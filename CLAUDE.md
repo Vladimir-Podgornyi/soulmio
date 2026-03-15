@@ -377,6 +377,15 @@ User: Here is [Name]'s preference profile:
 - Props interface defined above component
 - No business logic in components — use custom hooks
 
+### Responsive Design (Mobile-first)
+- Always write mobile styles first, then extend for larger screens
+- Use Tailwind breakpoints: `md:` (768px) for tablet, `lg:` (1024px) for desktop
+- Every component must look good on mobile by default
+- Use `sonner` for notifications (not `toast`)
+- Test layout at 375px (iPhone SE) as minimum screen size
+- Avoid fixed widths — use `w-full`, `max-w-*`, `flex`, `grid` instead
+- Touch targets minimum 44px height for interactive elements
+
 ### File naming
 - Components: `PascalCase.tsx`
 - Hooks: `camelCase.ts` (prefix with `use`)
