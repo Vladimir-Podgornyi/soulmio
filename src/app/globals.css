@@ -4,7 +4,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Soulmio design tokens ─────────────────────────────────────────────── */
+:root {
+  --s-bg-primary:    #F8F5F0;
+  --s-bg-secondary:  #FFFFFF;
+  --s-bg-card:       #FFFFFF;
+  --s-bg-input:      #EEEBE6;
+  --s-bg-input-focus:#E5E0DA;
+  --s-bg-hover:      #EEEBE6;
+  --s-text-primary:  #1A1A1A;
+  --s-text-secondary:#9C9590;
+  --s-text-muted:    #C0B8B0;
+  --s-border:        #E2DDD8;
+  --s-border-card:   #E8E3DD;
+  --s-shadow-card:   0 1px 4px rgba(0,0,0,0.06);
+}
+
+.dark {
+  --s-bg-primary:    #0E0D0C;
+  --s-bg-secondary:  #141312;
+  --s-bg-card:       #1A1917;
+  --s-bg-input:      #2A2826;
+  --s-bg-input-focus:#313028;
+  --s-bg-hover:      #242220;
+  --s-text-primary:  #F0EDE8;
+  --s-text-secondary:#888888;
+  --s-text-muted:    #555555;
+  --s-border:        #2A2826;
+  --s-border-card:   #242220;
+  --s-shadow-card:   0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Primary & accent — same in both themes */
+:root, .dark {
+  --s-primary:      #E8735A;
+  --s-primary-dark: #C94F38;
+  --s-accent:       #4A90A4;
+}
+
 @theme inline {
+  /* Soulmio semantic colors — use as bg-s-bg-card, text-s-text-primary, etc. */
+  --color-s-bg-primary:    var(--s-bg-primary);
+  --color-s-bg-secondary:  var(--s-bg-secondary);
+  --color-s-bg-card:       var(--s-bg-card);
+  --color-s-bg-input:      var(--s-bg-input);
+  --color-s-bg-input-focus:var(--s-bg-input-focus);
+  --color-s-bg-hover:      var(--s-bg-hover);
+  --color-s-text-primary:  var(--s-text-primary);
+  --color-s-text-secondary:var(--s-text-secondary);
+  --color-s-text-muted:    var(--s-text-muted);
+  --color-s-border:        var(--s-border);
+  --color-s-border-card:   var(--s-border-card);
+  --color-s-primary:       var(--s-primary);
+  --color-s-primary-dark:  var(--s-primary-dark);
+  --color-s-accent:        var(--s-accent);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);

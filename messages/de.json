@@ -1,0 +1,123 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "back": "Zurück",
+    "loading": "Lädt...",
+    "error": "Etwas ist schiefgelaufen",
+    "empty": "Noch nichts hier",
+    "or": "oder"
+  },
+  "brand": {
+    "name": "Soulmio",
+    "tagline": "Erinnere dich, was deinen Liebsten wichtig ist."
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "signOut": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "yourName": "Dein Name",
+    "namePlaceholder": "Anna Müller",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "alreadyHaveAccount": "Bereits ein Konto?",
+    "dontHaveAccount": "Noch kein Konto?",
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Melde dich bei deinem Konto an"
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "subtitle": "Beginne, das Wichtige zu behalten"
+    },
+    "emailSent": {
+      "title": "Überprüfe deine E-Mail",
+      "message": "Wir haben dir einen Bestätigungslink geschickt. Klicke darauf, um dein Konto zu aktivieren.",
+      "backToSignIn": "Zurück zur Anmeldung"
+    }
+  },
+  "nav": {
+    "home": "Startseite",
+    "people": "Personen",
+    "discover": "Entdecken",
+    "settings": "Einstellungen"
+  },
+  "people": {
+    "title": "Personen",
+    "addPerson": "Person hinzufügen",
+    "editPerson": "Person bearbeiten",
+    "deletePerson": "Person löschen",
+    "name": "Name",
+    "relation": "Beziehung",
+    "notes": "Notizen",
+    "relations": {
+      "partner": "Partner/in",
+      "friend": "Freund/in",
+      "family": "Familie",
+      "other": "Andere"
+    }
+  },
+  "categories": {
+    "food": "Essen",
+    "restaurants": "Restaurants",
+    "gifts": "Geschenke",
+    "movies": "Filme",
+    "travel": "Reisen",
+    "addCustom": "Kategorie hinzufügen",
+    "custom": "Benutzerdefiniert"
+  },
+  "items": {
+    "addItem": "Eintrag hinzufügen",
+    "editItem": "Eintrag bearbeiten",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "image": "Bild",
+    "link": "Link",
+    "price": "Preis",
+    "tags": "Tags",
+    "sentiments": {
+      "likes": "Liebt",
+      "dislikes": "Mag nicht",
+      "wants": "Möchte ausprobieren",
+      "visited": "War dort"
+    },
+    "ratings": {
+      "mine": "Meine Bewertung",
+      "partner": "Ihre/Seine Bewertung"
+    }
+  },
+  "ai": {
+    "suggestions": "KI-Vorschläge",
+    "proBadge": "Pro",
+    "generating": "Generiere Vorschläge...",
+    "noSuggestions": "Noch keine Vorschläge",
+    "refresh": "Aktualisieren"
+  },
+  "paywall": {
+    "upgradeToPro": "Auf Pro upgraden",
+    "personLimit": "Du hast 1 Person im kostenlosen Plan hinzugefügt. Upgrade auf Pro, um Vorlieben für Freunde und Familie zu verfolgen.",
+    "categoryLimit": "Benutzerdefinierte Kategorien sind auf 2 im kostenlosen Plan begrenzt. Upgrade auf Pro für unbegrenzte Kategorien.",
+    "aiLimit": "Du hast deine 3 kostenlosen KI-Vorschläge diesen Monat aufgebraucht. Upgrade auf Pro für unbegrenzte Vorschläge und KI-Chat.",
+    "aiFeature": "KI-Vorschläge sind eine Pro-Funktion. Upgrade für personalisierte Empfehlungen.",
+    "moviesTravel": "Filme und Reisen sind in Pro verfügbar. Upgrade, um alle Kategorien freizuschalten."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Design",
+    "themes": {
+      "dark": "Dunkel",
+      "light": "Hell",
+      "system": "System"
+    },
+    "account": "Konto",
+    "subscription": "Abonnement",
+    "free": "Kostenlos",
+    "pro": "Pro"
+  }
+}
