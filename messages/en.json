@@ -1,0 +1,123 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "back": "Back",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "empty": "Nothing here yet",
+    "or": "or"
+  },
+  "brand": {
+    "name": "Soulmio",
+    "tagline": "Remember what matters to the people you love."
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "yourName": "Your name",
+    "namePlaceholder": "Anna Müller",
+    "continueWithGoogle": "Continue with Google",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Start remembering what matters"
+    },
+    "emailSent": {
+      "title": "Check your email",
+      "message": "We sent a confirmation link to your inbox. Click it to activate your account.",
+      "backToSignIn": "Back to sign in"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "people": "People",
+    "discover": "Discover",
+    "settings": "Settings"
+  },
+  "people": {
+    "title": "People",
+    "addPerson": "Add Person",
+    "editPerson": "Edit Person",
+    "deletePerson": "Delete Person",
+    "name": "Name",
+    "relation": "Relation",
+    "notes": "Notes",
+    "relations": {
+      "partner": "Partner",
+      "friend": "Friend",
+      "family": "Family",
+      "other": "Other"
+    }
+  },
+  "categories": {
+    "food": "Food",
+    "restaurants": "Restaurants",
+    "gifts": "Gifts",
+    "movies": "Movies",
+    "travel": "Travel",
+    "addCustom": "Add category",
+    "custom": "Custom"
+  },
+  "items": {
+    "addItem": "Add item",
+    "editItem": "Edit item",
+    "title": "Title",
+    "description": "Description",
+    "image": "Image",
+    "link": "Link",
+    "price": "Price",
+    "tags": "Tags",
+    "sentiments": {
+      "likes": "Loves",
+      "dislikes": "Avoids",
+      "wants": "Wants to try",
+      "visited": "Been there"
+    },
+    "ratings": {
+      "mine": "My rating",
+      "partner": "Their rating"
+    }
+  },
+  "ai": {
+    "suggestions": "AI Suggestions",
+    "proBadge": "Pro",
+    "generating": "Generating suggestions...",
+    "noSuggestions": "No suggestions yet",
+    "refresh": "Refresh"
+  },
+  "paywall": {
+    "upgradeToPro": "Upgrade to Pro",
+    "personLimit": "You've added 1 person on the free plan. Upgrade to Pro to track preferences for friends and family too.",
+    "categoryLimit": "Custom categories are limited to 2 on the free plan. Upgrade to Pro for unlimited categories.",
+    "aiLimit": "You've used your 3 free AI suggestions this month. Upgrade to Pro for unlimited suggestions and AI chat.",
+    "aiFeature": "AI suggestions are a Pro feature. Upgrade to see personalized recommendations based on their taste.",
+    "moviesTravel": "Movies and Travel categories are available on Pro. Upgrade to unlock all categories."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    },
+    "account": "Account",
+    "subscription": "Subscription",
+    "free": "Free",
+    "pro": "Pro"
+  }
+}
