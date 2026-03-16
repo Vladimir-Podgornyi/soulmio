@@ -1,6 +1,20 @@
 import type { DbClient } from '@/shared/api/supabase'
 import type { Person, Relation } from '../model/types'
 
+export async function getPeople(
+  supabase: DbClient,
+  userId: string
+): Promise<Person[]> {
+  const { data, error } = await supabase
+    .from('people')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as Person[]
+}
+
 export interface CreatePersonInput {
   name: string
   relation: Relation | null

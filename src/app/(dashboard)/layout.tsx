@@ -1,11 +1,16 @@
+import { BottomNavClient } from '@/widgets/bottom-nav/ui/BottomNavClient'
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-[#0E0D0C]">
-      {children}
+    <div className="min-h-screen bg-s-bg-primary">
+      <main className="pb-20">
+        {children}
+      </main>
+      <BottomNavClient />
     </div>
   )
 }
