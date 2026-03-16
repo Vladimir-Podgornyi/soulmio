@@ -22,8 +22,6 @@ async function getOrCreateProfile(
 
   if (data) return data as Profile
 
-  // Fallback: profile table unreachable (e.g. RLS not configured yet)
-  // Build an in-memory profile from auth data so the user can still use the app
   return {
     id: userId,
     email: email ?? null,
