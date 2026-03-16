@@ -106,6 +106,10 @@
     "aiFeature": "KI-Vorschläge sind eine Pro-Funktion. Upgrade für personalisierte Empfehlungen.",
     "moviesTravel": "Filme und Reisen sind in Pro verfügbar. Upgrade, um alle Kategorien freizuschalten."
   },
+  "dashboard": {
+    "greeting": "Hey, {name}",
+    "yourPeople": "Deine Personen"
+  },
   "settings": {
     "title": "Einstellungen",
     "language": "Sprache",

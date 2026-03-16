@@ -4,6 +4,9 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export interface Database {
+  __InternalSupabase: {
+    PostgrestVersion: '12'
+  }
   public: {
     Tables: {
       profiles: {
@@ -31,6 +34,7 @@ export interface Database {
           subscription_tier?: string
           created_at?: string
         }
+        Relationships: []
       }
       people: {
         Row: {
@@ -60,6 +64,7 @@ export interface Database {
           notes?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -89,6 +94,7 @@ export interface Database {
           sort_order?: number
           created_at?: string
         }
+        Relationships: []
       }
       items: {
         Row: {
@@ -139,6 +145,7 @@ export interface Database {
           ai_suggested?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       ai_recommendations: {
         Row: {
@@ -168,7 +175,12 @@ export interface Database {
           response?: string | null
           created_at?: string
         }
+        Relationships: []
       }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

@@ -106,6 +106,10 @@
     "aiFeature": "AI suggestions are a Pro feature. Upgrade to see personalized recommendations based on their taste.",
     "moviesTravel": "Movies and Travel categories are available on Pro. Upgrade to unlock all categories."
   },
+  "dashboard": {
+    "greeting": "Hey, {name}",
+    "yourPeople": "Your people"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
