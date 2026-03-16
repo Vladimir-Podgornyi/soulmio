@@ -1,6 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/shared/types/database'
 
+export type DbClient = ReturnType<typeof createBrowserClient<Database>>
+
 /**
  * Browser (client component) Supabase client.
  * Use inside 'use client' components and custom hooks.

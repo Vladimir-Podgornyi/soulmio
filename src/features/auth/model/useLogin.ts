@@ -32,8 +32,7 @@ export function useLogin() {
       return
     }
 
-    router.push('/')
-    router.refresh()
+    window.location.href = '/dashboard'
   }
 
   async function signInWithGoogle() {
