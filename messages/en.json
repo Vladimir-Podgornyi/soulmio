@@ -112,6 +112,7 @@
   },
   "settings": {
     "title": "Settings",
+    "appearance": "Appearance",
     "language": "Language",
     "theme": "Theme",
     "themes": {
@@ -119,7 +120,21 @@
       "light": "Light",
       "system": "System"
     },
+    "languages": {
+      "en": "English",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
     "account": "Account",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "passwordMismatch": "Passwords do not match",
+    "nameSaved": "Name updated",
+    "emailSent": "Confirmation link sent to new email",
+    "passwordSaved": "Password updated",
     "subscription": "Subscription",
     "free": "Free",
     "pro": "Pro"

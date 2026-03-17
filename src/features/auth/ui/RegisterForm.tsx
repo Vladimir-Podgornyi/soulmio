@@ -21,11 +21,11 @@ export function RegisterForm() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 text-2xl">
           ✉️
         </div>
-        <p className="text-base font-semibold text-s-text-primary">{t('auth.emailSent.title')}</p>
-        <p className="text-sm leading-relaxed text-s-text-secondary">
+        <p className="text-base font-semibold text-text-primary">{t('auth.emailSent.title')}</p>
+        <p className="text-sm leading-relaxed text-text-secondary">
           {t('auth.emailSent.message')}
         </p>
-        <Link href="/login" className="mt-2 text-sm font-medium text-s-primary hover:underline">
+        <Link href="/login" className="mt-2 text-sm font-medium text-primary hover:underline">
           {t('auth.emailSent.backToSignIn')}
         </Link>
       </div>
@@ -39,7 +39,7 @@ export function RegisterForm() {
         type="button"
         onClick={signInWithGoogle}
         disabled={isLoading}
-        className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-s-border bg-s-bg-card text-sm font-medium text-s-text-primary transition-colors hover:bg-s-bg-hover disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-bg-card text-sm font-medium text-text-primary transition-colors hover:bg-bg-hover disabled:opacity-50"
       >
         <GoogleIcon />
         {t('auth.continueWithGoogle')}
@@ -47,16 +47,16 @@ export function RegisterForm() {
 
       {/* Divider */}
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-s-border" />
-        <span className="text-xs text-s-text-muted">{t('common.or')}</span>
-        <div className="h-px flex-1 bg-s-border" />
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-text-muted">{t('common.or')}</span>
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
 
         {/* Full name */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.yourName')}
           </label>
           <input
@@ -64,7 +64,7 @@ export function RegisterForm() {
             type="text"
             autoComplete="name"
             placeholder={t('auth.namePlaceholder')}
-            className="h-11 rounded-xl bg-s-bg-input px-4 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
           />
           {errors.fullName && (
             <span className="text-xs text-red-500">{errors.fullName.message}</span>
@@ -73,7 +73,7 @@ export function RegisterForm() {
 
         {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.email')}
           </label>
           <input
@@ -81,7 +81,7 @@ export function RegisterForm() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            className="h-11 rounded-xl bg-s-bg-input px-4 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
           />
           {errors.email && (
             <span className="text-xs text-red-500">{errors.email.message}</span>
@@ -90,7 +90,7 @@ export function RegisterForm() {
 
         {/* Password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.password')}
           </label>
           <div className="relative">
@@ -99,12 +99,12 @@ export function RegisterForm() {
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="h-11 w-full rounded-xl bg-s-bg-input px-4 pr-11 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+              className="h-11 w-full rounded-xl bg-bg-input px-4 pr-11 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-s-text-muted transition-colors hover:text-s-text-secondary"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-text-secondary"
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
@@ -118,7 +118,7 @@ export function RegisterForm() {
 
         {/* Confirm password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.confirmPassword')}
           </label>
           <div className="relative">
@@ -127,12 +127,12 @@ export function RegisterForm() {
               type={showConfirm ? 'text' : 'password'}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="h-11 w-full rounded-xl bg-s-bg-input px-4 pr-11 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+              className="h-11 w-full rounded-xl bg-bg-input px-4 pr-11 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
             />
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-s-text-muted transition-colors hover:text-s-text-secondary"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-text-secondary"
               tabIndex={-1}
               aria-label={showConfirm ? 'Hide password' : 'Show password'}
             >
@@ -147,15 +147,15 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 h-11 w-full rounded-xl bg-s-primary text-sm font-semibold text-white transition-colors hover:bg-s-primary-dark disabled:opacity-50"
+          className="mt-2 h-11 w-full rounded-xl bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
         >
           {isLoading ? t('common.loading') : t('auth.signUp')}
         </button>
       </form>
 
-      <p className="text-center text-sm text-s-text-secondary">
+      <p className="text-center text-sm text-text-secondary">
         {t('auth.alreadyHaveAccount')}{' '}
-        <Link href="/login" className="font-medium text-s-primary hover:underline">
+        <Link href="/login" className="font-medium text-primary hover:underline">
           {t('auth.signIn')}
         </Link>
       </p>

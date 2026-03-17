@@ -5,169 +5,216 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─── Soulmio design tokens ─────────────────────────────────────────────── */
+/* Light theme (default) */
 :root {
-  --s-bg-primary:    #F8F5F0;
-  --s-bg-secondary:  #FFFFFF;
-  --s-bg-card:       #FFFFFF;
-  --s-bg-input:      #EEEBE6;
-  --s-bg-input-focus:#E5E0DA;
-  --s-bg-hover:      #EEEBE6;
-  --s-text-primary:  #1A1A1A;
-  --s-text-secondary:#9C9590;
-  --s-text-muted:    #C0B8B0;
-  --s-border:        #E2DDD8;
-  --s-border-card:   #E8E3DD;
-  --s-shadow-card:   0 1px 4px rgba(0,0,0,0.06);
+  color-scheme: light;
+  --bg-primary:    #F8F5F0;
+  --bg-secondary:  #FFFFFF;
+  --bg-card:       #FFFFFF;
+  --bg-input:      #EEEBE6;
+  --bg-input-focus:#E5E0DA;
+  --bg-hover:      #EEEBE6;
+  --text-primary:  #1A1A1A;
+  --text-secondary:#9C9590;
+  --text-muted:    #C0B8B0;
+  --border:        #E2DDD8;
+  --border-card:   #E8E3DD;
+  --shadow-card:   0 1px 4px rgba(0,0,0,0.06);
+  --primary-bg:    #FEF0EC;
+  --accent-bg:     #EBF4F7;
+  --loves-bg:      #E8F5EE;
+  --loves-text:    #3A9060;
+  --avoid-bg:      #FEE8E8;
+  --avoid-text:    #C04040;
+  --wants-bg:      #FEF3D8;
+  --wants-text:    #B07800;
 }
 
+/* Dark theme */
 .dark {
-  --s-bg-primary:    #0E0D0C;
-  --s-bg-secondary:  #141312;
-  --s-bg-card:       #1A1917;
-  --s-bg-input:      #2A2826;
-  --s-bg-input-focus:#313028;
-  --s-bg-hover:      #242220;
-  --s-text-primary:  #F0EDE8;
-  --s-text-secondary:#888888;
-  --s-text-muted:    #555555;
-  --s-border:        #2A2826;
-  --s-border-card:   #242220;
-  --s-shadow-card:   0 1px 4px rgba(0,0,0,0.3);
+  color-scheme: dark;
+  --bg-primary:    #0E0D0C;
+  --bg-secondary:  #141312;
+  --bg-card:       #1A1917;
+  --bg-input:      #2A2826;
+  --bg-input-focus:#313028;
+  --bg-hover:      #242220;
+  --text-primary:  #F0EDE8;
+  --text-secondary:#888888;
+  --text-muted:    #555555;
+  --border:        #2A2826;
+  --border-card:   #242220;
+  --shadow-card:   0 1px 4px rgba(0,0,0,0.3);
+  --primary-bg:    #2A1E1A;
+  --accent-bg:     #1E3A48;
+  --loves-bg:      #2A3A28;
+  --loves-text:    #5CBD8A;
+  --avoid-bg:      #3A2020;
+  --avoid-text:    #E05555;
+  --wants-bg:      #2A2A1A;
+  --wants-text:    #F0A500;
 }
 
 /* Primary & accent — same in both themes */
 :root, .dark {
-  --s-primary:      #E8735A;
-  --s-primary-dark: #C94F38;
-  --s-accent:       #4A90A4;
+  --primary:      #E8735A;
+  --primary-dark: #C94F38;
+  --accent-teal:  #4A90A4;
 }
 
-@theme inline {
-  /* Soulmio semantic colors — use as bg-s-bg-card, text-s-text-primary, etc. */
-  --color-s-bg-primary:    var(--s-bg-primary);
-  --color-s-bg-secondary:  var(--s-bg-secondary);
-  --color-s-bg-card:       var(--s-bg-card);
-  --color-s-bg-input:      var(--s-bg-input);
-  --color-s-bg-input-focus:var(--s-bg-input-focus);
-  --color-s-bg-hover:      var(--s-bg-hover);
-  --color-s-text-primary:  var(--s-text-primary);
-  --color-s-text-secondary:var(--s-text-secondary);
-  --color-s-text-muted:    var(--s-text-muted);
-  --color-s-border:        var(--s-border);
-  --color-s-border-card:   var(--s-border-card);
-  --color-s-primary:       var(--s-primary);
-  --color-s-primary-dark:  var(--s-primary-dark);
-  --color-s-accent:        var(--s-accent);
-
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-}
-
+/* ─── Shadcn base variables ──────────────────────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #F8F5F0;
+  --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+  --primary: #E8735A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EEEBE6;
+  --secondary-foreground: #1A1A1A;
+  --muted: #EEEBE6;
+  --muted-foreground: #9C9590;
+  --accent: #EEEBE6;
+  --accent-foreground: #1A1A1A;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --input: #EEEBE6;
+  --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #E8735A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EEEBE6;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E2DDD8;
+  --sidebar-ring: #E8735A;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #0E0D0C;
+  --foreground: #F0EDE8;
+  --card: #1A1917;
+  --card-foreground: #F0EDE8;
+  --popover: #1A1917;
+  --popover-foreground: #F0EDE8;
+  --primary: #E8735A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2A2826;
+  --secondary-foreground: #F0EDE8;
+  --muted: #2A2826;
+  --muted-foreground: #888888;
+  --accent: #2A2826;
+  --accent-foreground: #F0EDE8;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --input: #2A2826;
+  --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #141312;
+  --sidebar-foreground: #F0EDE8;
+  --sidebar-primary: #E8735A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2A2826;
+  --sidebar-accent-foreground: #F0EDE8;
+  --sidebar-border: #2A2826;
+  --sidebar-ring: #E8735A;
+}
+
+/* ─── Tailwind @theme (for shadcn + coral/accent tokens) ─────────────────── */
+@theme inline {
+  --color-primary:          var(--primary);
+  --color-primary-dark:     var(--primary-dark);
+  --color-primary-bg:       var(--primary-bg);
+  --color-accent-teal:      var(--accent-teal);
+  --color-accent-bg:        var(--accent-bg);
+  --color-background:       var(--background);
+  --color-foreground:       var(--foreground);
+  --font-sans:              var(--font-sans);
+  --font-mono:              var(--font-geist-mono);
+  --color-sidebar-ring:     var(--sidebar-ring);
+  --color-sidebar-border:   var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent:   var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary:  var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar:          var(--sidebar);
+  --color-chart-5:          var(--chart-5);
+  --color-chart-4:          var(--chart-4);
+  --color-chart-3:          var(--chart-3);
+  --color-chart-2:          var(--chart-2);
+  --color-chart-1:          var(--chart-1);
+  --color-ring:             var(--ring);
+  --color-input:            var(--input);
+  --color-border:           var(--border);
+  --color-destructive:      var(--destructive);
+  --color-accent-foreground:var(--accent-foreground);
+  --color-accent:           var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted:            var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary:        var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover:          var(--popover);
+  --color-card-foreground:  var(--card-foreground);
+  --color-card:             var(--card);
+  --radius-sm:  calc(var(--radius) * 0.6);
+  --radius-md:  calc(var(--radius) * 0.8);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ─── Soulmio utility classes ────────────────────────────────────────────── */
+/* Defined directly — guaranteed to respect --token CSS vars in both themes  */
+@layer utilities {
+  /* Backgrounds */
+  .bg-bg-primary   { background-color: var(--bg-primary);    }
+  .bg-bg-secondary { background-color: var(--bg-secondary);  }
+  .bg-bg-card      { background-color: var(--bg-card);       }
+  .bg-bg-input     { background-color: var(--bg-input);      }
+  .bg-bg-input-focus { background-color: var(--bg-input-focus); }
+  .bg-bg-hover     { background-color: var(--bg-hover);      }
+
+  /* Text */
+  .text-text-primary   { color: var(--text-primary);   }
+  .text-text-secondary { color: var(--text-secondary); }
+  .text-text-muted     { color: var(--text-muted);     }
+
+  /* Borders */
+  .border-border-card { border-color: var(--border-card); }
+  .bg-border-card     { background-color: var(--border-card); }
+  .bg-border          { background-color: var(--border); }
+
+  /* Sentiment */
+  .bg-loves-bg   { background-color: var(--loves-bg);  }
+  .text-loves    { color: var(--loves-text); }
+  .bg-avoid-bg   { background-color: var(--avoid-bg);  }
+  .text-avoid    { color: var(--avoid-text); }
+  .bg-wants-bg   { background-color: var(--wants-bg);  }
+  .text-wants    { color: var(--wants-text); }
+
+  /* AI / accent */
+  .bg-accent-bg  { background-color: var(--accent-bg); }
+  .text-accent-teal { color: var(--accent-teal); }
+  .bg-accent-teal   { background-color: var(--accent-teal); }
+
+  /* Primary bg (active nav) */
+  .bg-primary-bg { background-color: var(--primary-bg); }
+  .bg-primary-dark { background-color: var(--primary-dark); }
 }
 
 @layer base {
@@ -175,9 +222,21 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
   }
   html {
     @apply font-sans;
   }
 }
+
+/* ─── Gradient stat cards ───────────────────────────────────────────────── */
+.card-coral { background: linear-gradient(145deg, #FADADB, #F5B0A8); }
+.card-rose  { background: linear-gradient(145deg, #F5D6E8, #EAA8C8); }
+.card-ocean { background: linear-gradient(145deg, #D0E8F5, #A0C8E8); }
+.card-sage  { background: linear-gradient(145deg, #D0EDD8, #A0D0B0); }
+
+.dark .card-coral { background: linear-gradient(145deg, #7A3020, #B04228); }
+.dark .card-rose  { background: linear-gradient(145deg, #5C2240, #904060); }
+.dark .card-ocean { background: linear-gradient(145deg, #182E48, #285078); }
+.dark .card-sage  { background: linear-gradient(145deg, #22382A, #345A40); }
