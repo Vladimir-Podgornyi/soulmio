@@ -112,6 +112,7 @@
   },
   "settings": {
     "title": "Настройки",
+    "appearance": "Внешний вид",
     "language": "Язык",
     "theme": "Тема",
     "themes": {
@@ -119,7 +120,21 @@
       "light": "Светлая",
       "system": "Системная"
     },
+    "languages": {
+      "en": "English",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
     "account": "Аккаунт",
+    "name": "Имя",
+    "email": "Почта",
+    "password": "Пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Повторите новый пароль",
+    "passwordMismatch": "Пароли не совпадают",
+    "nameSaved": "Имя обновлено",
+    "emailSent": "Ссылка для подтверждения отправлена на новый адрес",
+    "passwordSaved": "Пароль обновлён",
     "subscription": "Подписка",
     "free": "Бесплатно",
     "pro": "Pro"

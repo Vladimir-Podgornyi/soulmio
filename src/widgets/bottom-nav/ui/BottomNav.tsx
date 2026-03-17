@@ -16,7 +16,7 @@ export function BottomNav() {
   const t = useTranslations()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-[64px] items-center justify-around bg-s-bg-secondary border-t border-s-border px-2 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-[64px] items-center justify-around bg-bg-secondary border-t border-border px-2 pb-safe">
       {NAV_ITEMS.map(({ href, icon: Icon, labelKey }) => {
         const isActive = pathname === href
 
@@ -29,12 +29,12 @@ export function BottomNav() {
             <Icon
               size={22}
               strokeWidth={isActive ? 2.2 : 1.8}
-              className={isActive ? 'text-s-primary' : 'text-s-text-muted'}
+              className={isActive ? 'text-primary' : 'text-text-muted'}
             />
             {/* Active dot */}
             <span
               className={`h-1 w-1 rounded-full transition-opacity ${
-                isActive ? 'bg-s-primary opacity-100' : 'opacity-0'
+                isActive ? 'bg-primary opacity-100' : 'opacity-0'
               }`}
             />
           </Link>

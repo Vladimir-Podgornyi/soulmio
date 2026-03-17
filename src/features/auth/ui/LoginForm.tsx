@@ -17,7 +17,7 @@ export function LoginForm() {
         type="button"
         onClick={signInWithGoogle}
         disabled={isLoading}
-        className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-s-border bg-s-bg-card text-sm font-medium text-s-text-primary transition-colors hover:bg-s-bg-hover disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-bg-card text-sm font-medium text-text-primary transition-colors hover:bg-bg-hover disabled:opacity-50"
       >
         <GoogleIcon />
         {t('auth.continueWithGoogle')}
@@ -25,15 +25,15 @@ export function LoginForm() {
 
       {/* Divider */}
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-s-border" />
-        <span className="text-xs text-s-text-muted">{t('common.or')}</span>
-        <div className="h-px flex-1 bg-s-border" />
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-text-muted">{t('common.or')}</span>
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       {/* Email/password form */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.email')}
           </label>
           <input
@@ -41,7 +41,7 @@ export function LoginForm() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            className="h-11 rounded-xl bg-s-bg-input px-4 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
           />
           {errors.email && (
             <span className="text-xs text-red-500">{errors.email.message}</span>
@@ -49,7 +49,7 @@ export function LoginForm() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-s-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.password')}
           </label>
           <input
@@ -57,7 +57,7 @@ export function LoginForm() {
             type="password"
             autoComplete="current-password"
             placeholder="••••••••"
-            className="h-11 rounded-xl bg-s-bg-input px-4 text-sm text-s-text-primary placeholder:text-s-text-muted outline-none transition-colors focus:bg-s-bg-input-focus focus:ring-1 focus:ring-s-primary/40"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
           />
           {errors.password && (
             <span className="text-xs text-red-500">{errors.password.message}</span>
@@ -67,15 +67,15 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 h-11 w-full rounded-xl bg-s-primary text-sm font-semibold text-white transition-colors hover:bg-s-primary-dark disabled:opacity-50"
+          className="mt-2 h-11 w-full rounded-xl bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
         >
           {isLoading ? t('common.loading') : t('auth.signIn')}
         </button>
       </form>
 
-      <p className="text-center text-sm text-s-text-secondary">
+      <p className="text-center text-sm text-text-secondary">
         {t('auth.dontHaveAccount')}{' '}
-        <Link href="/signup" className="font-medium text-s-primary hover:underline">
+        <Link href="/signup" className="font-medium text-primary hover:underline">
           {t('auth.signUp')}
         </Link>
       </p>

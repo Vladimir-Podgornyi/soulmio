@@ -24,12 +24,12 @@ export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex w-full items-center gap-4 rounded-[14px] bg-s-bg-card border border-dashed border-s-border p-4 text-left transition-colors hover:bg-s-bg-hover min-h-[60px]"
+        className="flex w-full items-center gap-4 rounded-[14px] bg-bg-card border border-dashed border-border p-4 text-left transition-colors hover:bg-bg-hover min-h-[60px]"
       >
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-s-bg-input text-xl text-s-text-muted">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-xl text-text-muted">
           +
         </div>
-        <span className="text-sm font-medium text-s-text-secondary">
+        <span className="text-sm font-medium text-text-secondary">
           {t('people.addPerson')}
         </span>
       </button>
@@ -44,15 +44,15 @@ export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
           />
 
           {/* Sheet */}
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-s-bg-secondary p-6 pb-safe">
+          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-[-0.5px] text-s-text-primary">
+              <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
                 {t('people.addPerson')}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-s-bg-input text-s-text-muted hover:bg-s-bg-hover"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
               >
                 ✕
               </button>

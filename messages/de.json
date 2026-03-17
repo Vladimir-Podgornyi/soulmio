@@ -112,6 +112,7 @@
   },
   "settings": {
     "title": "Einstellungen",
+    "appearance": "Erscheinungsbild",
     "language": "Sprache",
     "theme": "Design",
     "themes": {
@@ -119,7 +120,21 @@
       "light": "Hell",
       "system": "System"
     },
+    "languages": {
+      "en": "English",
+      "de": "Deutsch",
+      "ru": "Русский"
+    },
     "account": "Konto",
+    "name": "Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Neues Passwort bestätigen",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "nameSaved": "Name aktualisiert",
+    "emailSent": "Bestätigungslink an neue E-Mail gesendet",
+    "passwordSaved": "Passwort aktualisiert",
     "subscription": "Abonnement",
     "free": "Kostenlos",
     "pro": "Pro"
