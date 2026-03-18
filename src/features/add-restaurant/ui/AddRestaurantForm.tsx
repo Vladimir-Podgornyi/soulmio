@@ -10,9 +10,9 @@ import { useAddRestaurant } from '../model/useAddRestaurant'
 interface AddRestaurantFormProps {
   personId: string
   categoryId: string
-  /** All restaurants already saved — used for duplicate detection */
+  /** Все уже сохранённые рестораны — используются для обнаружения дублей */
   existingItems?: Item[]
-  /** Pass existing item to enter edit mode */
+  /** Передайте существующий элемент для входа в режим редактирования */
   item?: Item
   onSuccess: (item: Item) => void
   onCancel: () => void
@@ -101,7 +101,7 @@ export function AddRestaurantForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-      {/* Maps URL */}
+      {/* Ссылка на карты */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('restaurants.mapsUrl')}
@@ -129,7 +129,7 @@ export function AddRestaurantForm({
         <p className="text-[11px] text-text-muted">{t('restaurants.mapsHint')}</p>
       </div>
 
-      {/* Name */}
+      {/* Название */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('items.title')} *
@@ -143,7 +143,7 @@ export function AddRestaurantForm({
         />
       </div>
 
-      {/* Address */}
+      {/* Адрес */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('restaurants.address')}
@@ -157,7 +157,7 @@ export function AddRestaurantForm({
         />
       </div>
 
-      {/* Sentiment */}
+      {/* Статус */}
       <div className="flex flex-col gap-2">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('restaurants.status')}
@@ -168,7 +168,7 @@ export function AddRestaurantForm({
               key={s}
               type="button"
               onClick={() => setSentiment(s)}
-              className={`h-9 flex-1 rounded-[20px] px-4 text-sm font-medium transition-colors ${
+              className={`h-9 flex-1 min-w-0 whitespace-nowrap rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
                 sentiment === s
                   ? 'bg-primary text-white'
                   : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
@@ -180,7 +180,7 @@ export function AddRestaurantForm({
         </div>
       </div>
 
-      {/* Ratings — only if visited */}
+      {/* Рейтинги — только если посещали */}
       {sentiment === 'visited' && (
         <div className="flex gap-4">
           <RatingField label={t('items.ratings.mine')} value={myRating} onChange={setMyRating} />
@@ -188,7 +188,7 @@ export function AddRestaurantForm({
         </div>
       )}
 
-      {/* Comment */}
+      {/* Комментарий */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('restaurants.comment')}
@@ -202,7 +202,7 @@ export function AddRestaurantForm({
         />
       </div>
 
-      {/* Duplicate warning */}
+      {/* Предупреждение о дубликате */}
       {duplicate && (
         <div className="flex items-start gap-2.5 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
           <span className="mt-0.5 text-base leading-none">⚠️</span>
@@ -212,7 +212,7 @@ export function AddRestaurantForm({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Кнопки действий */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
@@ -233,7 +233,7 @@ export function AddRestaurantForm({
   )
 }
 
-/* ── Rating field ── */
+/* ── Поле рейтинга ── */
 
 interface RatingFieldProps {
   label: string

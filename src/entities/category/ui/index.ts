@@ -1,2 +1,2 @@
-// Category entity — UI components (dumb, props-only)
-// CategoryPill, CategoryCard, etc.
+// Сущность Category — UI компоненты (тупые, только props)
+// CategoryPill, CategoryCard и т.д.

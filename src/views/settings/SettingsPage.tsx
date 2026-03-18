@@ -79,11 +79,11 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         {t('settings.title')}
       </h1>
 
-      {/* ── Appearance ── */}
+      {/* ── Внешний вид ── */}
       <SectionLabel>{t('settings.appearance')}</SectionLabel>
       <div className="mb-5 rounded-[14px] bg-bg-card border border-border-card overflow-hidden">
 
-        {/* Theme */}
+        {/* Тема */}
         <div className="px-4 py-3">
           <p className="mb-2 text-sm font-medium text-text-primary">{t('settings.theme')}</p>
           <div className="flex gap-2">
@@ -108,7 +108,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
 
         <Divider />
 
-        {/* Language */}
+        {/* Язык */}
         <div className="px-4 py-3">
           <p className="mb-2 text-sm font-medium text-text-primary">{t('settings.language')}</p>
           <div className="flex gap-2">
@@ -129,11 +129,11 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         </div>
       </div>
 
-      {/* ── Account ── */}
+      {/* ── Аккаунт ── */}
       <SectionLabel>{t('settings.account')}</SectionLabel>
       <div className="mb-5 rounded-[14px] bg-bg-card border border-border-card overflow-hidden">
 
-        {/* Name */}
+        {/* Имя */}
         <AccountRow
           label={t('settings.name')}
           value={profile.full_name ?? '—'}
@@ -154,7 +154,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
 
         <Divider />
 
-        {/* Email */}
+        {/* Email (почта) */}
         <AccountRow
           label={t('settings.email')}
           value={profile.email ?? '—'}
@@ -176,7 +176,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
 
         <Divider />
 
-        {/* Password */}
+        {/* Пароль */}
         <AccountRow
           label={t('settings.password')}
           value="••••••••"
@@ -212,7 +212,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         </AccountRow>
       </div>
 
-      {/* ── Sign out ── */}
+      {/* ── Выход ── */}
       <button
         onClick={signOut}
         disabled={signOutLoading}
@@ -225,7 +225,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
   )
 }
 
-/* ── Sub-components ── */
+/* ── Вспомогательные компоненты ── */
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (

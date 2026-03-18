@@ -18,19 +18,19 @@ export default async function Page({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Load person
+  // Загружаем человека
   const people = await getPeople(supabase as DbClient, user.id)
   const person = people.find((p) => p.id === id)
   if (!person) notFound()
 
-  // Determine pro status
+  // Определяем статус Pro
   const profile = await getProfile(supabase as DbClient, user.id)
   const isPro = profile?.subscription_tier === 'pro'
 
-  // Ensure default categories exist
+  // Убеждаемся, что дефолтные категории существуют
   const categories = await ensureDefaultCategories(supabase as DbClient, person.id, isPro)
 
-  // Load items for the first category (restaurants)
+  // Загружаем элементы для первой категории (рестораны)
   const defaultCategory =
     categories.find((c) => c.name === 'restaurants') ?? categories[0]
 

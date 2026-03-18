@@ -34,7 +34,7 @@ export function RegisterForm() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Google OAuth */}
+      {/* Google OAuth (вход через Google) */}
       <button
         type="button"
         onClick={signInWithGoogle}
@@ -45,7 +45,7 @@ export function RegisterForm() {
         {t('auth.continueWithGoogle')}
       </button>
 
-      {/* Divider */}
+      {/* Разделитель */}
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
         <span className="text-xs text-text-muted">{t('common.or')}</span>
@@ -54,7 +54,7 @@ export function RegisterForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
 
-        {/* Full name */}
+        {/* Полное имя */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.yourName')}
@@ -71,7 +71,7 @@ export function RegisterForm() {
           )}
         </div>
 
-        {/* Email */}
+        {/* Email (почта) */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.email')}
@@ -88,7 +88,7 @@ export function RegisterForm() {
           )}
         </div>
 
-        {/* Password */}
+        {/* Пароль */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.password')}
@@ -116,7 +116,7 @@ export function RegisterForm() {
           )}
         </div>
 
-        {/* Confirm password */}
+        {/* Подтверждение пароля */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
             {t('auth.confirmPassword')}

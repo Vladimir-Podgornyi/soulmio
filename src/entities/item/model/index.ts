@@ -1,1 +1,1 @@
-// Item entity — business model (types, store, hooks)
+// Сущность Item — бизнес-модель (типы, стор, хуки)

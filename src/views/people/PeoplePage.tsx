@@ -67,7 +67,7 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
   )
 }
 
-/* ── Person card ── */
+/* ── Карточка человека ── */
 
 interface PersonCardProps {
   person: Person
@@ -127,10 +127,10 @@ function PersonCard({ person, onDeleted, onFavoriteToggled }: PersonCardProps) {
   return (
     <div className="flex flex-col rounded-[14px] bg-bg-card border border-border-card">
       <div className="flex items-center gap-4 px-4 py-3 min-h-[60px]">
-        {/* Avatar — tapping navigates */}
+        {/* Аватар — нажатие переходит на страницу */}
         <Link href={`/people/${person.id}`} className="flex items-center gap-4 flex-1 min-w-0">
           <div className="relative flex-shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-sm font-bold text-white uppercase">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
               {person.name.charAt(0)}
             </div>
             {person.is_favorite && (
@@ -152,7 +152,7 @@ function PersonCard({ person, onDeleted, onFavoriteToggled }: PersonCardProps) {
           </div>
         </Link>
 
-        {/* Three-dot menu */}
+        {/* Меню из трёх точек */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
@@ -188,7 +188,7 @@ function PersonCard({ person, onDeleted, onFavoriteToggled }: PersonCardProps) {
         </div>
       </div>
 
-      {/* Delete confirmation */}
+      {/* Подтверждение удаления */}
       {confirmDelete && (
         <div className="flex items-center justify-between border-t border-border-card bg-red-500/5 px-4 py-2.5 rounded-b-[14px]">
           <span className="text-sm text-red-500">{t('people.deleteConfirm')}</span>

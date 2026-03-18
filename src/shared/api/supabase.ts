@@ -4,11 +4,11 @@ import type { Database } from '@/shared/types/database'
 export type DbClient = ReturnType<typeof createBrowserClient<Database>>
 
 /**
- * Browser (client component) Supabase client.
- * Use inside 'use client' components and custom hooks.
+ * Браузерный (клиентский компонент) Supabase-клиент.
+ * Использовать внутри компонентов с 'use client' и пользовательских хуков.
  *
- * Creates a new instance on every call — intentional for @supabase/ssr,
- * which internally deduplicates the underlying GoTrue client.
+ * Создаёт новый экземпляр при каждом вызове — намеренно для @supabase/ssr,
+ * который внутри дедуплицирует базовый GoTrue-клиент.
  */
 export function createClient() {
   return createBrowserClient<Database>(

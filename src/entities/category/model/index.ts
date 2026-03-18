@@ -1,1 +1,1 @@
-// Category entity — business model (types, store, hooks)
+// Сущность Category — бизнес-модель (типы, стор, хуки)

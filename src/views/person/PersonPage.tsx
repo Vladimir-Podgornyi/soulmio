@@ -10,6 +10,8 @@ import type { Category } from '@/entities/category/model/types'
 import type { Item } from '@/entities/item/model/types'
 import { AddRestaurantForm } from '@/features/add-restaurant'
 import { useAddRestaurant } from '@/features/add-restaurant/model/useAddRestaurant'
+import { AddFoodForm } from '@/features/add-food'
+import { useAddFood, getFoodType, getCuisineType, getLinkedRestaurant } from '@/features/add-food'
 
 interface PersonPageProps {
   person: Person
@@ -40,13 +42,24 @@ export function PersonPage({
   })
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
-  const [filter, setFilter] = useState<'all' | 'visited' | 'wants'>('all')
+  const [filter, setFilter] = useState<'all' | 'visited' | 'wants' | 'likes' | 'dislikes'>('all')
+  const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'dish' | 'food_type' | 'cuisine'>('all')
 
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
   const allItems = itemsByCategory[activeCategoryId] ?? []
-  const items = filter === 'all'
-    ? allItems
-    : allItems.filter((it) => it.sentiment === filter)
+
+  const sentimentFiltered = filter === 'all' ? allItems : allItems.filter((it) => it.sentiment === filter)
+  const items = foodTypeFilter === 'all'
+    ? sentimentFiltered
+    : sentimentFiltered.filter((it) => getFoodType(it.tags ?? null) === foodTypeFilter)
+
+  const isRestaurants = activeCategory?.name === 'restaurants'
+  const isFood = activeCategory?.name === 'food'
+
+  const restaurantCategory = categories.find((c) => c.name === 'restaurants')
+  const availableRestaurants = restaurantCategory
+    ? (itemsByCategory[restaurantCategory.id] ?? [])
+    : []
 
   function handleItemAdded(item: Item) {
     setItemsByCategory((prev) => ({
@@ -76,6 +89,7 @@ export function PersonPage({
   async function handleCategoryChange(categoryId: string) {
     setActiveCategoryId(categoryId)
     setFilter('all')
+    setFoodTypeFilter('all')
     if (!(categoryId in itemsByCategory)) {
       const res = await fetch(`/api/items?personId=${person.id}&categoryId=${categoryId}`)
       const data = (await res.json()) as Item[]
@@ -83,11 +97,19 @@ export function PersonPage({
     }
   }
 
-  const isRestaurants = activeCategory?.name === 'restaurants'
+  async function handleOpenFoodAdd() {
+    setIsAddOpen(true)
+    // Ленивая загрузка ресторанов, чтобы они были доступны при привязке блюда
+    if (restaurantCategory && !(restaurantCategory.id in itemsByCategory)) {
+      const res = await fetch(`/api/items?personId=${person.id}&categoryId=${restaurantCategory.id}`)
+      const data = (await res.json()) as Item[]
+      setItemsByCategory((prev) => ({ ...prev, [restaurantCategory.id]: data }))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Header */}
+      {/* Шапка */}
       <div className="px-4 pt-14 pb-4">
         <Link href="/people" className="mb-4 flex items-center gap-1 text-sm text-text-secondary">
           <ChevronLeft size={16} />
@@ -95,7 +117,7 @@ export function PersonPage({
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-lg font-bold text-white uppercase">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[18px] font-bold text-white uppercase leading-none overflow-hidden">
             {person.name.charAt(0)}
           </div>
           <div>
@@ -104,15 +126,17 @@ export function PersonPage({
             </h1>
             {person.relation && (
               <p className="text-sm text-text-secondary capitalize">
-                {t(`people.relations.${person.relation}`)}
+                {['partner', 'friend', 'family', 'other'].includes(person.relation)
+                  ? t(`people.relations.${person.relation as 'partner' | 'friend' | 'family' | 'other'}`)
+                  : person.relation}
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Category tabs */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-4 scrollbar-none">
+      {/* Вкладки категорий */}
+      <div className="flex gap-2 overflow-x-auto px-4 pb-5 scrollbar-none">
         {categories.map((cat) => {
           const icon = cat.icon ?? CATEGORY_ICONS[cat.name] ?? '📁'
           const isActive = cat.id === activeCategoryId
@@ -137,9 +161,63 @@ export function PersonPage({
         })}
       </div>
 
-      {/* Sentiment filter — shown only for restaurants and when there are items */}
-      {activeCategory?.name === 'restaurants' && allItems.length > 0 && (
-        <div className="flex gap-2 px-4 pb-3">
+      {/* Фильтры — еда */}
+      {isFood && allItems.length > 0 && (
+        <div className="px-4 pb-4">
+          {/* Мобильный: две строки друг под другом. Десктоп: одна прокручиваемая строка */}
+          <div className="flex flex-col gap-1 md:flex-row md:gap-0 md:overflow-x-auto md:scrollbar-none md:items-center">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              {([
+                { key: 'all',      label: t('common.all') },
+                { key: 'likes',    label: t('items.sentiments.likes') },
+                { key: 'dislikes', label: t('items.sentiments.dislikes') },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                    filter === key
+                      ? 'bg-bg-input text-text-primary'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {label}
+                  {key !== 'all' && (
+                    <span className="ml-1.5 text-text-muted">
+                      {allItems.filter((it) => it.sentiment === key).length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <span className="hidden md:block flex-shrink-0 w-px h-4 bg-border mx-2" />
+            <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              {([
+                { key: 'all',       label: t('food.filterAll') },
+                { key: 'dish',      label: `🍽️ ${t('food.types.dish')}` },
+                { key: 'food_type', label: `🥗 ${t('food.types.food_type')}` },
+                { key: 'cuisine',   label: `🍜 ${t('food.cuisineTitle')}` },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFoodTypeFilter(key)}
+                  className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                    foodTypeFilter === key
+                      ? 'bg-bg-input text-text-primary'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Фильтр по отношению — рестораны */}
+      {isRestaurants && allItems.length > 0 && (
+        <div className="flex gap-2 px-4 pb-4">
           {([
             { key: 'all',     label: t('common.all') },
             { key: 'visited', label: t('items.sentiments.visited') },
@@ -165,8 +243,19 @@ export function PersonPage({
         </div>
       )}
 
-      {/* Items list */}
-      <div className="px-4 pb-32">
+      {/* Список элементов */}
+      <div className="px-4 pb-32 pt-1">
+        {/* Десктоп: пунктирная карточка "Добавить" вверху списка */}
+        <button
+          onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
+          className="hidden md:flex mb-2 w-full items-center gap-3 rounded-[14px] border border-dashed border-border bg-transparent p-4 text-left transition-colors hover:bg-bg-hover"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted">
+            <Plus size={16} />
+          </div>
+          <span className="text-sm text-text-muted">{t('common.add')}</span>
+        </button>
+
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="mb-3 text-5xl">
@@ -176,29 +265,53 @@ export function PersonPage({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {items.map((item) => (
-              <RestaurantCard
-                key={item.id}
-                item={item}
-                personId={person.id}
-                categoryId={activeCategoryId}
-                onEdit={() => setEditingItem(item)}
-                onDeleted={() => handleItemDeleted(item.id)}
-              />
-            ))}
+            {items.map((item) =>
+              isFood ? (
+                <FoodCard
+                  key={item.id}
+                  item={item}
+                  personId={person.id}
+                  categoryId={activeCategoryId}
+                  onEdit={() => setEditingItem(item)}
+                  onDeleted={() => handleItemDeleted(item.id)}
+                />
+              ) : (
+                <RestaurantCard
+                  key={item.id}
+                  item={item}
+                  personId={person.id}
+                  categoryId={activeCategoryId}
+                  onEdit={() => setEditingItem(item)}
+                  onDeleted={() => handleItemDeleted(item.id)}
+                />
+              )
+            )}
           </div>
         )}
       </div>
 
-      {/* FAB */}
+      {/* FAB — только на мобильных */}
       <button
-        onClick={() => setIsAddOpen(true)}
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
+        onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
+        className="md:hidden fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
       >
         <Plus size={24} className="text-white" />
       </button>
 
-      {/* Add bottom sheet */}
+      {/* Нижний лист добавления — еда */}
+      {isAddOpen && isFood && (
+        <BottomSheet title={t('food.add')} onClose={() => setIsAddOpen(false)}>
+          <AddFoodForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            availableRestaurants={availableRestaurants}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист добавления — рестораны */}
       {isAddOpen && isRestaurants && (
         <BottomSheet title={t('restaurants.add')} onClose={() => setIsAddOpen(false)}>
           <AddRestaurantForm
@@ -211,7 +324,21 @@ export function PersonPage({
         </BottomSheet>
       )}
 
-      {/* Edit bottom sheet */}
+      {/* Нижний лист редактирования — еда */}
+      {editingItem && isFood && (
+        <BottomSheet title={t('food.edit')} onClose={() => setEditingItem(null)}>
+          <AddFoodForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            availableRestaurants={availableRestaurants}
+            item={editingItem}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — рестораны */}
       {editingItem && isRestaurants && (
         <BottomSheet title={t('common.edit')} onClose={() => setEditingItem(null)}>
           <AddRestaurantForm
@@ -228,9 +355,9 @@ export function PersonPage({
   )
 }
 
-/* ── Restaurant card ── */
+/* ── Карточка еды ── */
 
-interface RestaurantCardProps {
+interface FoodCardProps {
   item: Item
   personId: string
   categoryId: string
@@ -238,14 +365,13 @@ interface RestaurantCardProps {
   onDeleted: () => void
 }
 
-function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: RestaurantCardProps) {
+function FoodCard({ item, personId, categoryId, onEdit, onDeleted }: FoodCardProps) {
   const t = useTranslations()
-  const { isSaving, removeRestaurant } = useAddRestaurant(personId, categoryId, () => {})
+  const { isSaving, removeFood } = useAddFood(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Close menu on outside click
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
@@ -259,51 +385,56 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
 
   async function handleDelete() {
     try {
-      await removeRestaurant(item.id)
+      await removeFood(item.id)
       onDeleted()
-      toast.success(t('restaurants.deleted'))
+      toast.success(t('food.deleted'))
     } catch {
       toast.error(t('common.error'))
     }
   }
 
-  const addressTag = item.tags?.find((tag) => tag.startsWith('📍'))
-  const isVisited = item.sentiment === 'visited'
+  const isLikes = item.sentiment === 'likes'
+  const foodType = getFoodType(item.tags ?? null)
+  const cuisineType = getCuisineType(item.tags ?? null)
+  const linkedRestaurant = getLinkedRestaurant(item.tags ?? null)
+
+  const typeLabel =
+    foodType === 'dish' ? `🍽️ ${t('food.types.dish')}` :
+    foodType === 'cuisine' ? `🍜 ${t('food.types.cuisine')}` :
+    `🥗 ${t('food.types.food_type')}`
 
   return (
     <div className="rounded-[14px] bg-bg-card border border-border-card p-4">
-      {/* Top row */}
+      {/* Верхняя строка */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-1 flex-col gap-0.5">
-          <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
-          {addressTag && (
-            <span className="text-xs text-text-secondary">{addressTag}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+            <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted">
+              {typeLabel}
+            </span>
+            {cuisineType && (
+              <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-secondary">
+                {cuisineType}
+              </span>
+            )}
+          </div>
+          {linkedRestaurant && (
+            <span className="text-xs text-text-secondary mt-0.5">🍴 {linkedRestaurant.name}</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Sentiment badge */}
+          {/* Значок отношения */}
           <span
             className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${
-              isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'
+              isLikes ? 'bg-loves-bg text-loves' : 'bg-avoid-bg text-avoid'
             }`}
           >
-            {isVisited ? t('items.sentiments.visited') : t('items.sentiments.wants')}
+            {isLikes ? `❤️ ${t('items.sentiments.likes')}` : `😕 ${t('items.sentiments.dislikes')}`}
           </span>
 
-          {/* External link */}
-          {item.external_url && (
-            <a
-              href={item.external_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-muted hover:text-text-secondary"
-            >
-              <ExternalLink size={15} />
-            </a>
-          )}
-
-          {/* Three-dot menu */}
+          {/* Меню из трёх точек */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
@@ -335,26 +466,172 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
         </div>
       </div>
 
-      {/* Ratings */}
-      {isVisited && (item.my_rating || item.partner_rating) ? (
-        <div className="mt-3 flex gap-4 border-t border-border-card pt-3">
-          {item.my_rating !== null && (
-            <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />
-          )}
-          {item.partner_rating !== null && (
-            <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />
-          )}
-        </div>
-      ) : null}
-
-      {/* Comment */}
+      {/* Комментарий */}
       {item.description && (
         <p className="mt-2 text-[13px] text-text-secondary leading-relaxed">
           {item.description}
         </p>
       )}
 
-      {/* Delete confirmation */}
+      {/* Подтверждение удаления */}
+      {confirmDelete && (
+        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+          <span className="text-sm text-red-500">{t('food.deleteConfirm')}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.delete')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Карточка ресторана ── */
+
+interface RestaurantCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  onEdit: () => void
+  onDeleted: () => void
+}
+
+function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: RestaurantCardProps) {
+  const t = useTranslations()
+  const { isSaving, removeRestaurant } = useAddRestaurant(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Закрываем меню по клику снаружи
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeRestaurant(item.id)
+      onDeleted()
+      toast.success(t('restaurants.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const addressTag = item.tags?.find((tag) => tag.startsWith('📍'))
+  const isVisited = item.sentiment === 'visited'
+  const hasRatings = isVisited && (item.my_rating !== null || item.partner_rating !== null)
+
+  // Иконки, общие для размещения в последней строке
+  const icons = (
+    <div className="flex flex-shrink-0 items-center gap-0.5">
+      {item.external_url && (
+        <a
+          href={item.external_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+        >
+          <ExternalLink size={15} />
+        </a>
+      )}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+        >
+          <MoreVertical size={15} />
+        </button>
+        {menuOpen && (
+          <div className="absolute right-0 bottom-8 z-20 min-w-[130px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+            <button
+              onClick={() => { setMenuOpen(false); onEdit() }}
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+            >
+              <Pencil size={14} className="text-text-secondary" />
+              {t('common.edit')}
+            </button>
+            <div className="mx-3 h-px bg-border-card" />
+            <button
+              onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 size={14} />
+              {t('common.delete')}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="rounded-[14px] bg-bg-card border border-border-card p-4">
+      {/* Верхняя строка: название + адрес + значок отношения */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-1 flex-col gap-0.5 min-w-0">
+          <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+          {addressTag && (
+            <span className="text-xs text-text-secondary">{addressTag}</span>
+          )}
+        </div>
+        <span
+          className={`flex-shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${
+            isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'
+          }`}
+        >
+          {isVisited ? t('items.sentiments.visited') : t('items.sentiments.wants')}
+        </span>
+      </div>
+
+      {/* Рейтинги — иконки справа, если нет комментария */}
+      {hasRatings && (
+        <div className="mt-3 flex items-end justify-between gap-2 border-t border-border-card pt-3">
+          <div className="flex gap-4">
+            {item.my_rating !== null && (
+              <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />
+            )}
+            {item.partner_rating !== null && (
+              <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />
+            )}
+          </div>
+          {!item.description && icons}
+        </div>
+      )}
+
+      {/* Комментарий — иконки справа в этой последней строке */}
+      {item.description && (
+        <div className="mt-2 flex items-end justify-between gap-2">
+          <p className="flex-1 text-[13px] text-text-secondary leading-relaxed">{item.description}</p>
+          {icons}
+        </div>
+      )}
+
+      {/* Только иконки — когда нет рейтингов и комментария */}
+      {!hasRatings && !item.description && (
+        <div className="mt-2 flex justify-end">{icons}</div>
+      )}
+
+      {/* Подтверждение удаления */}
       {confirmDelete && (
         <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
           <span className="text-sm text-red-500">{t('restaurants.deleteConfirm')}</span>
@@ -379,7 +656,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
   )
 }
 
-/* ── Rating display ── */
+/* ── Отображение рейтинга ── */
 
 function RatingDisplay({ label, value }: { label: string; value: number }) {
   return (
@@ -398,7 +675,7 @@ function RatingDisplay({ label, value }: { label: string; value: number }) {
   )
 }
 
-/* ── Bottom sheet ── */
+/* ── Нижний лист ── */
 
 function BottomSheet({
   title,

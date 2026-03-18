@@ -1,2 +1,2 @@
-// Item entity — UI components (dumb, props-only)
-// ItemCard, ItemIcon, etc.
+// Сущность Item — UI компоненты (тупые, только props)
+// ItemCard, ItemIcon и т.д.

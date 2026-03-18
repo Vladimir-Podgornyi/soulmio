@@ -21,8 +21,8 @@ export async function createServerSupabaseClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // setAll is called from a Server Component — cookies are read-only there.
-            // The session will still be read; writes are a no-op and harmless.
+            // setAll вызывается из Server Component — там куки только для чтения.
+            // Сессия всё равно читается; запись — это no-op и безвредна.
           }
         },
       },
@@ -31,9 +31,9 @@ export async function createServerSupabaseClient() {
 }
 
 /**
- * Service-role Supabase client — bypasses RLS.
- * Use ONLY in trusted server contexts (e.g. admin API routes).
- * Never expose SUPABASE_SERVICE_ROLE_KEY to the browser.
+ * Supabase-клиент с правами сервиса — обходит RLS.
+ * Использовать ТОЛЬКО в доверенных серверных контекстах (например, admin API роуты).
+ * Никогда не передавать SUPABASE_SERVICE_ROLE_KEY в браузер.
  */
 export async function createServiceSupabaseClient() {
   const cookieStore = await cookies()
@@ -52,7 +52,7 @@ export async function createServiceSupabaseClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // read-only context — safe to ignore
+            // контекст только для чтения — можно проигнорировать
           }
         },
       },

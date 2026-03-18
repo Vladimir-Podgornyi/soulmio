@@ -26,8 +26,8 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh session — wrapped in try/catch so a misconfigured Supabase URL
-  // never results in a 500; it just skips auth and lets the page render.
+  // Обновляем сессию — обёрнуто в try/catch, чтобы неверный URL Supabase
+  // никогда не приводил к ошибке 500; просто пропускаем аутентификацию и рендерим страницу.
   let user = null
   try {
     const { data } = await supabase.auth.getUser()

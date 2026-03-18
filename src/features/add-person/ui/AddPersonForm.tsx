@@ -80,7 +80,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      {/* Name */}
+      {/* Имя */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('people.name')}
@@ -97,14 +97,14 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
         )}
       </div>
 
-      {/* Relation */}
+      {/* Отношение */}
       <div className="flex flex-col gap-2">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('people.relation')}
         </label>
         <div className="flex flex-wrap gap-2">
 
-          {/* Default pills */}
+          {/* Стандартные пилюли */}
           {DEFAULT_RELATIONS.map((rel) => (
             <button
               key={rel}
@@ -120,7 +120,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
             </button>
           ))}
 
-          {/* Saved custom pills */}
+          {/* Сохранённые пользовательские пилюли */}
           {isPro && savedCustom.map((rel) => (
             <button
               key={rel}
@@ -147,7 +147,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
             </button>
           ))}
 
-          {/* Pro: + new custom */}
+          {/* Pro: + новое пользовательское */}
           {isPro && (
             !customMode ? (
               <button
@@ -188,7 +188,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
             )
           )}
 
-          {/* Free hint */}
+          {/* Подсказка для бесплатного плана */}
           {!isPro && (
             <span className="flex h-9 items-center rounded-[20px] px-3 text-xs text-text-muted border border-dashed border-border opacity-50 cursor-not-allowed">
               + {t('people.customRelationPro')}
@@ -197,7 +197,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Заметки */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
           {t('people.notes')}
@@ -210,7 +210,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
         />
       </div>
 
-      {/* Actions */}
+      {/* Кнопки действий */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"

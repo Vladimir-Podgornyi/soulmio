@@ -116,6 +116,38 @@
     "aiFeature": "KI-Vorschläge sind eine Pro-Funktion. Upgrade für personalisierte Empfehlungen.",
     "moviesTravel": "Filme und Reisen sind in Pro verfügbar. Upgrade, um alle Kategorien freizuschalten."
   },
+  "food": {
+    "add": "Essen hinzufügen",
+    "edit": "Essen bearbeiten",
+    "nameRequired": "Name ist erforderlich",
+    "namePlaceholder": "z. B. Sushi, Pizza, Thaiküche...",
+    "comment": "Kommentar",
+    "commentPlaceholder": "Beliebige Notizen...",
+    "type": "Typ",
+    "types": {
+      "dish": "Gericht",
+      "food_type": "Lebensmittelart",
+      "cuisine": "Küche"
+
+    },
+    "cuisineType": "Küche",
+    "cuisineTitle": "Küche",
+    "cuisinePlaceholder": "Suchen oder eigene eingeben...",
+    "cuisineSelect": "Küche auswählen",
+    "cuisineCustom": "Verwenden",
+    "cuisineList": ["Italienisch", "Japanisch", "Chinesisch", "Französisch", "Mexikanisch", "Thailändisch", "Indisch", "Mediterran", "Amerikanisch", "Koreanisch", "Vietnamesisch", "Griechisch", "Spanisch", "Türkisch", "Georgisch", "Nahöstlich", "Sushi", "Pizza", "Burger", "BBQ", "Meeresfrüchte", "Vegetarisch", "Vegan", "Ramen", "Tapas", "Peruanisch", "Brasilianisch", "Libanesisch", "Marokkanisch", "Österreichisch"],
+    "linkRestaurant": "Verknüpftes Restaurant",
+    "linkRestaurantBtn": "Mit Restaurant verknüpfen",
+    "noRestaurantsLinked": "Kein Restaurant verknüpft",
+    "noRestaurants": "Noch keine Restaurants hinzugefügt",
+    "searchRestaurant": "Restaurant suchen...",
+    "added": "Hinzugefügt",
+    "updated": "Aktualisiert",
+    "deleted": "Gelöscht",
+    "deleteConfirm": "Diesen Eintrag löschen?",
+    "filterType": "Typ",
+    "filterAll": "Alle"
+  },
   "restaurants": {
     "add": "Restaurant hinzufügen",
     "mapsUrl": "Google / Apple Maps Link",

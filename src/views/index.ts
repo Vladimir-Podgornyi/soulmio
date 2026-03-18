@@ -1,2 +1,2 @@
-// FSD Pages layer — page-level components
-// Each page slice lives in its own subfolder: pages/home/, pages/person/, etc.
+// Слой Pages (FSD) — компоненты уровня страниц
+// Каждый слайс страницы живёт в своей папке: pages/home/, pages/person/ и т.д.

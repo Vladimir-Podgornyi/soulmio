@@ -1,2 +1,2 @@
-// Person entity public API
+// Публичное API сущности Person
 export * from './model/types'

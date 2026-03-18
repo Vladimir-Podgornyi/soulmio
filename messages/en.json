@@ -116,6 +116,37 @@
     "aiFeature": "AI suggestions are a Pro feature. Upgrade to see personalized recommendations based on their taste.",
     "moviesTravel": "Movies and Travel categories are available on Pro. Upgrade to unlock all categories."
   },
+  "food": {
+    "add": "Add food item",
+    "edit": "Edit food item",
+    "nameRequired": "Name is required",
+    "namePlaceholder": "e.g. Sushi, Pizza, Thai food...",
+    "comment": "Comment",
+    "commentPlaceholder": "Any notes...",
+    "type": "Type",
+    "types": {
+      "dish": "Dish",
+      "food_type": "Food type",
+      "cuisine": "Cuisine type"
+    },
+    "cuisineType": "Cuisine",
+    "cuisineTitle": "Cuisine",
+    "cuisinePlaceholder": "Search or type your own...",
+    "cuisineSelect": "Select cuisine",
+    "cuisineCustom": "Use",
+    "cuisineList": ["Italian", "Japanese", "Chinese", "French", "Mexican", "Thai", "Indian", "Mediterranean", "American", "Korean", "Vietnamese", "Greek", "Spanish", "Turkish", "Georgian", "Middle Eastern", "Sushi", "Pizza", "Burgers", "BBQ", "Seafood", "Vegetarian", "Vegan", "Ramen", "Tapas", "Peruvian", "Brazilian", "Lebanese", "Moroccan", "Austrian"],
+    "linkRestaurant": "Linked restaurant",
+    "linkRestaurantBtn": "Link to restaurant",
+    "noRestaurantsLinked": "No restaurant linked",
+    "noRestaurants": "No restaurants added yet",
+    "searchRestaurant": "Search restaurant...",
+    "added": "Added",
+    "updated": "Updated",
+    "deleted": "Deleted",
+    "deleteConfirm": "Delete this item?",
+    "filterType": "Type",
+    "filterAll": "All"
+  },
   "restaurants": {
     "add": "Add Restaurant",
     "mapsUrl": "Google / Apple Maps link",

@@ -31,7 +31,7 @@ export function BottomNav() {
               strokeWidth={isActive ? 2.2 : 1.8}
               className={isActive ? 'text-primary' : 'text-text-muted'}
             />
-            {/* Active dot */}
+            {/* Активная точка */}
             <span
               className={`h-1 w-1 rounded-full transition-opacity ${
                 isActive ? 'bg-primary opacity-100' : 'opacity-0'

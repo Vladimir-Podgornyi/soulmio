@@ -1,2 +1,2 @@
-// User entity — UI components (dumb, props-only)
-// UserAvatar, UserBadge, etc.
+// Сущность User — UI компоненты (тупые, только props)
+// UserAvatar, UserBadge и т.д.
