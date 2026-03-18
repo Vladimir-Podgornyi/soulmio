@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/shared/api/supabase-server'
 import type { DbClient } from '@/shared/api/supabase'
 import { getPeople } from '@/entities/person/api'
+import { getProfile } from '@/entities/user/api'
 import { PeoplePage } from '@/views/people/PeoplePage'
 
 export default async function Page() {
@@ -10,7 +11,12 @@ export default async function Page() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const people = await getPeople(supabase as DbClient, user.id)
+  const [people, profile] = await Promise.all([
+    getPeople(supabase as DbClient, user.id),
+    getProfile(supabase as DbClient, user.id),
+  ])
 
-  return <PeoplePage initialPeople={people} />
+  const isPro = profile?.subscription_tier === 'pro'
+
+  return <PeoplePage initialPeople={people} isPro={isPro} />
 }

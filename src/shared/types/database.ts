@@ -44,6 +44,7 @@ export interface Database {
           relation: string | null
           avatar_url: string | null
           notes: string | null
+          is_favorite: boolean
           created_at: string
         }
         Insert: {
@@ -53,6 +54,7 @@ export interface Database {
           relation?: string | null
           avatar_url?: string | null
           notes?: string | null
+          is_favorite?: boolean
           created_at?: string
         }
         Update: {
@@ -62,6 +64,7 @@ export interface Database {
           relation?: string | null
           avatar_url?: string | null
           notes?: string | null
+          is_favorite?: boolean
           created_at?: string
         }
         Relationships: []
@@ -144,6 +147,24 @@ export interface Database {
           tags?: string[] | null
           ai_suggested?: boolean
           created_at?: string
+        }
+        Relationships: []
+      }
+      custom_relations: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          name?: string
         }
         Relationships: []
       }
