@@ -1,5 +1,5 @@
 import type { DbClient } from '@/shared/api/supabase'
-import type { Person, Relation } from '../model/types'
+import type { Person } from '../model/types'
 
 export async function getPeople(
   supabase: DbClient,
@@ -17,7 +17,7 @@ export async function getPeople(
 
 export interface CreatePersonInput {
   name: string
-  relation: Relation | null
+  relation: string | null
   notes: string | null
 }
 
@@ -39,4 +39,24 @@ export async function createPerson(
 
   if (error) throw new Error(error.message)
   return data as Person
+}
+
+export async function deletePerson(
+  supabase: DbClient,
+  id: string
+): Promise<void> {
+  const { error } = await supabase.from('people').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function toggleFavorite(
+  supabase: DbClient,
+  id: string,
+  isFavorite: boolean
+): Promise<void> {
+  const { error } = await supabase
+    .from('people')
+    .update({ is_favorite: isFavorite })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }

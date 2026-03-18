@@ -6,16 +6,27 @@ import type { Person } from '@/entities/person/model/types'
 import { AddPersonForm } from '@/features/add-person'
 
 interface AddPersonWidgetProps {
+  isPro: boolean
+  canAdd: boolean
   onPersonAdded?: (person: Person) => void
 }
 
-export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
+export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidgetProps) {
   const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   function handleSuccess(person: Person) {
     setIsOpen(false)
     onPersonAdded?.(person)
+  }
+
+  function handleTriggerClick() {
+    if (canAdd) {
+      setIsOpen(true)
+    } else {
+      setShowPaywall((v) => !v)
+    }
   }
 
   return (
@@ -23,7 +34,7 @@ export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
       {/* Trigger card */}
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={handleTriggerClick}
         className="flex w-full items-center gap-4 rounded-[14px] bg-bg-card border border-dashed border-border p-4 text-left transition-colors hover:bg-bg-hover min-h-[60px]"
       >
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-xl text-text-muted">
@@ -33,6 +44,19 @@ export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
           {t('people.addPerson')}
         </span>
       </button>
+
+      {/* Paywall message */}
+      {showPaywall && !canAdd && (
+        <div className="flex flex-col gap-2 rounded-[14px] border border-primary/30 bg-primary/5 px-4 py-3.5">
+          <p className="text-sm text-text-primary">{t('paywall.personLimit')}</p>
+          <button
+            type="button"
+            className="self-start rounded-[10px] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition-colors"
+          >
+            {t('paywall.upgradeToPro')}
+          </button>
+        </div>
+      )}
 
       {/* Modal overlay */}
       {isOpen && (
@@ -59,6 +83,7 @@ export function AddPersonWidget({ onPersonAdded }: AddPersonWidgetProps) {
             </div>
 
             <AddPersonForm
+              isPro={isPro}
               onSuccess={handleSuccess}
               onCancel={() => setIsOpen(false)}
             />
