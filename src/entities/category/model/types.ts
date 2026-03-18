@@ -1,4 +1,4 @@
-// Category entity types
+// Типы сущности Category
 export type DefaultCategoryName = 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'
 
 export interface Category {

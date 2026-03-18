@@ -1,2 +1,2 @@
-// Item entity public API
+// Публичное API сущности Item
 export * from './model/types'

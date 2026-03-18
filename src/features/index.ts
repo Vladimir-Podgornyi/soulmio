@@ -1,2 +1,2 @@
-// FSD Features layer — user interactions
-// Each feature slice lives in its own subfolder: features/add-person/, features/add-item/, etc.
+// Слой Features (FSD) — пользовательские взаимодействия
+// Каждый слайс фичи живёт в своей папке: features/add-person/, features/add-item/ и т.д.

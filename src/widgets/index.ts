@@ -1,2 +1,2 @@
-// FSD Widgets layer — composite UI blocks
-// Each widget slice lives in its own subfolder: widgets/person-list/, widgets/category-grid/, etc.
+// Слой Widgets (FSD) — составные UI блоки
+// Каждый слайс виджета живёт в своей папке: widgets/person-list/, widgets/category-grid/ и т.д.

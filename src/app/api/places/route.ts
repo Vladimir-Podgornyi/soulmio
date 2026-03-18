@@ -7,26 +7,26 @@ export interface PlaceResult {
 }
 
 /**
- * Resolves a short goo.gl/maps.app.goo.gl URL by following redirects
- * and returns the Location header from the first redirect, which contains
- * ?q=Name,+Address — much more useful than the final resolved URL.
+ * Разворачивает короткую ссылку goo.gl/maps.app.goo.gl, следуя редиректам,
+ * и возвращает заголовок Location первого редиректа, который содержит
+ * ?q=Название,+Адрес — гораздо полезнее, чем финальный URL.
  */
 async function resolveGoogleShortUrl(url: string): Promise<PlaceResult> {
   const res = await fetch(url, {
     method: 'HEAD',
-    redirect: 'manual', // don't follow — we want the Location header
+    redirect: 'manual', // не следовать — нужен заголовок Location
     headers: { 'User-Agent': 'Mozilla/5.0' },
   })
 
   const location = res.headers.get('location') ?? ''
 
-  // Location header: https://maps.google.com?q=Name,+Street,+City&ftid=...
+  // Заголовок Location: https://maps.google.com?q=Название,+Улица,+Город&ftid=...
   try {
     const parsed = new URL(location)
     const q = parsed.searchParams.get('q')
     if (q) {
       const decoded = decodeURIComponent(q.replace(/\+/g, ' '))
-      // Split "Name, Street, City" → name is first segment, rest is address
+      // Разбить "Название, Улица, Город" → название — первый сегмент, остальное — адрес
       const commaIdx = decoded.indexOf(',')
       if (commaIdx !== -1) {
         return {
@@ -38,7 +38,7 @@ async function resolveGoogleShortUrl(url: string): Promise<PlaceResult> {
       return { name: decoded.trim(), address: null, rating: null }
     }
   } catch {
-    // ignore
+    // игнорируем
   }
 
   return { name: null, address: null, rating: null }
@@ -48,7 +48,7 @@ function extractFromRegularUrl(url: string): PlaceResult {
   try {
     const parsed = new URL(url)
 
-    // Apple Maps: https://maps.apple.com/?q=Place+Name,+Address
+    // Apple Maps: https://maps.apple.com/?q=Название+места,+Адрес
     if (parsed.hostname.includes('apple.com')) {
       const q = parsed.searchParams.get('q')
       if (q) {
@@ -65,7 +65,7 @@ function extractFromRegularUrl(url: string): PlaceResult {
       }
     }
 
-    // Google Maps with ?q= param
+    // Google Maps с параметром ?q=
     const q = parsed.searchParams.get('q')
     if (q) {
       const decoded = decodeURIComponent(q.replace(/\+/g, ' '))
@@ -80,14 +80,14 @@ function extractFromRegularUrl(url: string): PlaceResult {
       return { name: decoded.trim(), address: null, rating: null }
     }
 
-    // Google Maps path: /maps/place/<name>/...
+    // Путь Google Maps: /maps/place/<название>/...
     const match = parsed.pathname.match(/\/maps\/place\/([^/@]+)/)
     if (match?.[1]) {
       const name = decodeURIComponent(match[1].replace(/\+/g, ' '))
       return { name, address: null, rating: null }
     }
   } catch {
-    // invalid URL
+    // некорректный URL
   }
 
   return { name: null, address: null, rating: null }
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'url required' }, { status: 400 })
   }
 
-  // Short Google Maps links — resolve via Location header
+  // Короткие ссылки Google Maps — разворачиваем через заголовок Location
   const isShortUrl =
     url.includes('maps.app.goo.gl') ||
     url.includes('goo.gl/maps')
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ name: null, address: null, rating: null })
   }
 
-  // If Google Places API key is set — enrich with rating and canonical address
+  // Если задан ключ Google Places API — обогащаем рейтингом и каноническим адресом
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   if (apiKey) {
     try {
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
         await fetchGooglePlaceDetails(result.name, result.address, apiKey)
       )
     } catch {
-      // fall through to return what we have
+      // передаём управление дальше, возвращаем то, что есть
     }
   }
 

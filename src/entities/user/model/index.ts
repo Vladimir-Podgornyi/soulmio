@@ -1,1 +1,1 @@
-// User entity — business model (types, store, hooks)
+// Сущность User — бизнес-модель (типы, стор, хуки)

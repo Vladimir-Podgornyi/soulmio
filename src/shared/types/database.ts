@@ -1,5 +1,5 @@
-// Supabase generated database types
-// Run: npx supabase gen types typescript --local > src/shared/types/database.ts
+// Типы базы данных, сгенерированные Supabase
+// Запуск: npx supabase gen types typescript --local > src/shared/types/database.ts
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 

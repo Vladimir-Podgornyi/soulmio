@@ -1,4 +1,4 @@
-// Item entity types
+// Типы сущности Item
 export type Sentiment = 'likes' | 'dislikes' | 'wants' | 'visited'
 
 export interface Item {

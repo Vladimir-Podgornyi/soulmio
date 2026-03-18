@@ -1,4 +1,4 @@
-// i18n setup — re-export next-intl utilities
+// Настройка i18n — реэкспорт утилит next-intl
 export { useTranslations, useLocale } from 'next-intl'
 
 export const locales = ['en', 'de', 'ru'] as const

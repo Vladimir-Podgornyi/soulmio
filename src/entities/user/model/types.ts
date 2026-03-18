@@ -1,4 +1,4 @@
-// User entity types
+// Типы сущности User
 export type SubscriptionTier = 'free' | 'pro'
 
 export interface Profile {

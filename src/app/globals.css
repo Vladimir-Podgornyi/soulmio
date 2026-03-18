@@ -227,7 +227,16 @@
   }
   html {
     @apply font-sans;
+    font-size: 18px;
   }
+}
+
+/* ─── Hide scrollbar utility ────────────────────────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;   /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;           /* Chrome / Safari */
 }
 
 /* ─── Gradient stat cards ───────────────────────────────────────────────── */

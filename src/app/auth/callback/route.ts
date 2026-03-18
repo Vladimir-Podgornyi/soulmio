@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/shared/api/supabase-server'
 
 /**
- * Supabase auth callback handler.
- * Called after:
- *  - Email confirmation (signup)
- *  - Google OAuth redirect
+ * Обработчик callback-а аутентификации Supabase.
+ * Вызывается после:
+ *  - Подтверждения email (регистрация)
+ *  - Редиректа Google OAuth
  *
- * Exchanges the one-time `code` for a session and redirects the user.
+ * Обменивает одноразовый `code` на сессию и перенаправляет пользователя.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -23,6 +23,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Something went wrong — redirect to login with error param
+  // Что-то пошло не так — перенаправляем на логин с параметром ошибки
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
 }

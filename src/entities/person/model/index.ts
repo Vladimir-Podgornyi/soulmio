@@ -1,1 +1,1 @@
-// Person entity — business model (types, store, hooks)
+// Сущность Person — бизнес-модель (типы, стор, хуки)

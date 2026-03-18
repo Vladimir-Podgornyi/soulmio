@@ -3,8 +3,8 @@ import { cookies, headers } from 'next/headers'
 import { defaultLocale, type Locale, locales } from './index'
 
 function parseAcceptLanguage(header: string): Locale {
-  // Parse "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6"
-  // → pick the first locale we support
+  // Парсим "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,de;q=0.6"
+  // → берём первую поддерживаемую локаль
   const preferred = header
     .split(',')
     .map((part) => {
@@ -17,7 +17,7 @@ function parseAcceptLanguage(header: string): Locale {
   return (preferred.find((lang) => (locales as readonly string[]).includes(lang)) as Locale) ?? defaultLocale
 }
 
-// Static import map — required for Turbopack (template literal imports don't work)
+// Статическая карта импортов — обязательно для Turbopack (импорты через шаблонные строки не работают)
 async function loadMessages(locale: Locale) {
   switch (locale) {
     case 'de':
@@ -33,9 +33,9 @@ export default getRequestConfig(async () => {
   const cookieStore = await cookies()
   const headerStore = await headers()
 
-  // Priority: 1) explicit cookie (user manually switched)
-  //           2) browser Accept-Language header
-  //           3) fallback to English
+  // Приоритет: 1) явная кука (пользователь вручную сменил язык)
+  //            2) заголовок браузера Accept-Language
+  //            3) откат на английский
   const cookieLocale = cookieStore.get('locale')?.value
   const acceptLanguage = headerStore.get('accept-language') ?? ''
 

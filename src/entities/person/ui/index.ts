@@ -1,2 +1,2 @@
-// Person entity — UI components (dumb, props-only)
-// PersonRow, PersonAvatar, etc.
+// Сущность Person — UI компоненты (тупые, только props)
+// PersonRow, PersonAvatar и т.д.

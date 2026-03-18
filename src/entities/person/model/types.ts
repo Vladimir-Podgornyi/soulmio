@@ -1,4 +1,4 @@
-// Person entity types
+// Типы сущности Person
 export type DefaultRelation = 'partner' | 'friend' | 'family' | 'other'
 export const DEFAULT_RELATIONS: DefaultRelation[] = ['partner', 'friend', 'family', 'other']
 
