@@ -137,6 +137,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         <AccountRow
           label={t('settings.name')}
           value={profile.full_name ?? '—'}
+          cancelLabel={t('common.cancel')}
           isEditing={editing === 'name'}
           onEdit={() => setEditing('name')}
           onCancel={() => setEditing(null)}
@@ -157,6 +158,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         <AccountRow
           label={t('settings.email')}
           value={profile.email ?? '—'}
+          cancelLabel={t('common.cancel')}
           isEditing={editing === 'email'}
           onEdit={() => setEditing('email')}
           onCancel={() => setEditing(null)}
@@ -178,6 +180,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         <AccountRow
           label={t('settings.password')}
           value="••••••••"
+          cancelLabel={t('common.cancel')}
           isEditing={editing === 'password'}
           onEdit={() => setEditing('password')}
           onCancel={() => { setPasswordValue(''); setConfirmPasswordValue(''); setEditing(null) }}
@@ -239,13 +242,14 @@ function Divider() {
 interface AccountRowProps {
   label: string
   value: string
+  cancelLabel: string
   isEditing: boolean
   onEdit: () => void
   onCancel: () => void
   children: React.ReactNode
 }
 
-function AccountRow({ label, value, isEditing, onEdit, onCancel, children }: AccountRowProps) {
+function AccountRow({ label, value, cancelLabel, isEditing, onEdit, onCancel, children }: AccountRowProps) {
   return (
     <div className="px-4 py-3">
       {!isEditing ? (
@@ -267,7 +271,7 @@ function AccountRow({ label, value, isEditing, onEdit, onCancel, children }: Acc
               onClick={onCancel}
               className="text-xs text-text-muted hover:text-text-secondary"
             >
-              {t('common.cancel')}
+              {cancelLabel}
             </button>
           </div>
           {children}

@@ -1,0 +1,267 @@
+'use client'
+
+import { useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { Link, Star } from 'lucide-react'
+import { toast } from 'sonner'
+import type { Item } from '@/entities/item/model/types'
+import { useAddRestaurant } from '../model/useAddRestaurant'
+
+interface AddRestaurantFormProps {
+  personId: string
+  categoryId: string
+  /** All restaurants already saved — used for duplicate detection */
+  existingItems?: Item[]
+  /** Pass existing item to enter edit mode */
+  item?: Item
+  onSuccess: (item: Item) => void
+  onCancel: () => void
+}
+
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-zа-яё0-9]/gi, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function findDuplicate(name: string, items: Item[], excludeId?: string): Item | null {
+  const needle = normalize(name)
+  if (needle.length < 4) return null
+  for (const item of items) {
+    if (item.id === excludeId) continue
+    const hay = normalize(item.title)
+    if (hay === needle || hay.includes(needle) || needle.includes(hay)) return item
+  }
+  return null
+}
+
+function getAddressFromTags(tags: string[] | null): string {
+  const tag = tags?.find((t) => t.startsWith('📍'))
+  return tag ? tag.slice(2).trim() : ''
+}
+
+export function AddRestaurantForm({
+  personId,
+  categoryId,
+  existingItems = [],
+  item,
+  onSuccess,
+  onCancel,
+}: AddRestaurantFormProps) {
+  const t = useTranslations()
+  const isEdit = !!item
+  const { isFetching, isSaving, fetchPlaceDetails, saveRestaurant, editRestaurant } =
+    useAddRestaurant(personId, categoryId, onSuccess)
+
+  const [mapsUrl, setMapsUrl]         = useState(item?.external_url ?? '')
+  const [name, setName]               = useState(item?.title ?? '')
+  const [address, setAddress]         = useState(getAddressFromTags(item?.tags ?? null))
+  const [comment, setComment]         = useState(item?.description ?? '')
+
+  const duplicate = findDuplicate(name, existingItems, item?.id)
+
+  function handleNameChange(value: string) {
+    setName(value)
+  }
+  const [sentiment, setSentiment]     = useState<'visited' | 'wants'>(
+    item?.sentiment === 'visited' ? 'visited' : 'wants'
+  )
+  const [myRating, setMyRating]       = useState<number | null>(item?.my_rating ?? null)
+  const [partnerRating, setPartnerRating] = useState<number | null>(item?.partner_rating ?? null)
+
+  async function handleFetchDetails() {
+    if (!mapsUrl.trim()) return
+    try {
+      const result = await fetchPlaceDetails(mapsUrl.trim())
+      if (result.name) setName(result.name)
+      if (result.address) setAddress(result.address)
+      if (!result.name && !result.address) toast.info(t('restaurants.fetchNoResult'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) { toast.error(t('restaurants.nameRequired')); return }
+
+    const values = { mapsUrl, name, address, comment, sentiment, myRating, partnerRating }
+
+    try {
+      if (isEdit) {
+        await editRestaurant(item.id, values)
+        toast.success(t('restaurants.updated'))
+      } else {
+        await saveRestaurant(values)
+        toast.success(t('restaurants.added'))
+      }
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+      {/* Maps URL */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('restaurants.mapsUrl')}
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Link size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="url"
+              value={mapsUrl}
+              onChange={(e) => setMapsUrl(e.target.value)}
+              placeholder="https://maps.google.com/..."
+              className="h-11 w-full rounded-xl bg-bg-input pl-8 pr-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleFetchDetails}
+            disabled={!mapsUrl.trim() || isFetching}
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-40"
+          >
+            {isFetching ? '...' : t('restaurants.fetch')}
+          </button>
+        </div>
+        <p className="text-[11px] text-text-muted">{t('restaurants.mapsHint')}</p>
+      </div>
+
+      {/* Name */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('items.title')} *
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder={t('restaurants.namePlaceholder')}
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
+        />
+      </div>
+
+      {/* Address */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('restaurants.address')}
+        </label>
+        <input
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder={t('restaurants.addressPlaceholder')}
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40"
+        />
+      </div>
+
+      {/* Sentiment */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('restaurants.status')}
+        </label>
+        <div className="flex gap-2">
+          {(['visited', 'wants'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSentiment(s)}
+              className={`h-9 flex-1 rounded-[20px] px-4 text-sm font-medium transition-colors ${
+                sentiment === s
+                  ? 'bg-primary text-white'
+                  : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+              }`}
+            >
+              {s === 'visited' ? t('items.sentiments.visited') : t('items.sentiments.wants')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Ratings — only if visited */}
+      {sentiment === 'visited' && (
+        <div className="flex gap-4">
+          <RatingField label={t('items.ratings.mine')} value={myRating} onChange={setMyRating} />
+          <RatingField label={t('items.ratings.partner')} value={partnerRating} onChange={setPartnerRating} />
+        </div>
+      )}
+
+      {/* Comment */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('restaurants.comment')}
+        </label>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={3}
+          placeholder={t('restaurants.commentPlaceholder')}
+          className="rounded-xl bg-bg-input px-4 py-3 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 resize-none"
+        />
+      </div>
+
+      {/* Duplicate warning */}
+      {duplicate && (
+        <div className="flex items-start gap-2.5 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+          <span className="mt-0.5 text-base leading-none">⚠️</span>
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            {t('restaurants.duplicateWarning', { name: duplicate.title })}
+          </p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3 pt-1">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-11 flex-1 rounded-xl border border-border text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover"
+        >
+          {t('common.cancel')}
+        </button>
+        <button
+          type="submit"
+          disabled={isSaving || !name.trim()}
+          className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+        >
+          {isSaving ? t('common.loading') : t('common.save')}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+/* ── Rating field ── */
+
+interface RatingFieldProps {
+  label: string
+  value: number | null
+  onChange: (v: number | null) => void
+}
+
+function RatingField({ label, value, onChange }: RatingFieldProps) {
+  return (
+    <div className="flex flex-1 flex-col gap-1.5">
+      <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+        {label}
+      </label>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(value === star ? null : star)}
+            className="p-0.5"
+          >
+            <Star
+              size={22}
+              className={star <= (value ?? 0) ? 'fill-primary text-primary' : 'text-text-muted'}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}

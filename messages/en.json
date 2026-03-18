@@ -9,7 +9,8 @@
     "loading": "Loading...",
     "error": "Something went wrong",
     "empty": "Nothing here yet",
-    "or": "or"
+    "or": "or",
+    "all": "All"
   },
   "brand": {
     "name": "Soulmio",
@@ -105,6 +106,25 @@
     "aiLimit": "You've used your 3 free AI suggestions this month. Upgrade to Pro for unlimited suggestions and AI chat.",
     "aiFeature": "AI suggestions are a Pro feature. Upgrade to see personalized recommendations based on their taste.",
     "moviesTravel": "Movies and Travel categories are available on Pro. Upgrade to unlock all categories."
+  },
+  "restaurants": {
+    "add": "Add Restaurant",
+    "mapsUrl": "Google / Apple Maps link",
+    "mapsHint": "Optional — name and address will be filled automatically",
+    "fetch": "Fill",
+    "fetchNoResult": "Could not extract details from this link",
+    "nameRequired": "Restaurant name is required",
+    "namePlaceholder": "e.g. Café de Flore",
+    "address": "Address",
+    "addressPlaceholder": "e.g. 172 Boulevard Saint-Germain, Paris",
+    "comment": "Personal comment",
+    "commentPlaceholder": "What was special about it...",
+    "status": "Status",
+    "added": "Restaurant added",
+    "updated": "Restaurant updated",
+    "deleted": "Restaurant deleted",
+    "deleteConfirm": "Delete this restaurant?",
+    "duplicateWarning": "\"{name}\" is already in the list. You can still save if it's a different place."
   },
   "dashboard": {
     "greeting": "Hey, {name}",

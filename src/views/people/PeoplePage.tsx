@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { Person } from '@/entities/person/model/types'
 import { AddPersonWidget } from '@/widgets/add-person'
@@ -25,9 +26,10 @@ export function PeoplePage({ initialPeople }: PeoplePageProps) {
 
       <div className="flex flex-col gap-2">
         {people.map((person) => (
-          <div
+          <Link
             key={person.id}
-            className="flex items-center gap-4 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 min-h-[60px]"
+            href={`/people/${person.id}`}
+            className="flex items-center gap-4 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 min-h-[60px] transition-colors hover:bg-bg-hover"
           >
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-sm font-bold text-white uppercase">
               {person.name.charAt(0)}
@@ -43,7 +45,7 @@ export function PeoplePage({ initialPeople }: PeoplePageProps) {
               )}
             </div>
             <span className="text-text-muted">›</span>
-          </div>
+          </Link>
         ))}
 
         <AddPersonWidget onPersonAdded={handlePersonAdded} />
