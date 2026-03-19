@@ -166,6 +166,36 @@
     "deleteConfirm": "Удалить этот ресторан?",
     "duplicateWarning": "«{name}» уже есть в списке. Можешь сохранить, если это другое место."
   },
+  "gifts": {
+    "add": "Добавить подарок",
+    "edit": "Редактировать подарок",
+    "nameRequired": "Название подарка обязательно",
+    "namePlaceholder": "например, AirPods Pro, Книга...",
+    "productUrl": "Ссылка на товар",
+    "productUrlPlaceholder": "https://amazon.com/...",
+    "productUrlHint": "Необязательно — название, цена и фото заполнятся автоматически",
+    "fetch": "Загрузить",
+    "fetchNoResult": "Не удалось извлечь данные из этой ссылки",
+    "price": "Цена",
+    "pricePlaceholder": "49.99",
+    "description": "Комментарий",
+    "descriptionPlaceholder": "Любые заметки...",
+    "status": "Статус",
+    "date": "Дата подарка",
+    "datePlaceholder": "Выбрать дату",
+    "pinned": "Закрепить вверху",
+    "added": "Подарок добавлен",
+    "updated": "Подарок обновлён",
+    "deleted": "Подарок удалён",
+    "deleteConfirm": "Удалить этот подарок?",
+    "filterAll": "Все",
+    "filterWants": "Хочет",
+    "filterGifted": "Подарено",
+    "uploadPhoto": "Загрузить фото",
+    "uploading": "Загружаю...",
+    "uploadNotImage": "Пожалуйста, выберите файл изображения",
+    "uploadError": "Не удалось загрузить изображение"
+  },
   "dashboard": {
     "greeting": "Привет, {name}",
     "yourPeople": "Ваши люди"
@@ -174,6 +204,14 @@
     "title": "Настройки",
     "appearance": "Внешний вид",
     "language": "Язык",
+    "currency": "Валюта",
+    "currencies": {
+      "EUR": "Евро (€)",
+      "USD": "Доллар ($)",
+      "RUB": "Рубль (₽)",
+      "GBP": "Фунт (£)",
+      "CHF": "Франк (Fr.)"
+    },
     "theme": "Тема",
     "themes": {
       "dark": "Тёмная",

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Sun, Moon, Monitor, LogOut, ChevronRight } from 'lucide-react'
 import type { Profile } from '@/entities/user/model/types'
+import { useCurrency, CURRENCIES, CURRENCY_SYMBOLS } from '@/shared/lib/currency'
 import { useUpdateName } from '@/features/settings/model/useUpdateName'
 import { useUpdateEmail } from '@/features/settings/model/useUpdateEmail'
 import { useUpdatePassword } from '@/features/settings/model/useUpdatePassword'
@@ -35,6 +36,8 @@ export function SettingsPage({ profile }: SettingsPageProps) {
   const [emailValue, setEmailValue] = useState(profile.email ?? '')
   const [passwordValue, setPasswordValue] = useState('')
   const [confirmPasswordValue, setConfirmPasswordValue] = useState('')
+
+  const { currency, setCurrency } = useCurrency()
 
   const { updateName, loading: nameLoading } = useUpdateName()
   const { updateEmail, loading: emailLoading } = useUpdateEmail()
@@ -123,6 +126,29 @@ export function SettingsPage({ profile }: SettingsPageProps) {
                 }`}
               >
                 {t(`settings.languages.${l}` as never)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Divider />
+
+        {/* Валюта */}
+        <div className="px-4 py-3">
+          <p className="mb-2 text-sm font-medium text-text-primary">{t('settings.currency')}</p>
+          <div className="flex flex-wrap gap-2">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={`flex items-center gap-1 rounded-[8px] px-3 py-2 text-xs font-medium transition-colors ${
+                  mounted && currency === c
+                    ? 'bg-primary text-white'
+                    : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+                }`}
+              >
+                <span>{CURRENCY_SYMBOLS[c]}</span>
+                <span>{c}</span>
               </button>
             ))}
           </div>

@@ -12,12 +12,16 @@ import { AddRestaurantForm } from '@/features/add-restaurant'
 import { useAddRestaurant } from '@/features/add-restaurant/model/useAddRestaurant'
 import { AddFoodForm } from '@/features/add-food'
 import { useAddFood, getFoodType, getCuisineType, getLinkedRestaurant } from '@/features/add-food'
+import { AddGiftForm } from '@/features/add-gift'
+import { useAddGift, getGiftPinned, getGiftDate } from '@/features/add-gift'
+import { useCurrency, formatPrice } from '@/shared/lib/currency'
 
 interface PersonPageProps {
   person: Person
   categories: Category[]
   initialItems: Item[]
   initialCategoryId: string
+  isPro: boolean
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -33,6 +37,7 @@ export function PersonPage({
   categories,
   initialItems,
   initialCategoryId,
+  isPro,
 }: PersonPageProps) {
   const t = useTranslations()
 
@@ -48,13 +53,22 @@ export function PersonPage({
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
   const allItems = itemsByCategory[activeCategoryId] ?? []
 
-  const sentimentFiltered = filter === 'all' ? allItems : allItems.filter((it) => it.sentiment === filter)
-  const items = foodTypeFilter === 'all'
-    ? sentimentFiltered
-    : sentimentFiltered.filter((it) => getFoodType(it.tags ?? null) === foodTypeFilter)
-
   const isRestaurants = activeCategory?.name === 'restaurants'
   const isFood = activeCategory?.name === 'food'
+  const isGifts = activeCategory?.name === 'gifts'
+
+  const sentimentFiltered = filter === 'all' ? allItems : allItems.filter((it) => it.sentiment === filter)
+  const typeFiltered = foodTypeFilter === 'all'
+    ? sentimentFiltered
+    : sentimentFiltered.filter((it) => getFoodType(it.tags ?? null) === foodTypeFilter)
+  // Подарки: закреплённые сверху
+  const items = isGifts
+    ? [...typeFiltered].sort((a, b) => {
+        const aPin = getGiftPinned(a.tags ?? null) ? 0 : 1
+        const bPin = getGiftPinned(b.tags ?? null) ? 0 : 1
+        return aPin - bPin
+      })
+    : typeFiltered
 
   const restaurantCategory = categories.find((c) => c.name === 'restaurants')
   const availableRestaurants = restaurantCategory
@@ -243,6 +257,34 @@ export function PersonPage({
         </div>
       )}
 
+      {/* Фильтр — подарки */}
+      {isGifts && allItems.length > 0 && (
+        <div className="flex gap-2 px-4 pb-4">
+          {([
+            { key: 'all',   label: t('gifts.filterAll') },
+            { key: 'wants', label: t('gifts.filterWants') },
+            { key: 'likes', label: t('gifts.filterGifted') },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                filter === key
+                  ? 'bg-bg-input text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {label}
+              {key !== 'all' && (
+                <span className="ml-1.5 text-text-muted">
+                  {allItems.filter((it) => it.sentiment === key).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Список элементов */}
       <div className="px-4 pb-32 pt-1">
         {/* Десктоп: пунктирная карточка "Добавить" вверху списка */}
@@ -268,6 +310,15 @@ export function PersonPage({
             {items.map((item) =>
               isFood ? (
                 <FoodCard
+                  key={item.id}
+                  item={item}
+                  personId={person.id}
+                  categoryId={activeCategoryId}
+                  onEdit={() => setEditingItem(item)}
+                  onDeleted={() => handleItemDeleted(item.id)}
+                />
+              ) : isGifts ? (
+                <GiftCard
                   key={item.id}
                   item={item}
                   personId={person.id}
@@ -346,6 +397,33 @@ export function PersonPage({
             categoryId={activeCategoryId}
             existingItems={allItems}
             item={editingItem}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист добавления — подарки */}
+      {isAddOpen && isGifts && (
+        <BottomSheet title={t('gifts.add')} onClose={() => setIsAddOpen(false)}>
+          <AddGiftForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            isPro={isPro}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — подарки */}
+      {editingItem && isGifts && (
+        <BottomSheet title={t('gifts.edit')} onClose={() => setEditingItem(null)}>
+          <AddGiftForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            item={editingItem}
+            isPro={isPro}
             onSuccess={handleItemUpdated}
             onCancel={() => setEditingItem(null)}
           />
@@ -671,6 +749,222 @@ function RatingDisplay({ label, value }: { label: string; value: number }) {
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+/* ── Карточка подарка ── */
+
+interface GiftCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  onEdit: () => void
+  onDeleted: () => void
+}
+
+function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardProps) {
+  const t = useTranslations()
+  const { currency } = useCurrency()
+  const { isSaving, removeGift } = useAddGift(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const desktopMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      const target = e.target as Node
+      const inDesktop = desktopMenuRef.current?.contains(target)
+      const inMobile = mobileMenuRef.current?.contains(target)
+      if (!inDesktop && !inMobile) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeGift(item.id)
+      onDeleted()
+      toast.success(t('gifts.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const isPinned = getGiftPinned(item.tags ?? null)
+  const giftDate = getGiftDate(item.tags ?? null)
+  const isWants = item.sentiment === 'wants'
+
+  const statusBadge = (
+    <span
+      className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${
+        isWants ? 'bg-wants-bg text-wants' : 'bg-loves-bg text-loves'
+      }`}
+    >
+      {isWants ? `🎁 ${t('items.sentiments.wants')}` : `✅ ${t('gifts.filterGifted')}`}
+    </span>
+  )
+
+  const menuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[150px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button
+        onClick={() => { setMenuOpen(false); onEdit() }}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+      >
+        <Pencil size={14} className="text-text-secondary" />
+        {t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button
+        onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+      >
+        <Trash2 size={14} />
+        {t('common.delete')}
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="rounded-[14px] bg-bg-card border border-border-card">
+
+      {/* ── Верхняя часть: фото + текст ── */}
+      <div className="flex gap-3 p-4 pb-3">
+        {/* Миниатюра */}
+        {item.image_url && (
+          <img
+            src={item.image_url}
+            alt={item.title}
+            className="h-16 w-16 flex-shrink-0 rounded-[10px] object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+        )}
+
+        {/* Текст + десктопные контролы */}
+        <div className="flex flex-1 gap-2 min-w-0">
+
+          {/* Колонка: звёздочка + (название / цена / описание) */}
+          <div className="flex flex-1 items-start gap-1.5 min-w-0">
+            {isPinned && (
+              <Star size={13} className="flex-shrink-0 mt-[3px] fill-primary text-primary" />
+            )}
+            <div className="flex flex-col gap-1 min-w-0 flex-1">
+              <span className="font-semibold text-text-primary leading-snug">{item.title}</span>
+
+              {/* Цена + ссылка + дата */}
+              {(item.price != null || item.external_url || giftDate) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {item.price != null && (
+                    <span className="text-sm font-semibold text-text-primary">
+                      {formatPrice(item.price, currency)}
+                    </span>
+                  )}
+                  {item.external_url && (
+                    <a
+                      href={item.external_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary transition-colors"
+                    >
+                      <ExternalLink size={12} />
+                      {t('items.link')}
+                    </a>
+                  )}
+                  {giftDate && (
+                    <span className="flex items-center gap-1 text-xs text-text-secondary">
+                      📅 {new Date(giftDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Описание */}
+              {item.description && (
+                <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">
+                  {item.description}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Десктоп: статус + меню (скрыто на мобильных) */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={desktopMenuRef}>
+            {statusBadge}
+            <div className="relative">
+              <button
+                onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+              >
+                <MoreVertical size={15} />
+              </button>
+              {menuDropdown('top')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Нижняя полоска: статус | ссылка | меню — только мобильные ── */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+
+        {/* Статус */}
+        <div className="flex flex-1 items-center justify-center px-3 py-2.5">
+          {statusBadge}
+        </div>
+
+        {/* Ссылка на товар */}
+        {item.external_url && (
+          <>
+            <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+            <a
+              href={item.external_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap"
+            >
+              <ExternalLink size={13} />
+              {t('items.link')}
+            </a>
+          </>
+        )}
+
+        {/* Меню (три точки) — мобильные */}
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={mobileMenuRef}>
+          <button
+            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+            className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary"
+          >
+            <MoreVertical size={15} />
+          </button>
+          {menuDropdown('bottom')}
+        </div>
+      </div>
+
+      {/* Подтверждение удаления */}
+      {confirmDelete && (
+        <div className="mx-4 mb-4 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+          <span className="text-sm text-red-500">{t('gifts.deleteConfirm')}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.delete')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

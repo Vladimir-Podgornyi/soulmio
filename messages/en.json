@@ -166,6 +166,36 @@
     "deleteConfirm": "Delete this restaurant?",
     "duplicateWarning": "\"{name}\" is already in the list. You can still save if it's a different place."
   },
+  "gifts": {
+    "add": "Add gift",
+    "edit": "Edit gift",
+    "nameRequired": "Gift name is required",
+    "namePlaceholder": "e.g. AirPods Pro, Book...",
+    "productUrl": "Product link",
+    "productUrlPlaceholder": "https://amazon.com/...",
+    "productUrlHint": "Optional — title, price and image will be filled automatically",
+    "fetch": "Fill",
+    "fetchNoResult": "Could not extract details from this link",
+    "price": "Price",
+    "pricePlaceholder": "49.99",
+    "description": "Comment",
+    "descriptionPlaceholder": "Any notes...",
+    "status": "Status",
+    "date": "Gift date",
+    "datePlaceholder": "Pick a date",
+    "pinned": "Pin to top",
+    "added": "Gift added",
+    "updated": "Gift updated",
+    "deleted": "Gift deleted",
+    "deleteConfirm": "Delete this gift?",
+    "filterAll": "All",
+    "filterWants": "Wants",
+    "filterGifted": "Gifted",
+    "uploadPhoto": "Upload photo",
+    "uploading": "Uploading...",
+    "uploadNotImage": "Please select an image file",
+    "uploadError": "Failed to upload image"
+  },
   "dashboard": {
     "greeting": "Hey, {name}",
     "yourPeople": "Your people"
@@ -174,6 +204,14 @@
     "title": "Settings",
     "appearance": "Appearance",
     "language": "Language",
+    "currency": "Currency",
+    "currencies": {
+      "EUR": "Euro (€)",
+      "USD": "US Dollar ($)",
+      "RUB": "Ruble (₽)",
+      "GBP": "Pound (£)",
+      "CHF": "Franc (Fr.)"
+    },
     "theme": "Theme",
     "themes": {
       "dark": "Dark",
