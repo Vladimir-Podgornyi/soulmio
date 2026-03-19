@@ -19,6 +19,7 @@ export interface CreatePersonInput {
   name: string
   relation: string | null
   notes: string | null
+  avatar_url?: string | null
 }
 
 export async function createPerson(
@@ -33,7 +34,29 @@ export async function createPerson(
       name: input.name,
       relation: input.relation,
       notes: input.notes || null,
+      avatar_url: input.avatar_url ?? null,
     })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data as Person
+}
+
+export async function updatePerson(
+  supabase: DbClient,
+  id: string,
+  input: CreatePersonInput
+): Promise<Person> {
+  const { data, error } = await supabase
+    .from('people')
+    .update({
+      name: input.name,
+      relation: input.relation,
+      notes: input.notes || null,
+      avatar_url: input.avatar_url ?? null,
+    })
+    .eq('id', id)
     .select()
     .single()
 

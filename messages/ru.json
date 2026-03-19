@@ -63,6 +63,12 @@
     "removeFromFavorites": "Убрать из избранного",
     "addedToFavorites": "Добавлено в избранное",
     "removedFromFavorites": "Убрано из избранного",
+    "editPerson": "Редактировать",
+    "updated": "Данные обновлены",
+    "uploadPhotoHint": "Нажми на аватар чтобы загрузить фото",
+    "removePhoto": "Удалить фото",
+    "uploadNotImage": "Пожалуйста, выберите файл изображения",
+    "uploadError": "Не удалось загрузить фото",
     "deleteConfirm": "Удалить этого человека?",
     "deleted": "Человек удалён",
     "relations": {
