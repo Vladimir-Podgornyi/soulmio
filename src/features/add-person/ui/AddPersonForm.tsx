@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Camera } from 'lucide-react'
+import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
 import { DEFAULT_RELATIONS } from '@/entities/person/model/types'
@@ -12,19 +13,26 @@ import {
   deleteCustomRelation,
 } from '@/entities/person/api/customRelations'
 import { useAddPerson } from '../model/useAddPerson'
+import { uploadAvatar } from '@/shared/lib/uploadImage'
 
 interface AddPersonFormProps {
   isPro: boolean
+  person?: Person
   onSuccess: (person: Person) => void
   onCancel: () => void
 }
 
-export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps) {
+export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonFormProps) {
   const t = useTranslations()
-  const { form, isLoading, onSubmit } = useAddPerson(onSuccess)
+  const isEdit = !!person
+  const { form, isLoading, onSubmit } = useAddPerson(onSuccess, person)
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form
 
   const selectedRelation = watch('relation')
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(person?.avatar_url ?? null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [savedCustom, setSavedCustom] = useState<string[]>([])
   const [customMode, setCustomMode] = useState(false)
@@ -42,6 +50,31 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
     }
     if (isPro) load()
   }, [isPro])
+
+  // При редактировании предустанавливаем relation в форме
+  useEffect(() => {
+    if (person?.relation) setValue('relation', person.relation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleAvatarSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('people.uploadNotImage'))
+      return
+    }
+    setIsUploadingAvatar(true)
+    try {
+      const url = await uploadAvatar(file)
+      setAvatarUrl(url)
+    } catch {
+      toast.error(t('people.uploadError'))
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
 
   function handleSelectPreset(rel: string) {
     setCustomMode(false)
@@ -79,7 +112,56 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit((v) => onSubmit(v, avatarUrl))} className="flex flex-col gap-5">
+      {/* Аватар (только Pro) */}
+      {isPro && (
+        <div className="flex flex-col items-center gap-2 pb-1">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarSelect}
+          />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={isUploadingAvatar}
+            className="relative flex h-20 w-20 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              <span className="text-2xl font-bold uppercase leading-none">
+                {watch('name')?.charAt(0) || '?'}
+              </span>
+            )}
+            {/* Оверлей с иконкой камеры */}
+            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+              {isUploadingAvatar
+                ? <span className="text-xs text-white">...</span>
+                : <Camera size={20} className="text-white" />
+              }
+            </span>
+          </button>
+          {avatarUrl && (
+            <button
+              type="button"
+              onClick={() => setAvatarUrl(null)}
+              className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              {t('people.removePhoto')}
+            </button>
+          )}
+          <p className="text-[11px] text-text-muted">{t('people.uploadPhotoHint')}</p>
+        </div>
+      )}
+
       {/* Имя */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
@@ -224,7 +306,7 @@ export function AddPersonForm({ isPro, onSuccess, onCancel }: AddPersonFormProps
           disabled={isLoading}
           className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
         >
-          {isLoading ? t('common.loading') : t('common.save')}
+          {isLoading ? t('common.loading') : isEdit ? t('common.save') : t('common.add')}
         </button>
       </div>
     </form>

@@ -63,6 +63,11 @@
     "removeFromFavorites": "Remove from favorites",
     "addedToFavorites": "Added to favorites",
     "removedFromFavorites": "Removed from favorites",
+    "updated": "Profile updated",
+    "uploadPhotoHint": "Tap avatar to upload a photo",
+    "removePhoto": "Remove photo",
+    "uploadNotImage": "Please select an image file",
+    "uploadError": "Failed to upload photo",
     "deleteConfirm": "Delete this person?",
     "deleted": "Person deleted",
     "relations": {

@@ -132,7 +132,10 @@ export function PersonPage({
 
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[18px] font-bold text-white uppercase leading-none overflow-hidden">
-            {person.name.charAt(0)}
+            {person.avatar_url
+              ? <img src={person.avatar_url} alt={person.name} className="h-full w-full object-cover" />
+              : person.name.charAt(0)
+            }
           </div>
           <div>
             <h1 className="text-[24px] font-bold tracking-[-0.5px] text-text-primary leading-tight">
@@ -867,7 +870,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardPro
                       href={item.external_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary transition-colors"
+                      className="hidden md:flex items-center gap-1 text-xs text-text-secondary hover:text-primary transition-colors"
                     >
                       <ExternalLink size={12} />
                       {t('items.link')}

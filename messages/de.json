@@ -63,6 +63,11 @@
     "removeFromFavorites": "Aus Favoriten entfernen",
     "addedToFavorites": "Zu Favoriten hinzugefügt",
     "removedFromFavorites": "Aus Favoriten entfernt",
+    "updated": "Profil aktualisiert",
+    "uploadPhotoHint": "Tippe auf den Avatar um ein Foto hochzuladen",
+    "removePhoto": "Foto entfernen",
+    "uploadNotImage": "Bitte eine Bilddatei auswählen",
+    "uploadError": "Foto konnte nicht hochgeladen werden",
     "deleteConfirm": "Diese Person löschen?",
     "deleted": "Person gelöscht",
     "relations": {
