@@ -44,6 +44,7 @@ export default async function Page({ params }: Props) {
       categories={categories}
       initialItems={initialItems}
       initialCategoryId={defaultCategory?.id ?? ''}
+      isPro={isPro}
     />
   )
 }

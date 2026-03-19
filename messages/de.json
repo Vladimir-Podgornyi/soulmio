@@ -167,6 +167,36 @@
     "deleteConfirm": "Dieses Restaurant löschen?",
     "duplicateWarning": "{name} ist bereits in der Liste. Du kannst trotzdem speichern, falls es ein anderer Ort ist."
   },
+  "gifts": {
+    "add": "Geschenk hinzufügen",
+    "edit": "Geschenk bearbeiten",
+    "nameRequired": "Geschenkname ist erforderlich",
+    "namePlaceholder": "z. B. AirPods Pro, Buch...",
+    "productUrl": "Produktlink",
+    "productUrlPlaceholder": "https://amazon.de/...",
+    "productUrlHint": "Optional — Titel, Preis und Bild werden automatisch ausgefüllt",
+    "fetch": "Ausfüllen",
+    "fetchNoResult": "Details konnten aus diesem Link nicht extrahiert werden",
+    "price": "Preis",
+    "pricePlaceholder": "49.99",
+    "description": "Kommentar",
+    "descriptionPlaceholder": "Beliebige Notizen...",
+    "status": "Status",
+    "date": "Datum",
+    "datePlaceholder": "Datum wählen",
+    "pinned": "Oben anpinnen",
+    "added": "Geschenk hinzugefügt",
+    "updated": "Geschenk aktualisiert",
+    "deleted": "Geschenk gelöscht",
+    "deleteConfirm": "Dieses Geschenk löschen?",
+    "filterAll": "Alle",
+    "filterWants": "Wünsche",
+    "filterGifted": "Geschenkt",
+    "uploadPhoto": "Foto hochladen",
+    "uploading": "Hochladen...",
+    "uploadNotImage": "Bitte eine Bilddatei auswählen",
+    "uploadError": "Bild konnte nicht hochgeladen werden"
+  },
   "dashboard": {
     "greeting": "Hey, {name}",
     "yourPeople": "Deine Personen"
@@ -175,6 +205,14 @@
     "title": "Einstellungen",
     "appearance": "Erscheinungsbild",
     "language": "Sprache",
+    "currency": "Währung",
+    "currencies": {
+      "EUR": "Euro (€)",
+      "USD": "US-Dollar ($)",
+      "RUB": "Rubel (₽)",
+      "GBP": "Pfund (£)",
+      "CHF": "Franken (Fr.)"
+    },
     "theme": "Design",
     "themes": {
       "dark": "Dunkel",
