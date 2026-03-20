@@ -7,35 +7,43 @@ export interface PlaceResult {
 }
 
 /**
- * Разворачивает короткую ссылку goo.gl/maps.app.goo.gl, следуя редиректам,
- * и возвращает заголовок Location первого редиректа, который содержит
- * ?q=Название,+Адрес — гораздо полезнее, чем финальный URL.
+ * Разворачивает короткую ссылку maps.app.goo.gl / goo.gl/maps.
+ *
+ * Стратегия двух попыток:
+ * 1. HEAD + redirect:manual → первый Location (мобильные ссылки дают ?q=Название,Адрес)
+ * 2. GET + redirect:follow  → финальный URL   (десктопные ссылки дают /maps/place/Название/…)
  */
 async function resolveGoogleShortUrl(url: string): Promise<PlaceResult> {
-  const res = await fetch(url, {
-    method: 'HEAD',
-    redirect: 'manual', // не следовать — нужен заголовок Location
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  })
-
-  const location = res.headers.get('location') ?? ''
-
-  // Заголовок Location: https://maps.google.com?q=Название,+Улица,+Город&ftid=...
+  // Попытка 1: первый редирект (работает для мобильных ссылок)
   try {
-    const parsed = new URL(location)
-    const q = parsed.searchParams.get('q')
-    if (q) {
-      const decoded = decodeURIComponent(q.replace(/\+/g, ' '))
-      // Разбить "Название, Улица, Город" → название — первый сегмент, остальное — адрес
-      const commaIdx = decoded.indexOf(',')
-      if (commaIdx !== -1) {
-        return {
-          name: decoded.slice(0, commaIdx).trim(),
-          address: decoded.slice(commaIdx + 1).trim(),
-          rating: null,
-        }
-      }
-      return { name: decoded.trim(), address: null, rating: null }
+    const headRes = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'manual',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    })
+    const location = headRes.headers.get('location') ?? ''
+    if (location) {
+      const result = extractFromRegularUrl(location)
+      if (result.name) return result
+    }
+  } catch {
+    // игнорируем
+  }
+
+  // Попытка 2: следуем по всем редиректам до финального URL (десктопные ссылки)
+  try {
+    const getRes = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    })
+    const finalUrl = getRes.url
+    if (finalUrl && finalUrl !== url) {
+      const result = extractFromRegularUrl(finalUrl)
+      if (result.name) return result
     }
   } catch {
     // игнорируем
@@ -83,7 +91,7 @@ function extractFromRegularUrl(url: string): PlaceResult {
     // Путь Google Maps: /maps/place/<название>/...
     const match = parsed.pathname.match(/\/maps\/place\/([^/@]+)/)
     if (match?.[1]) {
-      const name = decodeURIComponent(match[1].replace(/\+/g, ' '))
+      const name = decodeURIComponent(match[1].replace(/\+/g, ' ')).replace(/_/g, ' ')
       return { name, address: null, rating: null }
     }
   } catch {

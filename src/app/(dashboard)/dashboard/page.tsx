@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/shared/api/supabase-server'
 import type { DbClient } from '@/shared/api/supabase'
 import { getProfile } from '@/entities/user/api'
+import { getPeople } from '@/entities/person/api'
+import { getItemSummary, getUpcomingGifts, getUpcomingRestaurants } from '@/entities/item/api'
 import { DashboardPage } from '@/views/dashboard/DashboardPage'
 import type { Profile } from '@/entities/user/model/types'
 
@@ -39,7 +41,23 @@ export default async function Page() {
   if (!user) redirect('/login')
 
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? null
-  const profile = await getOrCreateProfile(supabase as DbClient, user.id, user.email, fullName)
+  const db = supabase as DbClient
 
-  return <DashboardPage profile={profile} />
+  const [profile, people, summary, upcomingGifts, upcomingRestaurants] = await Promise.all([
+    getOrCreateProfile(db, user.id, user.email, fullName),
+    getPeople(db, user.id),
+    getItemSummary(db, user.id),
+    getUpcomingGifts(db, user.id),
+    getUpcomingRestaurants(db, user.id),
+  ])
+
+  return (
+    <DashboardPage
+      profile={profile}
+      people={people}
+      summary={summary}
+      upcomingGifts={upcomingGifts}
+      upcomingRestaurants={upcomingRestaurants}
+    />
+  )
 }

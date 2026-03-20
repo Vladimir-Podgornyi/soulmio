@@ -169,7 +169,15 @@
     "updated": "Restaurant updated",
     "deleted": "Restaurant deleted",
     "deleteConfirm": "Delete this restaurant?",
-    "duplicateWarning": "\"{name}\" is already in the list. You can still save if it's a different place."
+    "duplicateWarning": "\"{name}\" is already in the list. You can still save if it's a different place.",
+    "visitDate": "Planned visit date",
+    "visitDateHint": "You'll get a reminder 7 days before",
+    "reminder": "Restaurant reminder",
+    "bookTable": "Book a table",
+    "alreadyBooked": "Already booked",
+    "changedMind": "Changed my mind",
+    "markingBooked": "Saving...",
+    "markingMind": "Removing..."
   },
   "gifts": {
     "add": "Add gift",
@@ -203,7 +211,25 @@
   },
   "dashboard": {
     "greeting": "Hey, {name}",
-    "yourPeople": "Your people"
+    "yourPeople": "Your people",
+    "overview": "Overview",
+    "quickAdd": "Quick add",
+    "selectCategory": "What do you want to add?",
+    "selectPerson": "For whom?",
+    "addNewPerson": "Add new person",
+    "noStats": "Nothing saved yet",
+    "giftReminder": "Gift reminder",
+    "giftReminderDays": "{days, plural, =0 {Today!} =1 {Tomorrow} other {# days left}}",
+    "giftReminderFor": "For {name}",
+    "itemCount": "{count, plural, =0 {nothing} =1 {# item} other {# items}}",
+    "giftAlreadyBought": "Already bought",
+    "giftViewProduct": "View product",
+    "giftMarkingBought": "Marking...",
+    "overviewTitle": "All {category}",
+    "overviewEmpty": "Nothing saved in this category yet",
+    "overviewPersonTag": "{name}",
+    "goToList": "Go to list",
+    "remindersProHint": "Gift & restaurant reminders are available in Pro"
   },
   "settings": {
     "title": "Settings",
