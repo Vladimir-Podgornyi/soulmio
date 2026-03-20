@@ -28,6 +28,55 @@ export async function getCategories(
   return data as Category[]
 }
 
+export async function createCustomCategory(
+  supabase: DbClient,
+  personId: string,
+  name: string,
+  icon: string,
+): Promise<Category | null> {
+  const existing = await getCategories(supabase, personId)
+  const maxOrder = existing.reduce((max, c) => Math.max(max, c.sort_order), 0)
+
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({
+      person_id: personId,
+      name,
+      icon,
+      is_custom: true,
+      sort_order: maxOrder + 1,
+    })
+    .select()
+    .single()
+
+  if (error || !data) return null
+  return data as Category
+}
+
+export async function updateCustomCategory(
+  supabase: DbClient,
+  categoryId: string,
+  name: string,
+  icon: string,
+): Promise<Category | null> {
+  const { data, error } = await supabase
+    .from('categories')
+    .update({ name, icon })
+    .eq('id', categoryId)
+    .select()
+    .single()
+
+  if (error || !data) return null
+  return data as Category
+}
+
+export async function deleteCustomCategory(
+  supabase: DbClient,
+  categoryId: string,
+): Promise<void> {
+  await supabase.from('categories').delete().eq('id', categoryId)
+}
+
 export async function ensureDefaultCategories(
   supabase: DbClient,
   personId: string,
