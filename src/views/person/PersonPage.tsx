@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -40,15 +41,41 @@ export function PersonPage({
   isPro,
 }: PersonPageProps) {
   const t = useTranslations()
+  const searchParams = useSearchParams()
 
-  const [activeCategoryId, setActiveCategoryId] = useState(initialCategoryId)
+  // ?add=categoryName — переход из QuickAdd (открывает форму добавления)
+  // ?section=categoryName — переход из Overview (открывает нужную вкладку)
+  const addParam = searchParams.get('add')
+  const sectionParam = searchParams.get('section')
+
+  const targetCategoryId =
+    (addParam && (categories.find((c) => c.name === addParam)?.id ?? null)) ||
+    (sectionParam && (categories.find((c) => c.name === sectionParam)?.id ?? null)) ||
+    null
+
+  const [activeCategoryId, setActiveCategoryId] = useState(
+    targetCategoryId ?? initialCategoryId
+  )
   const [itemsByCategory, setItemsByCategory] = useState<Record<string, Item[]>>({
     [initialCategoryId]: initialItems,
   })
-  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [isAddOpen, setIsAddOpen] = useState(addParam !== null && targetCategoryId !== null)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [filter, setFilter] = useState<'all' | 'visited' | 'wants' | 'likes' | 'dislikes'>('all')
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'dish' | 'food_type' | 'cuisine'>('all')
+
+  // При переходе через ?section= — загружаем items для целевой категории если их нет
+  useEffect(() => {
+    if (!targetCategoryId || targetCategoryId === initialCategoryId) return
+    if (targetCategoryId in itemsByCategory) return
+    fetch(`/api/items?personId=${person.id}&categoryId=${targetCategoryId}`)
+      .then((r) => r.json())
+      .then((data: Item[]) => {
+        setItemsByCategory((prev) => ({ ...prev, [targetCategoryId]: data }))
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
   const allItems = itemsByCategory[activeCategoryId] ?? []

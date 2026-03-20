@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Link, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Item } from '@/entities/item/model/types'
-import { useAddRestaurant } from '../model/useAddRestaurant'
+import { useAddRestaurant, getVisitDate, getVisitBooked } from '../model/useAddRestaurant'
 
 interface AddRestaurantFormProps {
   personId: string
@@ -55,17 +55,19 @@ export function AddRestaurantForm({
   const [name, setName]               = useState(item?.title ?? '')
   const [address, setAddress]         = useState(getAddressFromTags(item?.tags ?? null))
   const [comment, setComment]         = useState(item?.description ?? '')
+  const [sentiment, setSentiment]     = useState<'visited' | 'wants'>(
+    item?.sentiment === 'visited' ? 'visited' : 'wants'
+  )
+  const [visitDate, setVisitDate]     = useState(getVisitDate(item?.tags ?? null))
+  const [myRating, setMyRating]       = useState<number | null>(item?.my_rating ?? null)
+  const [partnerRating, setPartnerRating] = useState<number | null>(item?.partner_rating ?? null)
 
+  const isBooked = getVisitBooked(item?.tags ?? null)
   const duplicate = findDuplicate(name, existingItems, item?.id)
 
   function handleNameChange(value: string) {
     setName(value)
   }
-  const [sentiment, setSentiment]     = useState<'visited' | 'wants'>(
-    item?.sentiment === 'visited' ? 'visited' : 'wants'
-  )
-  const [myRating, setMyRating]       = useState<number | null>(item?.my_rating ?? null)
-  const [partnerRating, setPartnerRating] = useState<number | null>(item?.partner_rating ?? null)
 
   async function handleFetchDetails() {
     if (!mapsUrl.trim()) return
@@ -83,7 +85,7 @@ export function AddRestaurantForm({
     e.preventDefault()
     if (!name.trim()) { toast.error(t('restaurants.nameRequired')); return }
 
-    const values = { mapsUrl, name, address, comment, sentiment, myRating, partnerRating }
+    const values = { mapsUrl, name, address, comment, sentiment, visitDate, isBooked, myRating, partnerRating }
 
     try {
       if (isEdit) {
@@ -179,6 +181,25 @@ export function AddRestaurantForm({
           ))}
         </div>
       </div>
+
+      {/* Дата планируемого посещения — только для "хочу посетить" */}
+      {sentiment === 'wants' && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            {t('restaurants.visitDate')}
+          </label>
+          <input
+            type="date"
+            value={visitDate}
+            onChange={(e) => setVisitDate(e.target.value)}
+            min={new Date().toISOString().slice(0, 10)}
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+          />
+          {visitDate && (
+            <p className="text-[11px] text-text-muted">{t('restaurants.visitDateHint')}</p>
+          )}
+        </div>
+      )}
 
       {/* Рейтинги — только если посещали */}
       {sentiment === 'visited' && (

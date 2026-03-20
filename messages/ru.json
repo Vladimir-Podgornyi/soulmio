@@ -170,7 +170,15 @@
     "updated": "Ресторан обновлён",
     "deleted": "Ресторан удалён",
     "deleteConfirm": "Удалить этот ресторан?",
-    "duplicateWarning": "«{name}» уже есть в списке. Можешь сохранить, если это другое место."
+    "duplicateWarning": "«{name}» уже есть в списке. Можешь сохранить, если это другое место.",
+    "visitDate": "Планируемая дата посещения",
+    "visitDateHint": "Напоминание появится за 7 дней",
+    "reminder": "Напоминание о ресторане",
+    "bookTable": "Забронировать столик",
+    "alreadyBooked": "Уже забронировал",
+    "changedMind": "Передумал идти",
+    "markingBooked": "Сохраняю...",
+    "markingMind": "Удаляю..."
   },
   "gifts": {
     "add": "Добавить подарок",
@@ -204,7 +212,25 @@
   },
   "dashboard": {
     "greeting": "Привет, {name}",
-    "yourPeople": "Ваши люди"
+    "yourPeople": "Ваши люди",
+    "overview": "Обзор",
+    "quickAdd": "Быстро добавить",
+    "selectCategory": "Что хочешь добавить?",
+    "selectPerson": "Для кого?",
+    "addNewPerson": "Добавить нового человека",
+    "noStats": "Пока ничего не сохранено",
+    "giftReminder": "Напоминание о подарке",
+    "giftReminderDays": "{days, plural, =0 {Сегодня!} =1 {Завтра} other {Осталось # дн.}}",
+    "giftReminderFor": "Для {name}",
+    "itemCount": "{count, plural, =0 {ничего} =1 {# запись} few {# записи} other {# записей}}",
+    "giftAlreadyBought": "Уже купил",
+    "giftViewProduct": "Посмотреть товар",
+    "giftMarkingBought": "Отмечаю...",
+    "overviewTitle": "Все {category}",
+    "overviewEmpty": "В этой категории пока ничего нет",
+    "overviewPersonTag": "{name}",
+    "goToList": "Перейти к списку",
+    "remindersProHint": "Напоминания о подарках и ресторанах доступны в Pro"
   },
   "settings": {
     "title": "Настройки",

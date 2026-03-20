@@ -170,7 +170,15 @@
     "updated": "Restaurant aktualisiert",
     "deleted": "Restaurant gelöscht",
     "deleteConfirm": "Dieses Restaurant löschen?",
-    "duplicateWarning": "{name} ist bereits in der Liste. Du kannst trotzdem speichern, falls es ein anderer Ort ist."
+    "duplicateWarning": "{name} ist bereits in der Liste. Du kannst trotzdem speichern, falls es ein anderer Ort ist.",
+    "visitDate": "Geplantes Besuchsdatum",
+    "visitDateHint": "Erinnerung erscheint 7 Tage vorher",
+    "reminder": "Restaurant-Erinnerung",
+    "bookTable": "Tisch reservieren",
+    "alreadyBooked": "Schon reserviert",
+    "changedMind": "Doch nicht hingehen",
+    "markingBooked": "Speichere...",
+    "markingMind": "Entferne..."
   },
   "gifts": {
     "add": "Geschenk hinzufügen",
@@ -204,7 +212,25 @@
   },
   "dashboard": {
     "greeting": "Hey, {name}",
-    "yourPeople": "Deine Personen"
+    "yourPeople": "Deine Personen",
+    "overview": "Übersicht",
+    "quickAdd": "Schnell hinzufügen",
+    "selectCategory": "Was möchtest du hinzufügen?",
+    "selectPerson": "Für wen?",
+    "addNewPerson": "Neue Person hinzufügen",
+    "noStats": "Noch nichts gespeichert",
+    "giftReminder": "Geschenk-Erinnerung",
+    "giftReminderDays": "{days, plural, =0 {Heute!} =1 {Morgen} other {Noch # Tage}}",
+    "giftReminderFor": "Für {name}",
+    "itemCount": "{count, plural, =0 {nichts} =1 {# Eintrag} other {# Einträge}}",
+    "giftAlreadyBought": "Schon gekauft",
+    "giftViewProduct": "Produkt ansehen",
+    "giftMarkingBought": "Markiere...",
+    "overviewTitle": "Alle {category}",
+    "overviewEmpty": "In dieser Kategorie noch nichts gespeichert",
+    "overviewPersonTag": "{name}",
+    "goToList": "Zur Liste gehen",
+    "remindersProHint": "Erinnerungen für Geschenke & Restaurants sind in Pro verfügbar"
   },
   "settings": {
     "title": "Einstellungen",

@@ -70,3 +70,260 @@ export async function deleteItem(
   const { error } = await supabase.from('items').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+export interface ItemCategorySummary {
+  categoryName: string
+  count: number
+}
+
+export async function getItemSummary(
+  supabase: DbClient,
+  userId: string
+): Promise<ItemCategorySummary[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .in('person_id', peopleIds)
+
+  if (!categories?.length) return []
+
+  const categoryIds = categories.map((c) => c.id)
+  const categoryMap = new Map(categories.map((c) => [c.id, c.name]))
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('category_id')
+    .in('category_id', categoryIds)
+
+  if (!items?.length) return []
+
+  const counts: Record<string, number> = {}
+  for (const item of items) {
+    const name = categoryMap.get(item.category_id) ?? 'other'
+    counts[name] = (counts[name] ?? 0) + 1
+  }
+
+  return Object.entries(counts).map(([categoryName, count]) => ({
+    categoryName,
+    count,
+  }))
+}
+
+export interface UpcomingGift {
+  itemId: string
+  title: string
+  description: string | null
+  imageUrl: string | null
+  externalUrl: string | null
+  price: number | null
+  personName: string
+  personId: string
+  daysLeft: number
+  giftDate: string
+}
+
+export async function getUpcomingGifts(
+  supabase: DbClient,
+  userId: string,
+  daysBefore = 14
+): Promise<UpcomingGift[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(people.map((p) => [p.id, p.name]))
+
+  const { data: giftCats } = await supabase
+    .from('categories')
+    .select('id')
+    .in('person_id', peopleIds)
+    .eq('name', 'gifts')
+
+  if (!giftCats?.length) return []
+
+  const giftCatIds = giftCats.map((c) => c.id)
+
+  const { data: giftItems } = await supabase
+    .from('items')
+    .select('id, title, description, image_url, external_url, price, person_id, tags, sentiment')
+    .in('category_id', giftCatIds)
+
+  if (!giftItems?.length) return []
+
+  const now = new Date()
+  const upcoming: UpcomingGift[] = []
+
+  for (const item of giftItems) {
+    // Уже купленные подарки не показываем
+    if (item.sentiment === 'likes') continue
+
+    const dateTag = item.tags?.find((t: string) => t.startsWith('gift_date:'))
+    if (!dateTag) continue
+
+    const dateStr = (dateTag as string).slice('gift_date:'.length)
+    const date = new Date(dateStr)
+    const msLeft = date.getTime() - now.getTime()
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+
+    if (daysLeft >= 0 && daysLeft <= daysBefore) {
+      upcoming.push({
+        itemId: item.id,
+        title: item.title,
+        description: item.description ?? null,
+        imageUrl: item.image_url ?? null,
+        externalUrl: item.external_url ?? null,
+        price: item.price ?? null,
+        personName: peopleMap.get(item.person_id) ?? '',
+        personId: item.person_id,
+        daysLeft,
+        giftDate: dateStr,
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
+}
+
+export interface UpcomingRestaurant {
+  itemId: string
+  title: string
+  address: string | null
+  comment: string | null
+  externalUrl: string | null
+  tags: string[]
+  personName: string
+  personId: string
+  daysLeft: number
+  visitDate: string
+}
+
+export async function getUpcomingRestaurants(
+  supabase: DbClient,
+  userId: string,
+  daysBefore = 7
+): Promise<UpcomingRestaurant[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(people.map((p) => [p.id, p.name]))
+
+  const { data: restCats } = await supabase
+    .from('categories')
+    .select('id')
+    .in('person_id', peopleIds)
+    .eq('name', 'restaurants')
+
+  if (!restCats?.length) return []
+
+  const restCatIds = restCats.map((c) => c.id)
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('id, title, description, external_url, person_id, tags')
+    .in('category_id', restCatIds)
+
+  if (!items?.length) return []
+
+  const now = new Date()
+  const upcoming: UpcomingRestaurant[] = []
+
+  for (const item of items) {
+    const tags = (item.tags ?? []) as string[]
+
+    if (tags.includes('visit_booked:true')) continue
+
+    const dateTag = tags.find((t: string) => t.startsWith('visit_date:'))
+    if (!dateTag) continue
+
+    const dateStr = (dateTag as string).slice('visit_date:'.length)
+    const date = new Date(dateStr)
+    const msLeft = date.getTime() - now.getTime()
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+
+    if (daysLeft >= 0 && daysLeft <= daysBefore) {
+      const addressTag = tags.find((t: string) => t.startsWith('📍'))
+      upcoming.push({
+        itemId: item.id,
+        title: item.title,
+        address: addressTag ? (addressTag as string).slice(2).trim() : null,
+        comment: item.description ?? null,
+        externalUrl: item.external_url ?? null,
+        tags,
+        personName: peopleMap.get(item.person_id) ?? '',
+        personId: item.person_id,
+        daysLeft,
+        visitDate: dateStr,
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
+}
+
+export interface ItemWithPerson extends Item {
+  personName: string
+  personAvatar: string | null
+}
+
+export async function getAllItemsByCategoryName(
+  supabase: DbClient,
+  userId: string,
+  categoryName: string
+): Promise<ItemWithPerson[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name, avatar_url')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(
+    people.map((p) => [p.id, { name: p.name, avatar_url: p.avatar_url }])
+  )
+
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id')
+    .in('person_id', peopleIds)
+    .eq('name', categoryName)
+
+  if (!categories?.length) return []
+
+  const categoryIds = categories.map((c) => c.id)
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('*')
+    .in('category_id', categoryIds)
+    .order('created_at', { ascending: false })
+
+  if (!items?.length) return []
+
+  return items.map((raw) => {
+    const item = raw as Item
+    return {
+      ...item,
+      personName: peopleMap.get(item.person_id)?.name ?? '',
+      personAvatar: peopleMap.get(item.person_id)?.avatar_url ?? null,
+    }
+  })
+}

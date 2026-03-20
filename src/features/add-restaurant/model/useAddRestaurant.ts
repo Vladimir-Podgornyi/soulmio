@@ -12,8 +12,19 @@ export interface RestaurantFormValues {
   address: string
   comment: string
   sentiment: 'visited' | 'wants'
+  visitDate: string       // дата планируемого посещения (YYYY-MM-DD)
+  isBooked: boolean       // уже забронировано (скрытое поле, сохраняется при редактировании)
   myRating: number | null
   partnerRating: number | null
+}
+
+export function getVisitDate(tags: string[] | null): string {
+  const tag = tags?.find((t) => t.startsWith('visit_date:'))
+  return tag ? tag.slice('visit_date:'.length) : ''
+}
+
+export function getVisitBooked(tags: string[] | null): boolean {
+  return tags?.includes('visit_booked:true') ?? false
 }
 
 export function useAddRestaurant(
@@ -38,9 +49,11 @@ export function useAddRestaurant(
     }
   }
 
-  function buildTags(address: string): string[] | null {
+  function buildTags(address: string, visitDate: string, isBooked: boolean): string[] | null {
     const tags: string[] = []
     if (address.trim()) tags.push(`📍 ${address.trim()}`)
+    if (visitDate.trim()) tags.push(`visit_date:${visitDate.trim()}`)
+    if (isBooked) tags.push('visit_booked:true')
     return tags.length > 0 ? tags : null
   }
 
@@ -61,7 +74,7 @@ export function useAddRestaurant(
         sentiment,
         my_rating: sentiment === 'visited' ? (values.myRating ?? null) : null,
         partner_rating: sentiment === 'visited' ? (values.partnerRating ?? null) : null,
-        tags: buildTags(values.address),
+        tags: buildTags(values.address, values.visitDate, false),
       })
       onSuccess(item)
     } finally {
@@ -81,7 +94,7 @@ export function useAddRestaurant(
         sentiment,
         my_rating: sentiment === 'visited' ? (values.myRating ?? null) : null,
         partner_rating: sentiment === 'visited' ? (values.partnerRating ?? null) : null,
-        tags: buildTags(values.address),
+        tags: buildTags(values.address, values.visitDate, values.isBooked),
       })
       onSuccess(item)
     } finally {
