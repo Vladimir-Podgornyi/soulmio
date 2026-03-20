@@ -118,8 +118,8 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   onClick={() => setSelectedGift(gift)}
                   className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A1A10] border border-primary/20 px-4 py-3.5 mb-2 hover:border-primary/40 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
-                    <Gift size={18} className="text-primary" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/20" suppressHydrationWarning>
+                    <Gift size={18} className="text-primary" suppressHydrationWarning />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-0.5">
@@ -146,8 +146,8 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   onClick={() => setSelectedRestaurant(restaurant)}
                   className="w-full flex items-center gap-3 rounded-[16px] bg-[#1A2818] border border-[#345A40]/40 px-4 py-3.5 mb-2 hover:border-[#345A40]/70 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#345A40]/30">
-                    <UtensilsCrossed size={18} className="text-[#5CBD8A]" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#345A40]/30" suppressHydrationWarning>
+                    <UtensilsCrossed size={18} className="text-[#5CBD8A]" suppressHydrationWarning />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#5CBD8A] mb-0.5">
@@ -168,7 +168,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       ) : (
         <section className="px-4 mb-5">
           <div className="flex items-center gap-3 rounded-[16px] border border-dashed border-border px-4 py-3">
-            <Bell size={15} className="text-text-muted flex-shrink-0" />
+            <Bell size={15} className="text-text-muted flex-shrink-0" suppressHydrationWarning />
             <p className="text-xs text-text-muted leading-snug">
               {t('dashboard.remindersProHint')}
             </p>
@@ -205,6 +205,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   <p
                     className="text-[11px] font-semibold uppercase tracking-[0.08em]"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
+                    suppressHydrationWarning
                   >
                     {t(card.labelKey as Parameters<typeof t>[0])}
                   </p>
@@ -212,12 +213,14 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                     <p
                       className="text-[30px] font-bold leading-none tracking-[-1px]"
                       style={{ color: '#fff' }}
+                      suppressHydrationWarning
                     >
                       {count}
                     </p>
                     <p
                       className="text-[11px] mt-1"
                       style={{ color: 'rgba(255,255,255,0.45)' }}
+                      suppressHydrationWarning
                     >
                       {t('dashboard.itemCount', { count })}
                     </p>

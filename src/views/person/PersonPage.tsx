@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
 import type { Category } from '@/entities/category/model/types'
 import type { Item } from '@/entities/item/model/types'
+import { createCustomCategory, updateCustomCategory, deleteCustomCategory } from '@/entities/category/api'
 import { AddRestaurantForm } from '@/features/add-restaurant'
 import { useAddRestaurant } from '@/features/add-restaurant/model/useAddRestaurant'
 import { AddFoodForm } from '@/features/add-food'
@@ -63,6 +65,9 @@ export function PersonPage({
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [filter, setFilter] = useState<'all' | 'visited' | 'wants' | 'likes' | 'dislikes'>('all')
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'dish' | 'food_type' | 'cuisine'>('all')
+  const [localCategories, setLocalCategories] = useState<Category[]>(categories)
+  const [showAddCategory, setShowAddCategory] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
   // При переходе через ?section= — загружаем items для целевой категории если их нет
   useEffect(() => {
@@ -77,7 +82,7 @@ export function PersonPage({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const activeCategory = categories.find((c) => c.id === activeCategoryId)
+  const activeCategory = localCategories.find((c) => c.id === activeCategoryId)
   const allItems = itemsByCategory[activeCategoryId] ?? []
 
   const isRestaurants = activeCategory?.name === 'restaurants'
@@ -97,7 +102,7 @@ export function PersonPage({
       })
     : typeFiltered
 
-  const restaurantCategory = categories.find((c) => c.name === 'restaurants')
+  const restaurantCategory = localCategories.find((c) => c.name === 'restaurants')
   const availableRestaurants = restaurantCategory
     ? (itemsByCategory[restaurantCategory.id] ?? [])
     : []
@@ -181,29 +186,93 @@ export function PersonPage({
 
       {/* Вкладки категорий */}
       <div className="flex gap-2 overflow-x-auto px-4 pb-5 scrollbar-none">
-        {categories.map((cat) => {
+        {localCategories.map((cat) => {
           const icon = cat.icon ?? CATEGORY_ICONS[cat.name] ?? '📁'
           const isActive = cat.id === activeCategoryId
+          const label = cat.name in { food: 1, restaurants: 1, gifts: 1, movies: 1, travel: 1 }
+            ? t(`categories.${cat.name as 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'}`)
+            : cat.name
+
+          if (cat.is_custom) {
+            return (
+              <div key={cat.id} className={`flex flex-shrink-0 items-center rounded-[20px] text-sm font-medium transition-colors ${isActive ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                <button
+                  onClick={() => handleCategoryChange(cat.id)}
+                  className="flex h-9 items-center gap-1.5 pl-4 pr-2"
+                >
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                </button>
+                <button
+                  onClick={() => setEditingCategory(cat)}
+                  className={`flex h-9 w-7 items-center justify-center rounded-r-[20px] pr-1 transition-colors ${isActive ? 'text-white/60 hover:text-white' : 'text-text-muted hover:text-text-secondary'}`}
+                >
+                  <MoreVertical size={13} />
+                </button>
+              </div>
+            )
+          }
+
           return (
             <button
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
               className={`flex h-9 flex-shrink-0 items-center gap-1.5 rounded-[20px] px-4 text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-primary text-white'
-                  : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+                isActive ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
               }`}
             >
               <span>{icon}</span>
-              <span>
-                {cat.name in { food: 1, restaurants: 1, gifts: 1, movies: 1, travel: 1 }
-                  ? t(`categories.${cat.name as 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'}`)
-                  : cat.name}
-              </span>
+              <span>{label}</span>
             </button>
           )
         })}
+        {/* Кнопка добавления кастомной категории */}
+        <button
+          onClick={() => setShowAddCategory(true)}
+          className="flex h-9 flex-shrink-0 items-center gap-1 rounded-[20px] px-3 text-sm font-medium bg-bg-input text-text-muted hover:bg-bg-hover transition-colors"
+        >
+          <Plus size={14} />
+          <span>{t('categories.addCustom')}</span>
+        </button>
       </div>
+
+      {/* Модал добавления кастомной категории */}
+      {showAddCategory && (
+        <AddCategoryModal
+          personId={person.id}
+          userId={person.user_id}
+          personName={person.name}
+          isPro={isPro}
+          customCategoryCount={localCategories.filter((c) => c.is_custom).length}
+          onClose={() => setShowAddCategory(false)}
+          onCreated={(cat) => {
+            setLocalCategories((prev) => [...prev, cat])
+            setShowAddCategory(false)
+            handleCategoryChange(cat.id)
+          }}
+        />
+      )}
+
+      {/* Модал редактирования кастомной категории */}
+      {editingCategory && (
+        <EditCategoryModal
+          category={editingCategory}
+          onClose={() => setEditingCategory(null)}
+          onUpdated={(updated) => {
+            setLocalCategories((prev) => prev.map((c) => c.id === updated.id ? updated : c))
+            setEditingCategory(null)
+          }}
+          onDeleted={(id) => {
+            const remaining = localCategories.filter((c) => c.id !== id)
+            setLocalCategories(remaining)
+            setEditingCategory(null)
+            if (activeCategoryId === id) {
+              const next = remaining[0]
+              if (next) handleCategoryChange(next.id)
+            }
+          }}
+        />
+      )}
 
       {/* Фильтры — еда */}
       {isFood && allItems.length > 0 && (
@@ -995,6 +1064,525 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardPro
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/* ── Emoji picker ── */
+
+const EMOJI_DATA: Array<{ e: string; k: string }> = [
+  // Популярные
+  { e: '📚', k: 'книги учёба чтение books reading study' },
+  { e: '🎵', k: 'музыка music song' },
+  { e: '🏃', k: 'бег спорт run sport fitness' },
+  { e: '💪', k: 'тренировка спорт fitness gym workout' },
+  { e: '🎮', k: 'игры games gaming' },
+  { e: '🌿', k: 'природа растения nature plants green' },
+  { e: '🐾', k: 'животные питомцы pets animals' },
+  { e: '✈️', k: 'путешествия travel fly flight' },
+  { e: '🛍️', k: 'шоппинг покупки shopping' },
+  { e: '🎨', k: 'искусство арт art creative рисование' },
+  { e: '🧘', k: 'медитация йога yoga meditation wellness' },
+  { e: '💅', k: 'красота beauty nails маникюр' },
+  // Еда и напитки
+  { e: '🍕', k: 'пицца pizza food еда' },
+  { e: '🍣', k: 'суши sushi японская еда' },
+  { e: '🍺', k: 'пиво beer drink напитки' },
+  { e: '☕', k: 'кофе coffee чай tea' },
+  { e: '🍷', k: 'вино wine drink' },
+  { e: '🍔', k: 'бургер burger fast food' },
+  { e: '🍜', k: 'рамен лапша ramen noodles' },
+  { e: '🎂', k: 'торт cake birthday день рождения' },
+  { e: '🍩', k: 'пончик donut sweet' },
+  { e: '🥗', k: 'салат salad healthy здоровье' },
+  { e: '🍰', k: 'пирожное dessert cake sweet' },
+  { e: '🧃', k: 'сок juice drink' },
+  { e: '🥤', k: 'коктейль cocktail drink smoothie' },
+  { e: '🍫', k: 'шоколад chocolate sweet десерт' },
+  { e: '🍿', k: 'попкорн popcorn cinema movies' },
+  { e: '🍳', k: 'готовка cooking kitchen кухня яйца' },
+  { e: '🥩', k: 'мясо meat стейк steak bbq' },
+  // Развлечения и хобби
+  { e: '🎬', k: 'кино фильмы cinema movies film' },
+  { e: '🎭', k: 'театр theatre drama' },
+  { e: '🎯', k: 'цель target goal дартс darts' },
+  { e: '🎲', k: 'настолки board games dice кости' },
+  { e: '🧩', k: 'пазл puzzle games головоломка' },
+  { e: '♟️', k: 'шахматы chess strategy' },
+  { e: '🎸', k: 'гитара guitar music музыка' },
+  { e: '🎹', k: 'пианино piano keyboard music' },
+  { e: '🎤', k: 'пение singing karaoke вокал' },
+  { e: '🎻', k: 'скрипка violin music' },
+  { e: '🥁', k: 'барабаны drums music' },
+  { e: '📷', k: 'фото фотография photo photography camera' },
+  { e: '✏️', k: 'рисование drawing writing письмо' },
+  { e: '📖', k: 'чтение reading book книга' },
+  { e: '🖌️', k: 'живопись painting art творчество' },
+  { e: '🧵', k: 'шитьё knitting craft рукоделие' },
+  { e: '🧶', k: 'вязание knitting craft хобби' },
+  // Спорт
+  { e: '⚽', k: 'футбол soccer football sport' },
+  { e: '🏀', k: 'баскетбол basketball sport' },
+  { e: '🎾', k: 'теннис tennis sport' },
+  { e: '🏊', k: 'плавание swimming swim sport' },
+  { e: '🚴', k: 'велосипед cycling bike sport' },
+  { e: '🧗', k: 'скалолазание climbing sport' },
+  { e: '⛷️', k: 'лыжи skiing ski sport winter' },
+  { e: '🏄', k: 'сёрфинг surfing sport море' },
+  { e: '🥊', k: 'бокс boxing sport martial arts' },
+  { e: '🏋️', k: 'тренажёрный зал weightlifting gym sport' },
+  { e: '🤸', k: 'гимнастика gymnastics sport' },
+  { e: '🏇', k: 'верховая езда horse riding equestrian' },
+  { e: '🏒', k: 'хоккей hockey sport ice' },
+  { e: '🏈', k: 'американский футбол american football sport' },
+  { e: '⛳', k: 'гольф golf sport' },
+  { e: '🎿', k: 'лыжи ski winter sport' },
+  // Природа и путешествия
+  { e: '🏔️', k: 'горы mountains travel nature' },
+  { e: '🏖️', k: 'пляж beach travel sea море' },
+  { e: '🌊', k: 'море волны sea ocean waves' },
+  { e: '🌅', k: 'закат рассвет sunset sunrise' },
+  { e: '🌲', k: 'лес деревья forest trees nature' },
+  { e: '🌸', k: 'цветы flowers spring весна' },
+  { e: '🦋', k: 'бабочка butterfly nature' },
+  { e: '🌍', k: 'мир world global earth путешествия travel' },
+  { e: '🗺️', k: 'карта map travel путешествия' },
+  { e: '⛺', k: 'кемпинг camping nature туризм' },
+  { e: '🌄', k: 'горный пейзаж mountain landscape nature' },
+  { e: '🏕️', k: 'кемпинг camp outdoor природа' },
+  { e: '🌺', k: 'цветок flower tropical nature' },
+  { e: '🍀', k: 'клевер clover luck природа' },
+  { e: '🌻', k: 'подсолнух sunflower flower' },
+  // Животные
+  { e: '🐕', k: 'собака dog pet питомец' },
+  { e: '🐈', k: 'кошка cat pet питомец' },
+  { e: '🐇', k: 'кролик rabbit pet' },
+  { e: '🐠', k: 'рыбка fish aquarium' },
+  { e: '🐦', k: 'птица bird nature' },
+  { e: '🐢', k: 'черепаха turtle reptile pet' },
+  { e: '🦜', k: 'попугай parrot bird pet' },
+  { e: '🐹', k: 'хомяк hamster rodent pet' },
+  // Работа и учёба
+  { e: '💻', k: 'компьютер computer work работа it' },
+  { e: '📊', k: 'статистика charts work business аналитика' },
+  { e: '🔬', k: 'наука science research лаборатория' },
+  { e: '🏆', k: 'достижения awards trophy победа win' },
+  { e: '💡', k: 'идеи ideas creative вдохновение' },
+  { e: '🔧', k: 'инструменты tools DIY ремонт' },
+  { e: '📝', k: 'заметки notes writing todo список' },
+  { e: '🎓', k: 'образование education study graduation' },
+  { e: '📐', k: 'математика math geometry design' },
+  // Дом и быт
+  { e: '🏠', k: 'дом home house' },
+  { e: '🛋️', k: 'диван couch home relax отдых' },
+  { e: '🌱', k: 'растения plants garden сад' },
+  { e: '🧹', k: 'уборка cleaning home порядок' },
+  { e: '🧁', k: 'выпечка baking sweet dessert' },
+  { e: '🧺', k: 'стирка laundry home' },
+  { e: '🪴', k: 'комнатные растения indoor plants' },
+  // Красота и стиль
+  { e: '💄', k: 'макияж makeup beauty красота' },
+  { e: '👗', k: 'одежда fashion мода clothes' },
+  { e: '👟', k: 'кроссовки shoes sneakers обувь' },
+  { e: '💍', k: 'украшения jewelry accessories' },
+  { e: '🛁', k: 'уход spa bath wellness релакс' },
+  { e: '👒', k: 'шляпа hat fashion аксессуары' },
+  { e: '👜', k: 'сумка bag fashion accessories' },
+  // Разное
+  { e: '❤️', k: 'любовь love heart сердце' },
+  { e: '⭐', k: 'звезда star favorite избранное' },
+  { e: '🔥', k: 'огонь fire hot популярное' },
+  { e: '💰', k: 'деньги money finance финансы бюджет' },
+  { e: '📱', k: 'телефон phone mobile смартфон' },
+  { e: '🎁', k: 'подарок gift present' },
+  { e: '🎉', k: 'праздник party celebration вечеринка' },
+  { e: '🧠', k: 'мозг brain mind knowledge знания' },
+  { e: '🌙', k: 'ночь night moon луна сон sleep' },
+  { e: '☀️', k: 'солнце sun morning утро' },
+  { e: '⚡', k: 'энергия energy lightning электричество' },
+  { e: '🎪', k: 'цирк circus entertainment шоу' },
+  { e: '🌈', k: 'радуга rainbow colorful яркий' },
+  { e: '🏡', k: 'дом загородный house home дача' },
+  { e: '🧳', k: 'чемодан suitcase travel поездка trip' },
+  { e: '🚗', k: 'машина car auto drive поездка' },
+  { e: '🚀', k: 'ракета rocket space космос' },
+  { e: '🎠', k: 'карусель merry-go-round entertainment' },
+  { e: '🎋', k: 'японская культура japan bamboo zen' },
+  { e: '🕯️', k: 'свеча candle romantic уют cozy' },
+  { e: '🧸', k: 'медведь teddy bear toy игрушка' },
+  { e: '🎃', k: 'хэллоуин halloween autumn осень' },
+  { e: '🎄', k: 'новый год christmas tree праздник' },
+]
+
+const EMOJI_COLS = 7
+const EMOJI_ROWS_DEFAULT = 2
+
+interface EmojiPickerProps {
+  value: string
+  onChange: (e: string) => void
+}
+
+function EmojiPicker({ value, onChange }: EmojiPickerProps) {
+  const t = useTranslations()
+  const [search, setSearch] = useState('')
+  const [expanded, setExpanded] = useState(false)
+
+  const filtered = search.trim()
+    ? EMOJI_DATA.filter((item) =>
+        item.k.toLowerCase().includes(search.toLowerCase()) || item.e === search.trim()
+      )
+    : EMOJI_DATA
+
+  const defaultCount = EMOJI_COLS * EMOJI_ROWS_DEFAULT
+  const visible = expanded || search.trim() ? filtered : filtered.slice(0, defaultCount)
+  const hasMore = !search.trim() && EMOJI_DATA.length > defaultCount
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Поиск */}
+      <div className="relative">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('categories.emojiSearch')}
+          className="w-full rounded-[10px] bg-bg-input pl-9 pr-4 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
+        />
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">🔍</span>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* Сетка эмодзи */}
+      <div className={`grid gap-1.5 ${expanded || search.trim() ? 'max-h-48 overflow-y-auto scrollbar-none' : ''}`}
+        style={{ gridTemplateColumns: `repeat(${EMOJI_COLS}, minmax(0, 1fr))` }}
+      >
+        {visible.map((item) => (
+          <button
+            key={item.e}
+            type="button"
+            onClick={() => onChange(item.e)}
+            className={`flex h-9 w-full items-center justify-center rounded-[10px] text-xl transition-colors ${
+              value === item.e ? 'bg-primary/20 ring-1 ring-primary' : 'bg-bg-input hover:bg-bg-hover'
+            }`}
+          >
+            {item.e}
+          </button>
+        ))}
+        {visible.length === 0 && (
+          <p className="col-span-7 py-4 text-center text-xs text-text-muted">{t('common.empty')}</p>
+        )}
+      </div>
+
+      {/* Показать все / скрыть */}
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="text-xs text-text-muted hover:text-text-secondary transition-colors text-center py-1"
+        >
+          {expanded
+            ? t('categories.emojiShowLess')
+            : t('categories.emojiShowMore', { count: EMOJI_DATA.length - defaultCount })}
+        </button>
+      )}
+
+      {/* Своя иконка */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-text-muted whitespace-nowrap">{t('categories.emojiCustom')}</span>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { if (e.target.value.length <= 2) onChange(e.target.value) }}
+          placeholder="📁"
+          className="w-14 rounded-[10px] bg-bg-input px-2 py-2 text-center text-xl text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+    </div>
+  )
+}
+
+/* ── Модал редактирования / удаления кастомной категории ── */
+
+interface EditCategoryModalProps {
+  category: Category
+  onClose: () => void
+  onUpdated: (cat: Category) => void
+  onDeleted: (id: string) => void
+}
+
+function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCategoryModalProps) {
+  const t = useTranslations()
+  const [name, setName] = useState(category.name)
+  const [icon, setIcon] = useState(category.icon ?? '📁')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  async function handleSave() {
+    if (!name.trim() || isSaving) return
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+      const updated = await updateCustomCategory(supabase, category.id, name.trim(), icon)
+      if (updated) onUpdated(updated)
+      else toast.error(t('common.error'))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+      await deleteCustomCategory(supabase, category.id)
+      onDeleted(category.id)
+      toast.success(t('categories.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
+        {/* Заголовок */}
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
+            {t('categories.edit')}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {/* Иконка */}
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+              {t('categories.icon')}
+            </p>
+            <EmojiPicker value={icon} onChange={setIcon} />
+          </div>
+
+          {/* Название */}
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+              {t('categories.name')}
+            </p>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              maxLength={30}
+              autoFocus
+              className="w-full rounded-[12px] bg-bg-input px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          {/* Кнопка сохранить */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim() || isSaving}
+            className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+          >
+            {isSaving ? '...' : t('common.save')}
+          </button>
+
+          {/* Удалить */}
+          {confirmDelete ? (
+            <div className="flex items-center justify-between rounded-[12px] bg-red-500/10 border border-red-500/20 px-4 py-3">
+              <span className="text-sm text-red-500">{t('categories.deleteConfirm')}</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="rounded-lg px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-hover transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isSaving}
+                  className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="w-full rounded-[12px] border border-border py-3 text-sm font-medium text-red-500/80 hover:bg-red-500/5 transition-colors"
+            >
+              {t('categories.delete')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модал добавления кастомной категории ── */
+
+const FREE_CUSTOM_LIMIT = 1
+
+interface AddCategoryModalProps {
+  personId: string
+  userId: string
+  personName: string
+  isPro: boolean
+  customCategoryCount: number
+  onClose: () => void
+  onCreated: (cat: Category) => void
+}
+
+function AddCategoryModal({ personId, userId, personName, isPro, customCategoryCount, onClose, onCreated }: AddCategoryModalProps) {
+  const t = useTranslations()
+  const [name, setName] = useState('')
+  const [icon, setIcon] = useState('📁')
+  const [scope, setScope] = useState<'one' | 'all'>('one')
+  const [isSaving, setIsSaving] = useState(false)
+  const isLimited = !isPro && customCategoryCount >= FREE_CUSTOM_LIMIT
+
+  async function handleSave() {
+    if (!name.trim() || isSaving) return
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+
+      if (scope === 'all') {
+        // Создаём для всех людей пользователя
+        const { data: people } = await supabase
+          .from('people')
+          .select('id')
+          .eq('user_id', userId)
+
+        if (people && people.length > 0) {
+          // Создаём для текущего человека первым — он нам нужен для onCreated
+          const current = await createCustomCategory(supabase, personId, name.trim(), icon)
+          // Остальные — в фоне
+          const others = people.filter((p) => p.id !== personId)
+          await Promise.all(others.map((p) => createCustomCategory(supabase, p.id, name.trim(), icon)))
+          if (current) onCreated(current)
+          else toast.error(t('common.error'))
+        }
+      } else {
+        const cat = await createCustomCategory(supabase, personId, name.trim(), icon)
+        if (cat) onCreated(cat)
+        else toast.error(t('common.error'))
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
+        {/* Заголовок */}
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
+            {t('categories.addCustom')}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {isLimited ? (
+          /* Paywall для Free */
+          <div className="rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-5 text-center">
+            <p className="text-2xl mb-3">🔒</p>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {t('paywall.categoryLimit')}
+            </p>
+          </div>
+        ) : (
+          /* Форма */
+          <div className="flex flex-col gap-4">
+            {/* Выбор иконки */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+                {t('categories.icon')}
+              </p>
+              <EmojiPicker value={icon} onChange={setIcon} />
+            </div>
+
+            {/* Название */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+                {t('categories.name')}
+              </p>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                placeholder={t('categories.namePlaceholder')}
+                maxLength={30}
+                autoFocus
+                className="w-full rounded-[12px] bg-bg-input px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            {/* Для кого */}
+            <div className="flex rounded-[12px] bg-bg-input p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setScope('one')}
+                className={`flex-1 rounded-[8px] py-2.5 text-sm font-medium transition-colors ${
+                  scope === 'one' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+                }`}
+              >
+                {t('categories.scopeOne', { name: personName })}
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope('all')}
+                className={`flex-1 rounded-[8px] py-2.5 text-sm font-medium transition-colors ${
+                  scope === 'all' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+                }`}
+              >
+                {t('categories.scopeAll')}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!name.trim() || isSaving}
+              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.save')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

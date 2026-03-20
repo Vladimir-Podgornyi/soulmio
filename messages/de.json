@@ -84,7 +84,20 @@
     "movies": "Filme",
     "travel": "Reisen",
     "addCustom": "Kategorie hinzufügen",
-    "custom": "Benutzerdefiniert"
+    "custom": "Benutzerdefiniert",
+    "icon": "Symbol",
+    "name": "Name",
+    "namePlaceholder": "z. B. Bücher, Fitness...",
+    "scopeOne": "Nur für {name}",
+    "scopeAll": "Für alle",
+    "edit": "Kategorie bearbeiten",
+    "delete": "Kategorie löschen",
+    "deleteConfirm": "Diese Kategorie löschen?",
+    "deleted": "Kategorie gelöscht",
+    "emojiSearch": "Emoji suchen...",
+    "emojiShowMore": "Noch {count} mehr",
+    "emojiShowLess": "Weniger anzeigen",
+    "emojiCustom": "Oder eigenes eingeben:"
   },
   "items": {
     "addItem": "Eintrag hinzufügen",
@@ -116,7 +129,7 @@
   "paywall": {
     "upgradeToPro": "Auf Pro upgraden",
     "personLimit": "Du hast 1 Person im kostenlosen Plan hinzugefügt. Upgrade auf Pro, um Vorlieben für Freunde und Familie zu verfolgen.",
-    "categoryLimit": "Benutzerdefinierte Kategorien sind auf 2 im kostenlosen Plan begrenzt. Upgrade auf Pro für unbegrenzte Kategorien.",
+    "categoryLimit": "Benutzerdefinierte Kategorien sind auf 1 im kostenlosen Plan begrenzt. Upgrade auf Pro für unbegrenzte Kategorien.",
     "aiLimit": "Du hast deine 3 kostenlosen KI-Vorschläge diesen Monat aufgebraucht. Upgrade auf Pro für unbegrenzte Vorschläge und KI-Chat.",
     "aiFeature": "KI-Vorschläge sind eine Pro-Funktion. Upgrade für personalisierte Empfehlungen.",
     "moviesTravel": "Filme und Reisen sind in Pro verfügbar. Upgrade, um alle Kategorien freizuschalten."

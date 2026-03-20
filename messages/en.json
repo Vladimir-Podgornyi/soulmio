@@ -84,7 +84,20 @@
     "movies": "Movies",
     "travel": "Travel",
     "addCustom": "Add category",
-    "custom": "Custom"
+    "custom": "Custom",
+    "icon": "Icon",
+    "name": "Name",
+    "namePlaceholder": "e.g. Books, Fitness...",
+    "scopeOne": "Only for {name}",
+    "scopeAll": "For everyone",
+    "edit": "Edit category",
+    "delete": "Delete category",
+    "deleteConfirm": "Delete this category?",
+    "deleted": "Category deleted",
+    "emojiSearch": "Search emoji...",
+    "emojiShowMore": "Show {count} more",
+    "emojiShowLess": "Show less",
+    "emojiCustom": "Or type your own:"
   },
   "items": {
     "addItem": "Add item",
@@ -116,7 +129,7 @@
   "paywall": {
     "upgradeToPro": "Upgrade to Pro",
     "personLimit": "You've added 1 person on the free plan. Upgrade to Pro to track preferences for friends and family too.",
-    "categoryLimit": "Custom categories are limited to 2 on the free plan. Upgrade to Pro for unlimited categories.",
+    "categoryLimit": "Custom categories are limited to 1 on the free plan. Upgrade to Pro for unlimited categories.",
     "aiLimit": "You've used your 3 free AI suggestions this month. Upgrade to Pro for unlimited suggestions and AI chat.",
     "aiFeature": "AI suggestions are a Pro feature. Upgrade to see personalized recommendations based on their taste.",
     "moviesTravel": "Movies and Travel categories are available on Pro. Upgrade to unlock all categories."
