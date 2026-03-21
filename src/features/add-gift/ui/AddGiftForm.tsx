@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import NextLink from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Link, Star, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -203,13 +204,13 @@ export function AddGiftForm({
         </div>
       ) : (
         /* Free: paywall-заглушка */
-        <div className="flex items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3">
+        <NextLink href="/pro" className="flex items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3 hover:border-primary/30 transition-colors">
           <Upload size={15} className="flex-shrink-0 text-text-muted" />
           <span className="flex-1 text-sm text-text-muted">{t('gifts.uploadPhoto')}</span>
           <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
             Pro
           </span>
-        </div>
+        </NextLink>
       )}
 
       {/* Название */}

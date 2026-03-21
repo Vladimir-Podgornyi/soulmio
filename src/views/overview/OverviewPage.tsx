@@ -263,11 +263,9 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
       return map[item.sentiment] ?? null
     }
     if (isTravel) {
-      const map: Record<string, { text: string; cls: string }> = {
-        wants:   { text: `✈️ ${t('travel.statusWants')}`,   cls: 'bg-wants-bg text-wants' },
-        visited: { text: `✅ ${t('travel.statusVisited')}`, cls: 'bg-loves-bg text-loves' },
-      }
-      return map[item.sentiment] ?? null
+      if (item.sentiment === 'visited') return { text: `✅ ${t('travel.statusVisited')}`, cls: 'bg-loves-bg text-loves' }
+      if ((item.tags ?? []).includes('trip_booked:true')) return { text: `🎟️ ${t('travel.statusBooked')}`, cls: 'bg-[#2A2A1A] text-[#F0A500]' }
+      return { text: `✈️ ${t('travel.statusWants')}`, cls: 'bg-wants-bg text-wants' }
     }
     const map: Record<string, { text: string; cls: string }> = {
       likes: {

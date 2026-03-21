@@ -400,10 +400,12 @@ export async function getUpcomingTrips(
   const upcoming: UpcomingTrip[] = []
 
   for (const item of items) {
-    // Only "wants to visit" trips
+    // Only "wants to visit" trips, not yet booked
     if (item.sentiment !== 'wants') continue
 
     const tags = (item.tags ?? []) as string[]
+    if (tags.includes('trip_booked:true')) continue
+
     const dateTag = tags.find((t: string) => t.startsWith('trip_date:'))
     if (!dateTag) continue
 
@@ -412,7 +414,10 @@ export async function getUpcomingTrips(
     const msLeft = date.getTime() - now.getTime()
     const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
 
-    if (daysLeft >= 0 && daysLeft <= daysBefore) {
+    const reminderTag = tags.find((t: string) => t.startsWith('reminder_days:'))
+    const reminderDays = reminderTag ? Number(reminderTag.slice('reminder_days:'.length)) : daysBefore
+
+    if (daysLeft >= 0 && daysLeft <= reminderDays) {
       const codeTag = tags.find((t: string) => t.startsWith('country_code:'))
       const code = codeTag ? codeTag.slice('country_code:'.length) : ''
       const flagEmoji = code
