@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
 import type { Category } from '@/entities/category/model/types'
+import { updateItem } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
 import { createCustomCategory, updateCustomCategory, deleteCustomCategory } from '@/entities/category/api'
 import { AddRestaurantForm } from '@/features/add-restaurant'
@@ -17,6 +18,7 @@ import { AddFoodForm } from '@/features/add-food'
 import { useAddFood, getFoodType, getCuisineType, getLinkedRestaurant } from '@/features/add-food'
 import { AddGiftForm } from '@/features/add-gift'
 import { useAddGift, getGiftPinned, getGiftDate } from '@/features/add-gift'
+import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleaseDate, isActorItem, getActorFilms, getMoviePinned } from '@/features/add-movie'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 
 interface PersonPageProps {
@@ -68,6 +70,8 @@ export function PersonPage({
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [movieSubTab, setMovieSubTab] = useState<'movies' | 'actors'>('movies')
+  const [movieGenreFilter, setMovieGenreFilter] = useState('all')
 
   // При переходе через ?section= — загружаем items для целевой категории если их нет
   useEffect(() => {
@@ -88,19 +92,35 @@ export function PersonPage({
   const isRestaurants = activeCategory?.name === 'restaurants'
   const isFood = activeCategory?.name === 'food'
   const isGifts = activeCategory?.name === 'gifts'
+  const isMovies = activeCategory?.name === 'movies'
 
-  const sentimentFiltered = filter === 'all' ? allItems : allItems.filter((it) => it.sentiment === filter)
-  const typeFiltered = foodTypeFilter === 'all'
-    ? sentimentFiltered
-    : sentimentFiltered.filter((it) => getFoodType(it.tags ?? null) === foodTypeFilter)
-  // Подарки: закреплённые сверху
-  const items = isGifts
-    ? [...typeFiltered].sort((a, b) => {
-        const aPin = getGiftPinned(a.tags ?? null) ? 0 : 1
-        const bPin = getGiftPinned(b.tags ?? null) ? 0 : 1
-        return aPin - bPin
-      })
+  // Фильмы: разделяем фильмы и актёров
+  const movieOnlyItems = isMovies ? allItems.filter((it) => !isActorItem(it.tags ?? null)) : allItems
+  const actorOnlyItems = isMovies ? allItems.filter((it) => isActorItem(it.tags ?? null)) : []
+  const availableMovieGenres = isMovies
+    ? [...new Set(movieOnlyItems.flatMap((it) => getMovieGenres(it.tags ?? null)))]
+    : []
+
+  // Пул на основе суб-таба
+  const baseItems = isMovies
+    ? (movieSubTab === 'actors' ? actorOnlyItems : movieOnlyItems)
+    : allItems
+
+  const sentimentFiltered = (filter === 'all' || (isMovies && movieSubTab === 'actors'))
+    ? baseItems
+    : baseItems.filter((it) => it.sentiment === filter)
+  const typeFiltered = isFood && foodTypeFilter !== 'all'
+    ? sentimentFiltered.filter((it) => getFoodType(it.tags ?? null) === foodTypeFilter)
+    : sentimentFiltered
+  const genreFiltered = isMovies && movieSubTab === 'movies' && movieGenreFilter !== 'all'
+    ? typeFiltered.filter((it) => getMovieGenres(it.tags ?? null).includes(movieGenreFilter))
     : typeFiltered
+  // Закреплённые сверху для всех категорий
+  const items = [...genreFiltered].sort((a, b) => {
+    const aPin = getGiftPinned(a.tags ?? null) || getMoviePinned(a.tags ?? null) ? 0 : 1
+    const bPin = getGiftPinned(b.tags ?? null) || getMoviePinned(b.tags ?? null) ? 0 : 1
+    return aPin - bPin
+  })
 
   const restaurantCategory = localCategories.find((c) => c.name === 'restaurants')
   const availableRestaurants = restaurantCategory
@@ -136,6 +156,8 @@ export function PersonPage({
     setActiveCategoryId(categoryId)
     setFilter('all')
     setFoodTypeFilter('all')
+    setMovieSubTab('movies')
+    setMovieGenreFilter('all')
     if (!(categoryId in itemsByCategory)) {
       const res = await fetch(`/api/items?personId=${person.id}&categoryId=${categoryId}`)
       const data = (await res.json()) as Item[]
@@ -384,6 +406,88 @@ export function PersonPage({
         </div>
       )}
 
+      {/* Фильтры — фильмы */}
+      {isMovies && (
+        <div className="px-4 pb-4 flex flex-col gap-3">
+          {/* Суб-табы: Фильмы | Актёры */}
+          <div className="flex rounded-[10px] bg-bg-input p-1 gap-1">
+            <button
+              onClick={() => { setMovieSubTab('movies'); setFilter('all'); setMovieGenreFilter('all') }}
+              className={`flex-1 rounded-[8px] py-2 text-sm font-medium transition-colors ${
+                movieSubTab === 'movies' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+              }`}
+            >
+              🎬 {t('movies.tab')}
+            </button>
+            <button
+              onClick={() => { setMovieSubTab('actors'); setFilter('all') }}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-[8px] py-2 text-sm font-medium transition-colors ${
+                movieSubTab === 'actors' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+              }`}
+            >
+              👤 {t('movies.actorsTab')}
+              {!isPro && (
+                <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Pro</span>
+              )}
+            </button>
+          </div>
+
+          {/* Фильтры статуса и жанра — только вкладка фильмов */}
+          {movieSubTab === 'movies' && movieOnlyItems.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {/* Статус */}
+              <div className="flex gap-2 overflow-x-auto scrollbar-none">
+                {([
+                  { key: 'all',      label: t('common.all') },
+                  { key: 'wants',    label: t('movies.statusWants') },
+                  { key: 'likes',    label: t('movies.statusLikes') },
+                  { key: 'dislikes', label: t('movies.statusDislikes') },
+                ] as const).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setFilter(key)}
+                    className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                      filter === key ? 'bg-bg-input text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                  >
+                    {label}
+                    {key !== 'all' && (
+                      <span className="ml-1.5 text-text-muted">
+                        {movieOnlyItems.filter((it) => it.sentiment === key).length}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {/* Жанры */}
+              {availableMovieGenres.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-none">
+                  <button
+                    onClick={() => setMovieGenreFilter('all')}
+                    className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                      movieGenreFilter === 'all' ? 'bg-bg-input text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                  >
+                    {t('common.all')}
+                  </button>
+                  {availableMovieGenres.map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setMovieGenreFilter(g)}
+                      className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                        movieGenreFilter === g ? 'bg-bg-input text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                      }`}
+                    >
+                      {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Список элементов */}
       <div className="px-4 pb-32 pt-1">
         {/* Десктоп: пунктирная карточка "Добавить" вверху списка */}
@@ -398,12 +502,21 @@ export function PersonPage({
         </button>
 
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="mb-3 text-5xl">
-              {activeCategory?.icon ?? CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋'}
-            </span>
-            <p className="text-sm text-text-muted">{t('common.empty')}</p>
-          </div>
+          isMovies && movieSubTab === 'actors' && !isPro ? (
+            <div className="rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center">
+              <p className="text-3xl mb-3">🎭</p>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                {t('movies.actorsPro')}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="mb-3 text-5xl">
+                {activeCategory?.icon ?? CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋'}
+              </span>
+              <p className="text-sm text-text-muted">{t('common.empty')}</p>
+            </div>
+          )
         ) : (
           <div className="flex flex-col gap-2">
             {items.map((item) =>
@@ -415,6 +528,7 @@ export function PersonPage({
                   categoryId={activeCategoryId}
                   onEdit={() => setEditingItem(item)}
                   onDeleted={() => handleItemDeleted(item.id)}
+                  onUpdated={handleItemUpdated}
                 />
               ) : isGifts ? (
                 <GiftCard
@@ -424,7 +538,30 @@ export function PersonPage({
                   categoryId={activeCategoryId}
                   onEdit={() => setEditingItem(item)}
                   onDeleted={() => handleItemDeleted(item.id)}
+                  onUpdated={handleItemUpdated}
                 />
+              ) : isMovies ? (
+                isActorItem(item.tags ?? null) ? (
+                  <ActorCard
+                    key={item.id}
+                    item={item}
+                    personId={person.id}
+                    categoryId={activeCategoryId}
+                    onEdit={() => setEditingItem(item)}
+                    onDeleted={() => handleItemDeleted(item.id)}
+                    onUpdated={handleItemUpdated}
+                  />
+                ) : (
+                  <MovieCard
+                    key={item.id}
+                    item={item}
+                    personId={person.id}
+                    categoryId={activeCategoryId}
+                    onEdit={() => setEditingItem(item)}
+                    onDeleted={() => handleItemDeleted(item.id)}
+                    onUpdated={handleItemUpdated}
+                  />
+                )
               ) : (
                 <RestaurantCard
                   key={item.id}
@@ -433,6 +570,7 @@ export function PersonPage({
                   categoryId={activeCategoryId}
                   onEdit={() => setEditingItem(item)}
                   onDeleted={() => handleItemDeleted(item.id)}
+                  onUpdated={handleItemUpdated}
                 />
               )
             )}
@@ -441,12 +579,14 @@ export function PersonPage({
       </div>
 
       {/* FAB — только на мобильных */}
-      <button
-        onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
-        className="md:hidden fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
-      >
-        <Plus size={24} className="text-white" />
-      </button>
+      {!(isMovies && movieSubTab === 'actors' && !isPro) && (
+        <button
+          onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
+          className="md:hidden fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
+        >
+          <Plus size={24} className="text-white" />
+        </button>
+      )}
 
       {/* Нижний лист добавления — еда */}
       {isAddOpen && isFood && (
@@ -528,6 +668,58 @@ export function PersonPage({
           />
         </BottomSheet>
       )}
+
+      {/* Нижний лист добавления — фильм */}
+      {isAddOpen && isMovies && movieSubTab === 'movies' && (
+        <BottomSheet title={t('movies.add')} onClose={() => setIsAddOpen(false)}>
+          <AddMovieForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            isPro={isPro}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист добавления — актёр (Pro) */}
+      {isAddOpen && isMovies && movieSubTab === 'actors' && isPro && (
+        <BottomSheet title={t('movies.addActor')} onClose={() => setIsAddOpen(false)}>
+          <AddActorForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — фильм */}
+      {editingItem && isMovies && !isActorItem(editingItem.tags ?? null) && (
+        <BottomSheet title={t('movies.edit')} onClose={() => setEditingItem(null)}>
+          <AddMovieForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            item={editingItem}
+            isPro={isPro}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — актёр */}
+      {editingItem && isMovies && isActorItem(editingItem.tags ?? null) && (
+        <BottomSheet title={t('movies.editActor')} onClose={() => setEditingItem(null)}>
+          <AddActorForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            item={editingItem}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
     </div>
   )
 }
@@ -540,9 +732,10 @@ interface FoodCardProps {
   categoryId: string
   onEdit: () => void
   onDeleted: () => void
+  onUpdated: (item: Item) => void
 }
 
-function FoodCard({ item, personId, categoryId, onEdit, onDeleted }: FoodCardProps) {
+function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: FoodCardProps) {
   const t = useTranslations()
   const { isSaving, removeFood } = useAddFood(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
@@ -570,6 +763,23 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted }: FoodCardPro
     }
   }
 
+  const isPinned = getGiftPinned(item.tags ?? null)
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
   const isLikes = item.sentiment === 'likes'
   const foodType = getFoodType(item.tags ?? null)
   const cuisineType = getCuisineType(item.tags ?? null)
@@ -581,11 +791,12 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted }: FoodCardPro
     `🥗 ${t('food.types.food_type')}`
 
   return (
-    <div className="rounded-[14px] bg-bg-card border border-border-card p-4">
+    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
       {/* Верхняя строка */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-1 flex-col gap-0.5">
           <div className="flex items-center gap-2 flex-wrap">
+            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
             <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
             <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted">
               {typeLabel}
@@ -621,13 +832,21 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted }: FoodCardPro
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 min-w-[130px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+              <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
                 <button
                   onClick={() => { setMenuOpen(false); onEdit() }}
                   className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
                 >
                   <Pencil size={14} className="text-text-secondary" />
                   {t('common.edit')}
+                </button>
+                <div className="mx-3 h-px bg-border-card" />
+                <button
+                  onClick={handleTogglePin}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+                >
+                  <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+                  {isPinned ? t('common.unpin') : t('common.pin')}
                 </button>
                 <div className="mx-3 h-px bg-border-card" />
                 <button
@@ -683,9 +902,10 @@ interface RestaurantCardProps {
   categoryId: string
   onEdit: () => void
   onDeleted: () => void
+  onUpdated: (item: Item) => void
 }
 
-function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: RestaurantCardProps) {
+function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: RestaurantCardProps) {
   const t = useTranslations()
   const { isSaving, removeRestaurant } = useAddRestaurant(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
@@ -709,6 +929,23 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
       await removeRestaurant(item.id)
       onDeleted()
       toast.success(t('restaurants.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const isPinned = getGiftPinned(item.tags ?? null)
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
     } catch {
       toast.error(t('common.error'))
     }
@@ -739,13 +976,21 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
           <MoreVertical size={15} />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 bottom-8 z-20 min-w-[130px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+          <div className="absolute right-0 bottom-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
             <button
               onClick={() => { setMenuOpen(false); onEdit() }}
               className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
             >
               <Pencil size={14} className="text-text-secondary" />
               {t('common.edit')}
+            </button>
+            <div className="mx-3 h-px bg-border-card" />
+            <button
+              onClick={handleTogglePin}
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+            >
+              <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+              {isPinned ? t('common.unpin') : t('common.pin')}
             </button>
             <div className="mx-3 h-px bg-border-card" />
             <button
@@ -762,11 +1007,14 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted }: Resta
   )
 
   return (
-    <div className="rounded-[14px] bg-bg-card border border-border-card p-4">
+    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
       {/* Верхняя строка: название + адрес + значок отношения */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-          <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+          <div className="flex items-center gap-1.5">
+            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+          </div>
           {addressTag && (
             <span className="text-xs text-text-secondary">{addressTag}</span>
           )}
@@ -860,9 +1108,10 @@ interface GiftCardProps {
   categoryId: string
   onEdit: () => void
   onDeleted: () => void
+  onUpdated: (item: Item) => void
 }
 
-function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardProps) {
+function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: GiftCardProps) {
   const t = useTranslations()
   const { currency } = useCurrency()
   const { isSaving, removeGift } = useAddGift(personId, categoryId, () => {})
@@ -897,6 +1146,21 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardPro
   const giftDate = getGiftDate(item.tags ?? null)
   const isWants = item.sentiment === 'wants'
 
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
   const statusBadge = (
     <span
       className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${
@@ -908,13 +1172,21 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardPro
   )
 
   const menuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[150px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
       <button
         onClick={() => { setMenuOpen(false); onEdit() }}
         className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
       >
         <Pencil size={14} className="text-text-secondary" />
         {t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button
+        onClick={handleTogglePin}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+      >
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
       </button>
       <div className="mx-3 h-px bg-border-card" />
       <button
@@ -1047,6 +1319,335 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted }: GiftCardPro
       {confirmDelete && (
         <div className="mx-4 mb-4 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
           <span className="text-sm text-red-500">{t('gifts.deleteConfirm')}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.delete')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Карточка фильма ── */
+
+interface MovieCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  onEdit: () => void
+  onDeleted: () => void
+  onUpdated: (item: Item) => void
+}
+
+function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: MovieCardProps) {
+  const t = useTranslations()
+  const { isSaving, removeMovie } = useAddMovie(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeMovie(item.id)
+      onDeleted()
+      toast.success(t('movies.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const genres = getMovieGenres(item.tags ?? null)
+  const releaseDate = getMovieReleaseDate(item.tags ?? null)
+  const isPinned = getMoviePinned(item.tags ?? null)
+  const isWants = item.sentiment === 'wants'
+  const isLikes = item.sentiment === 'likes'
+
+  const sentimentCls = isWants
+    ? 'bg-wants-bg text-wants'
+    : isLikes
+    ? 'bg-loves-bg text-loves'
+    : 'bg-avoid-bg text-avoid'
+  const sentimentLabel = isWants
+    ? `🎬 ${t('movies.statusWants')}`
+    : isLikes
+    ? `✅ ${t('movies.statusLikes')}`
+    : `❌ ${t('movies.statusDislikes')}`
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  return (
+    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="flex items-start gap-2">
+        <div className="flex flex-1 flex-col gap-3 min-w-0">
+          {/* Название + статус */}
+          <div className="flex items-start gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+              <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+            </div>
+            <span className={`flex-shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${sentimentCls}`}>
+              {sentimentLabel}
+            </span>
+          </div>
+
+          {/* Жанры */}
+          {genres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {genres.map((g) => (
+                <span key={g} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary">
+                  {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Рейтинги */}
+          {(item.my_rating !== null || item.partner_rating !== null) && (
+            <div className="flex gap-4">
+              {item.my_rating !== null && (
+                <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />
+              )}
+              {item.partner_rating !== null && (
+                <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />
+              )}
+            </div>
+          )}
+
+          {/* Дата выхода */}
+          {releaseDate && (
+            <span className="text-xs text-text-secondary">
+              📅 {new Date(releaseDate).toLocaleDateString()}
+            </span>
+          )}
+
+          {/* Комментарий */}
+          {item.description && (
+            <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">
+              {item.description}
+            </p>
+          )}
+        </div>
+
+        {/* Меню */}
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+          >
+            <MoreVertical size={15} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+              <button
+                onClick={() => { setMenuOpen(false); onEdit() }}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+              >
+                <Pencil size={14} className="text-text-secondary" />
+                {t('common.edit')}
+              </button>
+              <div className="mx-3 h-px bg-border-card" />
+              <button
+                onClick={handleTogglePin}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+              >
+                <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+                {isPinned ? t('common.unpin') : t('common.pin')}
+              </button>
+              <div className="mx-3 h-px bg-border-card" />
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 size={14} />
+                {t('common.delete')}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Подтверждение удаления */}
+      {confirmDelete && (
+        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+          <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.delete')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Карточка актёра ── */
+
+interface ActorCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  onEdit: () => void
+  onDeleted: () => void
+  onUpdated: (item: Item) => void
+}
+
+function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: ActorCardProps) {
+  const t = useTranslations()
+  const { isSaving, removeMovie } = useAddMovie(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeMovie(item.id)
+      onDeleted()
+      toast.success(t('movies.actorDeleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const films = getActorFilms(item.tags ?? null)
+  const isPinned = getMoviePinned(item.tags ?? null)
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  return (
+    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="flex items-start gap-2">
+        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+          <div className="flex items-center gap-1.5">
+            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+            <span className="font-semibold text-text-primary leading-tight">👤 {item.title}</span>
+          </div>
+          {films.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {films.map((f, i) => (
+                <span key={i} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary">
+                  🎬 {f}
+                </span>
+              ))}
+            </div>
+          )}
+          {item.description && (
+            <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">
+              {item.description}
+            </p>
+          )}
+        </div>
+
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+          >
+            <MoreVertical size={15} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+              <button
+                onClick={() => { setMenuOpen(false); onEdit() }}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+              >
+                <Pencil size={14} className="text-text-secondary" />
+                {t('common.edit')}
+              </button>
+              <div className="mx-3 h-px bg-border-card" />
+              <button
+                onClick={handleTogglePin}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+              >
+                <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+                {isPinned ? t('common.unpin') : t('common.pin')}
+              </button>
+              <div className="mx-3 h-px bg-border-card" />
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 size={14} />
+                {t('common.delete')}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {confirmDelete && (
+        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+          <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
           <div className="flex gap-2">
             <button
               onClick={() => setConfirmDelete(false)}

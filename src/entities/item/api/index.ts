@@ -278,6 +278,81 @@ export async function getUpcomingRestaurants(
   return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
 }
 
+export interface UpcomingMovie {
+  itemId: string
+  title: string
+  personName: string
+  personId: string
+  daysLeft: number
+  releaseDate: string
+  tags: string[]
+}
+
+export async function getUpcomingMovies(
+  supabase: DbClient,
+  userId: string,
+  daysBefore = 7
+): Promise<UpcomingMovie[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(people.map((p) => [p.id, p.name]))
+
+  const { data: movieCats } = await supabase
+    .from('categories')
+    .select('id')
+    .in('person_id', peopleIds)
+    .eq('name', 'movies')
+
+  if (!movieCats?.length) return []
+
+  const movieCatIds = movieCats.map((c) => c.id)
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('id, title, person_id, tags, sentiment')
+    .in('category_id', movieCatIds)
+
+  if (!items?.length) return []
+
+  const now = new Date()
+  const upcoming: UpcomingMovie[] = []
+
+  for (const item of items) {
+    const tags = (item.tags ?? []) as string[]
+    // Пропускаем актёров и уже просмотренные фильмы
+    if (tags.includes('item_type:actor')) continue
+    if (item.sentiment === 'likes' || item.sentiment === 'dislikes') continue
+
+    const dateTag = tags.find((t: string) => t.startsWith('release_date:'))
+    if (!dateTag) continue
+
+    const dateStr = (dateTag as string).slice('release_date:'.length)
+    const date = new Date(dateStr)
+    const msLeft = date.getTime() - now.getTime()
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+
+    if (daysLeft >= 0 && daysLeft <= daysBefore) {
+      upcoming.push({
+        itemId: item.id,
+        title: item.title,
+        personName: peopleMap.get(item.person_id) ?? '',
+        personId: item.person_id,
+        daysLeft,
+        releaseDate: dateStr,
+        tags: (item.tags ?? []) as string[],
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
+}
+
 export interface ItemWithPerson extends Item {
   personName: string
   personAvatar: string | null
