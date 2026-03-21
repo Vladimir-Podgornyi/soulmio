@@ -13,6 +13,7 @@ import { AddGiftForm } from '@/features/add-gift'
 import { getCuisineType, getFoodType } from '@/features/add-food'
 import { AddFoodForm } from '@/features/add-food'
 import { AddRestaurantForm } from '@/features/add-restaurant'
+import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActorItem } from '@/features/add-movie'
 
 interface OverviewPageProps {
   category: string
@@ -45,6 +46,7 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
 
   const isGifts = category === 'gifts'
   const isFood = category === 'food'
+  const isMovies = category === 'movies'
 
   // Для подарков: закреплённые сверху
   const sortedItems = isGifts
@@ -69,6 +71,10 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
   function getEditTitle() {
     if (isFood) return t('food.edit')
     if (isGifts) return t('gifts.edit')
+    if (isMovies) {
+      if (editingItem && isActorItem(editingItem.tags ?? null)) return t('movies.editActor')
+      return t('movies.edit')
+    }
     return t('common.edit')
   }
 
@@ -138,6 +144,25 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
               onSuccess={handleItemUpdated}
               onCancel={() => setEditingItem(null)}
             />
+          ) : isMovies ? (
+            isActorItem(editingItem.tags ?? null) ? (
+              <AddActorForm
+                personId={editingItem.person_id}
+                categoryId={editingItem.category_id}
+                item={editingItem}
+                onSuccess={handleItemUpdated}
+                onCancel={() => setEditingItem(null)}
+              />
+            ) : (
+              <AddMovieForm
+                personId={editingItem.person_id}
+                categoryId={editingItem.category_id}
+                item={editingItem}
+                isPro={isPro}
+                onSuccess={handleItemUpdated}
+                onCancel={() => setEditingItem(null)}
+              />
+            )
           ) : (
             <AddRestaurantForm
               personId={editingItem.person_id}
@@ -171,6 +196,7 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
   const isRestaurants = category === 'restaurants'
   const isGifts = category === 'gifts'
   const isFood = category === 'food'
+  const isMovies = category === 'movies'
   const isVisited = item.sentiment === 'visited'
   const isWants = item.sentiment === 'wants'
   const isLikes = item.sentiment === 'likes'
@@ -180,6 +206,9 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
   const isPinned = isGifts ? getGiftPinned(item.tags ?? null) : false
   const cuisineType = isFood ? getCuisineType(item.tags ?? null) : null
   const foodType = isFood ? getFoodType(item.tags ?? null) : null
+  const movieGenres = isMovies ? getMovieGenres(item.tags ?? null) : []
+  const movieReleaseDate = isMovies ? getMovieReleaseDate(item.tags ?? null) : ''
+  const isActor = isMovies ? isActorItem(item.tags ?? null) : false
 
   useEffect(() => {
     if (!menuOpen) return
@@ -204,6 +233,14 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
 
   function sentimentLabel(): { text: string; cls: string } | null {
     if (!item.sentiment) return null
+    if (isMovies) {
+      const map: Record<string, { text: string; cls: string }> = {
+        wants:    { text: `🎬 ${t('movies.statusWants')}`,    cls: 'bg-wants-bg text-wants' },
+        likes:    { text: `✅ ${t('movies.statusLikes')}`,    cls: 'bg-loves-bg text-loves' },
+        dislikes: { text: `❌ ${t('movies.statusDislikes')}`, cls: 'bg-avoid-bg text-avoid' },
+      }
+      return map[item.sentiment] ?? null
+    }
     const map: Record<string, { text: string; cls: string }> = {
       likes: {
         text: isGifts ? `✅ ${t('gifts.filterGifted')}` : t('items.sentiments.likes'),
@@ -259,6 +296,49 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
                 <p className="text-xs text-text-muted mt-0.5">
                   {new Date(giftDate).toLocaleDateString()}
                 </p>
+              )}
+              {isMovies && isActor && (
+                <p className="text-xs text-text-muted mt-1">👤 {t('movies.actorsTab')}</p>
+              )}
+              {isMovies && !isActor && (movieGenres.length > 0 || item.my_rating !== null || item.partner_rating !== null || movieReleaseDate) && (
+                <div className="flex flex-col gap-2 mt-2">
+                  {movieGenres.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {movieGenres.map((g) => (
+                        <span key={g} className="rounded-[5px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted">
+                          {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {(item.my_rating !== null || item.partner_rating !== null) && (
+                    <div className="flex gap-3">
+                      {item.my_rating !== null && (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] uppercase tracking-[0.08em] text-text-muted">{t('items.ratings.mine')}</span>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} size={10} className={s <= (item.my_rating ?? 0) ? 'fill-primary text-primary' : 'text-border-card'} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {item.partner_rating !== null && (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] uppercase tracking-[0.08em] text-text-muted">{t('items.ratings.partner')}</span>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} size={10} className={s <= (item.partner_rating ?? 0) ? 'fill-primary text-primary' : 'text-border-card'} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {movieReleaseDate && (
+                    <p className="text-xs text-text-muted">📅 {new Date(movieReleaseDate).toLocaleDateString()}</p>
+                  )}
+                </div>
               )}
             </div>
 

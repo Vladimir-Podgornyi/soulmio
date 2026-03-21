@@ -9,7 +9,7 @@ import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 import type { Profile } from '@/entities/user/model/types'
 import type { Person } from '@/entities/person/model/types'
-import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant } from '@/entities/item/api'
+import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie } from '@/entities/item/api'
 import { QuickAddWidget } from '@/widgets/quick-add'
 
 interface DashboardPageProps {
@@ -18,6 +18,7 @@ interface DashboardPageProps {
   summary: ItemCategorySummary[]
   upcomingGifts: UpcomingGift[]
   upcomingRestaurants: UpcomingRestaurant[]
+  upcomingMovies: UpcomingMovie[]
 }
 
 type StatCard = {
@@ -60,7 +61,7 @@ const STAT_CARDS: StatCard[] = [
   },
 ]
 
-export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants }: DashboardPageProps) {
+export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies }: DashboardPageProps) {
   const t = useTranslations()
   const isPro = profile.subscription_tier === 'pro'
   const displayName = profile.full_name?.split(' ')[0] ?? profile.email ?? 'there'
@@ -69,6 +70,8 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   const [selectedGift, setSelectedGift] = useState<UpcomingGift | null>(null)
   const [restaurants, setRestaurants] = useState<UpcomingRestaurant[]>(initialRestaurants)
   const [selectedRestaurant, setSelectedRestaurant] = useState<UpcomingRestaurant | null>(null)
+  const [movies, setMovies] = useState<UpcomingMovie[]>(initialMovies)
+  const [selectedMovie, setSelectedMovie] = useState<UpcomingMovie | null>(null)
 
   const summaryMap = new Map(summary.map((s) => [s.categoryName, s.count]))
   const totalItems = summary.reduce((acc, s) => acc + s.count, 0)
@@ -82,6 +85,11 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   function handleGiftBought(giftId: string) {
     setGifts((prev) => prev.filter((g) => g.itemId !== giftId))
     setSelectedGift(null)
+  }
+
+  function handleMovieDismiss(movieId: string) {
+    setMovies((prev) => prev.filter((m) => m.itemId !== movieId))
+    setSelectedMovie(null)
   }
 
   function handleRestaurantDismiss(restaurantId: string) {
@@ -158,6 +166,34 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                       {t('dashboard.giftReminderFor', { name: restaurant.personName })}
                       {' · '}
                       {t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </section>
+          )}
+
+          {movies.length > 0 && (
+            <section className="px-4 mb-5">
+              {movies.map((movie) => (
+                <button
+                  key={movie.itemId}
+                  type="button"
+                  onClick={() => setSelectedMovie(movie)}
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#182E48] border border-[#285078]/40 px-4 py-3.5 mb-2 hover:border-[#285078]/70 transition-colors text-left"
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#285078]/30 text-lg">
+                    🎬
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#4A90A4] mb-0.5">
+                      {t('movies.releaseReminder')}
+                    </p>
+                    <p className="text-sm font-medium text-text-primary truncate">{movie.title}</p>
+                    <p className="text-xs text-text-secondary">
+                      {t('dashboard.giftReminderFor', { name: movie.personName })}
+                      {' · '}
+                      {t('dashboard.giftReminderDays', { days: movie.daysLeft })}
                     </p>
                   </div>
                 </button>
@@ -295,6 +331,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           restaurant={selectedRestaurant}
           onClose={() => setSelectedRestaurant(null)}
           onDismiss={handleRestaurantDismiss}
+        />
+      )}
+
+      {/* Модальное окно фильма */}
+      {selectedMovie && (
+        <MovieReminderModal
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+          onDismiss={handleMovieDismiss}
         />
       )}
     </div>
@@ -562,6 +607,106 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
               className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
             >
               {isActing && action === 'mind' ? t('restaurants.markingMind') : t('restaurants.changedMind')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модальное окно напоминания о фильме ── */
+
+interface MovieReminderModalProps {
+  movie: UpcomingMovie
+  onClose: () => void
+  onDismiss: (movieId: string) => void
+}
+
+function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalProps) {
+  const t = useTranslations()
+  const [isActing, setIsActing] = useState(false)
+
+  function handleBuyTickets() {
+    const query = encodeURIComponent(`купить билет в кино ${movie.title}`)
+    const isRu = typeof navigator !== 'undefined' && navigator.language.startsWith('ru')
+    const url = isRu
+      ? `https://yandex.ru/search/?text=${query}`
+      : `https://www.google.com/search?q=${encodeURIComponent(`buy cinema ticket ${movie.title}`)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleNotGoing() {
+    setIsActing(true)
+    try {
+      const supabase = createClient()
+      const newTags = movie.tags.filter((tag) => !tag.startsWith('release_date:'))
+      await updateItem(supabase, movie.itemId, { tags: newTags })
+      onDismiss(movie.itemId)
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        <div className="px-6 pt-5 pb-6">
+          {/* Хэдер */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#4A90A4] mb-1">
+                {t('movies.releaseReminder')} · {t('dashboard.giftReminderFor', { name: movie.personName })}
+              </p>
+              <h2 className="text-lg font-bold tracking-[-0.3px] text-text-primary leading-tight">
+                {movie.title}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Дата */}
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-base">🎬</span>
+            <p className="text-sm text-text-secondary">
+              {t('dashboard.giftReminderDays', { days: movie.daysLeft })}
+              <span className="ml-1 text-text-muted">
+                ({new Date(movie.releaseDate).toLocaleDateString()})
+              </span>
+            </p>
+          </div>
+
+          {/* Кнопки */}
+          <div className="flex flex-col gap-2">
+            {/* Купить билеты */}
+            <button
+              type="button"
+              onClick={handleBuyTickets}
+              className="flex items-center justify-center gap-2 w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark transition-colors"
+            >
+              <ExternalLink size={15} />
+              {t('movies.buyTickets')}
+            </button>
+
+            {/* Не пойдем */}
+            <button
+              type="button"
+              onClick={handleNotGoing}
+              disabled={isActing}
+              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
+            >
+              {isActing ? '...' : t('movies.notGoing')}
             </button>
           </div>
         </div>
