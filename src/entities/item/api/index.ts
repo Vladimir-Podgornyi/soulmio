@@ -353,6 +353,93 @@ export async function getUpcomingMovies(
   return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
 }
 
+export interface UpcomingTrip {
+  itemId: string
+  title: string
+  flagEmoji: string
+  personName: string
+  personId: string
+  daysLeft: number
+  tripDate: string
+  tags: string[]
+}
+
+export async function getUpcomingTrips(
+  supabase: DbClient,
+  userId: string,
+  daysBefore = 30
+): Promise<UpcomingTrip[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(people.map((p) => [p.id, p.name]))
+
+  const { data: travelCats } = await supabase
+    .from('categories')
+    .select('id')
+    .in('person_id', peopleIds)
+    .eq('name', 'travel')
+
+  if (!travelCats?.length) return []
+
+  const travelCatIds = travelCats.map((c) => c.id)
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('id, title, person_id, tags, sentiment')
+    .in('category_id', travelCatIds)
+
+  if (!items?.length) return []
+
+  const now = new Date()
+  const upcoming: UpcomingTrip[] = []
+
+  for (const item of items) {
+    // Only "wants to visit" trips
+    if (item.sentiment !== 'wants') continue
+
+    const tags = (item.tags ?? []) as string[]
+    const dateTag = tags.find((t: string) => t.startsWith('trip_date:'))
+    if (!dateTag) continue
+
+    const dateStr = dateTag.slice('trip_date:'.length)
+    const date = new Date(dateStr)
+    const msLeft = date.getTime() - now.getTime()
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+
+    if (daysLeft >= 0 && daysLeft <= daysBefore) {
+      const codeTag = tags.find((t: string) => t.startsWith('country_code:'))
+      const code = codeTag ? codeTag.slice('country_code:'.length) : ''
+      const flagEmoji = code
+        ? String.fromCodePoint(
+            ...code
+              .toUpperCase()
+              .split('')
+              .map((c: string) => 0x1f1e6 + c.charCodeAt(0) - 65)
+          )
+        : '✈️'
+
+      upcoming.push({
+        itemId: item.id,
+        title: item.title,
+        flagEmoji,
+        personName: peopleMap.get(item.person_id) ?? '',
+        personId: item.person_id,
+        daysLeft,
+        tripDate: dateStr,
+        tags,
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
+}
+
 export interface ItemWithPerson extends Item {
   personName: string
   personAvatar: string | null

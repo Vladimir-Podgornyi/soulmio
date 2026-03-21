@@ -113,7 +113,15 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
 
   return (
     <form onSubmit={handleSubmit((v) => onSubmit(v, avatarUrl))} className="flex flex-col gap-5">
-      {/* Аватар (только Pro) */}
+      {/* Аватар */}
+      {!isPro && (
+        <div className="flex items-center gap-3 pb-1">
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-bg-input opacity-50">
+            <Camera size={20} className="text-text-muted" />
+          </div>
+          <p className="text-xs text-text-muted">{t('people.avatarProHint')}</p>
+        </div>
+      )}
       {isPro && (
         <div className="flex flex-col items-center gap-2 pb-1">
           <input

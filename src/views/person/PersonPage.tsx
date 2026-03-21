@@ -19,6 +19,7 @@ import { useAddFood, getFoodType, getCuisineType, getLinkedRestaurant } from '@/
 import { AddGiftForm } from '@/features/add-gift'
 import { useAddGift, getGiftPinned, getGiftDate } from '@/features/add-gift'
 import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleaseDate, isActorItem, getActorFilms, getMoviePinned } from '@/features/add-movie'
+import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji } from '@/features/add-travel'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 
 interface PersonPageProps {
@@ -93,6 +94,7 @@ export function PersonPage({
   const isFood = activeCategory?.name === 'food'
   const isGifts = activeCategory?.name === 'gifts'
   const isMovies = activeCategory?.name === 'movies'
+  const isTravel = activeCategory?.name === 'travel'
 
   // Фильмы: разделяем фильмы и актёров
   const movieOnlyItems = isMovies ? allItems.filter((it) => !isActorItem(it.tags ?? null)) : allItems
@@ -117,8 +119,8 @@ export function PersonPage({
     : typeFiltered
   // Закреплённые сверху для всех категорий
   const items = [...genreFiltered].sort((a, b) => {
-    const aPin = getGiftPinned(a.tags ?? null) || getMoviePinned(a.tags ?? null) ? 0 : 1
-    const bPin = getGiftPinned(b.tags ?? null) || getMoviePinned(b.tags ?? null) ? 0 : 1
+    const aPin = getGiftPinned(a.tags ?? null) || getMoviePinned(a.tags ?? null) || getTravelPinned(a.tags ?? null) ? 0 : 1
+    const bPin = getGiftPinned(b.tags ?? null) || getMoviePinned(b.tags ?? null) || getTravelPinned(b.tags ?? null) ? 0 : 1
     return aPin - bPin
   })
 
@@ -406,6 +408,34 @@ export function PersonPage({
         </div>
       )}
 
+      {/* Фильтр — путешествия */}
+      {isTravel && allItems.length > 0 && (
+        <div className="flex gap-2 px-4 pb-4">
+          {([
+            { key: 'all',     label: t('travel.filterAll') },
+            { key: 'wants',   label: t('travel.filterWants') },
+            { key: 'visited', label: t('travel.filterVisited') },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                filter === key
+                  ? 'bg-bg-input text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {label}
+              {key !== 'all' && (
+                <span className="ml-1.5 text-text-muted">
+                  {allItems.filter((it) => it.sentiment === key).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Фильтры — фильмы */}
       {isMovies && (
         <div className="px-4 pb-4 flex flex-col gap-3">
@@ -562,6 +592,16 @@ export function PersonPage({
                     onUpdated={handleItemUpdated}
                   />
                 )
+              ) : isTravel ? (
+                <TravelCard
+                  key={item.id}
+                  item={item}
+                  personId={person.id}
+                  categoryId={activeCategoryId}
+                  onEdit={() => setEditingItem(item)}
+                  onDeleted={() => handleItemDeleted(item.id)}
+                  onUpdated={handleItemUpdated}
+                />
               ) : (
                 <RestaurantCard
                   key={item.id}
@@ -715,6 +755,33 @@ export function PersonPage({
             personId={person.id}
             categoryId={activeCategoryId}
             item={editingItem}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист добавления — путешествие */}
+      {isAddOpen && isTravel && (
+        <BottomSheet title={t('travel.add')} onClose={() => setIsAddOpen(false)}>
+          <AddTravelForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            isPro={isPro}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — путешествие */}
+      {editingItem && isTravel && (
+        <BottomSheet title={t('travel.edit')} onClose={() => setEditingItem(null)}>
+          <AddTravelForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            item={editingItem}
+            isPro={isPro}
             onSuccess={handleItemUpdated}
             onCancel={() => setEditingItem(null)}
           />
@@ -2184,6 +2251,196 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ── Карточка путешествия ── */
+
+interface TravelCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  onEdit: () => void
+  onDeleted: () => void
+  onUpdated: (item: Item) => void
+}
+
+function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: TravelCardProps) {
+  const t = useTranslations()
+  const { isSaving, removeTravel } = useAddTravel(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeTravel(item.id)
+      onDeleted()
+      toast.success(t('travel.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const isPinned = getTravelPinned(item.tags ?? null)
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const travelCountry = getTravelCountry(item.tags ?? null)
+  const travelCity = getTravelCity(item.tags ?? null)
+  const travelDate = getTravelDate(item.tags ?? null)
+  const budget = getTravelBudget(item.tags ?? null)
+
+  const hasPlanBudget = [budget.plan.hotel, budget.plan.transport, budget.plan.onsite, budget.plan.other].some(v => v !== null)
+  const hasActualBudget = [budget.actual.hotel, budget.actual.transport, budget.actual.onsite, budget.actual.other].some(v => v !== null)
+
+  const planTotal = [budget.plan.hotel, budget.plan.transport, budget.plan.onsite, budget.plan.other]
+    .filter((v): v is number => v !== null)
+    .reduce((s, v) => s + v, 0)
+  const actualTotal = [budget.actual.hotel, budget.actual.transport, budget.actual.onsite, budget.actual.other]
+    .filter((v): v is number => v !== null)
+    .reduce((s, v) => s + v, 0)
+
+  const isVisited = item.sentiment === 'visited'
+  const flagEmoji = travelCountry.code ? getFlagEmoji(travelCountry.code) : null
+
+  return (
+    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      {/* Верхняя строка */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+            {flagEmoji && <span className="text-xl">{flagEmoji}</span>}
+            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+          </div>
+          {travelCity && travelCountry.name && travelCity !== item.title && (
+            <span className="text-xs text-text-secondary">{travelCity}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Бейдж статуса */}
+          <span
+            className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium flex-shrink-0 ${
+              isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'
+            }`}
+          >
+            {isVisited ? `✅ ${t('travel.statusVisited')}` : `✈️ ${t('travel.statusWants')}`}
+          </span>
+
+          {/* Меню из трёх точек */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+            >
+              <MoreVertical size={15} />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+                <button
+                  onClick={() => { setMenuOpen(false); onEdit() }}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+                >
+                  <Pencil size={14} className="text-text-secondary" />
+                  {t('common.edit')}
+                </button>
+                <div className="mx-3 h-px bg-border-card" />
+                <button
+                  onClick={handleTogglePin}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
+                >
+                  <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+                  {isPinned ? t('common.unpin') : t('common.pin')}
+                </button>
+                <div className="mx-3 h-px bg-border-card" />
+                <button
+                  onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {t('common.delete')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Дата поездки */}
+      {!isVisited && travelDate && (
+        <p className="mt-2 text-xs text-text-secondary">
+          📅 {new Date(travelDate).toLocaleDateString()}
+        </p>
+      )}
+
+      {/* Бюджет */}
+      {hasPlanBudget && (
+        <p className="mt-1.5 text-xs text-text-secondary">
+          💰 {t('travel.planBudget')}: {planTotal.toLocaleString()}
+        </p>
+      )}
+      {hasActualBudget && (
+        <p className="mt-1.5 text-xs text-text-secondary">
+          💸 {t('travel.actualBudget')}: {actualTotal.toLocaleString()}
+        </p>
+      )}
+
+      {/* Комментарий */}
+      {item.description && (
+        <p className="mt-2 text-[13px] text-text-secondary leading-relaxed">
+          {item.description}
+        </p>
+      )}
+
+      {/* Подтверждение удаления */}
+      {confirmDelete && (
+        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+          <span className="text-sm text-red-500">{t('travel.deleteConfirm')}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isSaving}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? '...' : t('common.delete')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

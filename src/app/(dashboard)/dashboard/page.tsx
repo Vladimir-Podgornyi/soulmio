@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/shared/api/supabase-server'
 import type { DbClient } from '@/shared/api/supabase'
 import { getProfile } from '@/entities/user/api'
 import { getPeople } from '@/entities/person/api'
-import { getItemSummary, getUpcomingGifts, getUpcomingRestaurants, getUpcomingMovies } from '@/entities/item/api'
+import { getItemSummary, getUpcomingGifts, getUpcomingRestaurants, getUpcomingMovies, getUpcomingTrips } from '@/entities/item/api'
 import { DashboardPage } from '@/views/dashboard/DashboardPage'
 import type { Profile } from '@/entities/user/model/types'
 
@@ -43,13 +43,14 @@ export default async function Page() {
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? null
   const db = supabase as DbClient
 
-  const [profile, people, summary, upcomingGifts, upcomingRestaurants, upcomingMovies] = await Promise.all([
+  const [profile, people, summary, upcomingGifts, upcomingRestaurants, upcomingMovies, upcomingTrips] = await Promise.all([
     getOrCreateProfile(db, user.id, user.email, fullName),
     getPeople(db, user.id),
     getItemSummary(db, user.id),
     getUpcomingGifts(db, user.id),
     getUpcomingRestaurants(db, user.id),
     getUpcomingMovies(db, user.id),
+    getUpcomingTrips(db, user.id),
   ])
 
   return (
@@ -60,6 +61,7 @@ export default async function Page() {
       upcomingGifts={upcomingGifts}
       upcomingRestaurants={upcomingRestaurants}
       upcomingMovies={upcomingMovies}
+      upcomingTrips={upcomingTrips}
     />
   )
 }

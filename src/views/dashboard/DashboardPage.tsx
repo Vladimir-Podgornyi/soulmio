@@ -9,7 +9,7 @@ import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 import type { Profile } from '@/entities/user/model/types'
 import type { Person } from '@/entities/person/model/types'
-import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie } from '@/entities/item/api'
+import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie, UpcomingTrip } from '@/entities/item/api'
 import { QuickAddWidget } from '@/widgets/quick-add'
 
 interface DashboardPageProps {
@@ -19,6 +19,7 @@ interface DashboardPageProps {
   upcomingGifts: UpcomingGift[]
   upcomingRestaurants: UpcomingRestaurant[]
   upcomingMovies: UpcomingMovie[]
+  upcomingTrips: UpcomingTrip[]
 }
 
 type StatCard = {
@@ -61,7 +62,7 @@ const STAT_CARDS: StatCard[] = [
   },
 ]
 
-export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies }: DashboardPageProps) {
+export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips }: DashboardPageProps) {
   const t = useTranslations()
   const isPro = profile.subscription_tier === 'pro'
   const displayName = profile.full_name?.split(' ')[0] ?? profile.email ?? 'there'
@@ -72,6 +73,8 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   const [selectedRestaurant, setSelectedRestaurant] = useState<UpcomingRestaurant | null>(null)
   const [movies, setMovies] = useState<UpcomingMovie[]>(initialMovies)
   const [selectedMovie, setSelectedMovie] = useState<UpcomingMovie | null>(null)
+  const [trips, setTrips] = useState<UpcomingTrip[]>(initialTrips)
+  const [selectedTrip, setSelectedTrip] = useState<UpcomingTrip | null>(null)
 
   const summaryMap = new Map(summary.map((s) => [s.categoryName, s.count]))
   const totalItems = summary.reduce((acc, s) => acc + s.count, 0)
@@ -90,6 +93,11 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   function handleMovieDismiss(movieId: string) {
     setMovies((prev) => prev.filter((m) => m.itemId !== movieId))
     setSelectedMovie(null)
+  }
+
+  function handleTripDismiss(tripId: string) {
+    setTrips((prev) => prev.filter((tr) => tr.itemId !== tripId))
+    setSelectedTrip(null)
   }
 
   function handleRestaurantDismiss(restaurantId: string) {
@@ -194,6 +202,34 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                       {t('dashboard.giftReminderFor', { name: movie.personName })}
                       {' · '}
                       {t('dashboard.giftReminderDays', { days: movie.daysLeft })}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </section>
+          )}
+
+          {trips.length > 0 && (
+            <section className="px-4 mb-5">
+              {trips.map((trip) => (
+                <button
+                  key={trip.itemId}
+                  type="button"
+                  onClick={() => setSelectedTrip(trip)}
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A2030] border border-[#483060]/40 px-4 py-3.5 mb-2 hover:border-[#483060]/70 transition-colors text-left"
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#483060]/30 text-xl">
+                    {trip.flagEmoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9B70D0] mb-0.5">
+                      {t('travel.reminder')}
+                    </p>
+                    <p className="text-sm font-medium text-text-primary truncate">{trip.title}</p>
+                    <p className="text-xs text-text-secondary">
+                      {t('dashboard.giftReminderFor', { name: trip.personName })}
+                      {' · '}
+                      {t('dashboard.giftReminderDays', { days: trip.daysLeft })}
                     </p>
                   </div>
                 </button>
@@ -340,6 +376,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           movie={selectedMovie}
           onClose={() => setSelectedMovie(null)}
           onDismiss={handleMovieDismiss}
+        />
+      )}
+
+      {/* Модальное окно поездки */}
+      {selectedTrip && (
+        <TripReminderModal
+          trip={selectedTrip}
+          onClose={() => setSelectedTrip(null)}
+          onDismiss={handleTripDismiss}
         />
       )}
     </div>
@@ -707,6 +752,109 @@ function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalPro
               className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
             >
               {isActing ? '...' : t('movies.notGoing')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модальное окно напоминания о поездке ── */
+
+interface TripReminderModalProps {
+  trip: UpcomingTrip
+  onClose: () => void
+  onDismiss: (tripId: string) => void
+}
+
+function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps) {
+  const t = useTranslations()
+  const [isActing, setIsActing] = useState(false)
+  const [action, setAction] = useState<'booked' | 'cancelled' | null>(null)
+
+  async function handleBooked() {
+    setIsActing(true)
+    setAction('booked')
+    try {
+      const supabase = createClient()
+      await updateItem(supabase, trip.itemId, { sentiment: 'visited' })
+      onDismiss(trip.itemId)
+    } finally {
+      setIsActing(false)
+      setAction(null)
+    }
+  }
+
+  async function handleCancelled() {
+    setIsActing(true)
+    setAction('cancelled')
+    try {
+      const supabase = createClient()
+      const newTags = trip.tags.filter((tag) => !tag.startsWith('trip_date:'))
+      await updateItem(supabase, trip.itemId, { tags: newTags })
+      onDismiss(trip.itemId)
+    } finally {
+      setIsActing(false)
+      setAction(null)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        <div className="px-6 pt-5 pb-6">
+          {/* Хэдер */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9B70D0] mb-1">
+                {t('travel.reminder')} · {t('dashboard.giftReminderFor', { name: trip.personName })}
+              </p>
+              <h2 className="text-lg font-bold tracking-[-0.3px] text-text-primary leading-tight flex items-center gap-2">
+                <span className="text-2xl">{trip.flagEmoji}</span>
+                {trip.title}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Дата */}
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-base">✈️</span>
+            <p className="text-sm text-text-secondary">
+              {t('dashboard.giftReminderDays', { days: trip.daysLeft })}
+              <span className="ml-1 text-text-muted">
+                ({new Date(trip.tripDate).toLocaleDateString()})
+              </span>
+            </p>
+          </div>
+
+          {/* Кнопки */}
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleBooked}
+              disabled={isActing}
+              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+            >
+              {isActing && action === 'booked' ? t('travel.markingBooked') : t('travel.reminderBooked')}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCancelled}
+              disabled={isActing}
+              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
+            >
+              {isActing && action === 'cancelled' ? '...' : t('travel.reminderCancelled')}
             </button>
           </div>
         </div>
