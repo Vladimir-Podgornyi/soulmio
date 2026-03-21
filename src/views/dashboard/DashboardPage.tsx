@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell } from 'lucide-react'
+import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight } from 'lucide-react'
 import { createClient } from '@/shared/api/supabase'
 import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
@@ -239,12 +239,16 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
         </>
       ) : (
         <section className="px-4 mb-5">
-          <div className="flex items-center gap-3 rounded-[16px] border border-dashed border-border px-4 py-3">
+          <Link
+            href="/pro"
+            className="flex items-center gap-3 rounded-[16px] border border-dashed border-border px-4 py-3 hover:border-primary/30 transition-colors"
+          >
             <Bell size={15} className="text-text-muted flex-shrink-0" suppressHydrationWarning />
-            <p className="text-xs text-text-muted leading-snug">
+            <p className="flex-1 text-xs text-text-muted leading-snug">
               {t('dashboard.remindersProHint')}
             </p>
-          </div>
+            <ChevronRight size={14} className="text-text-muted flex-shrink-0" />
+          </Link>
         </section>
       )}
 
@@ -778,7 +782,8 @@ function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps)
     setAction('booked')
     try {
       const supabase = createClient()
-      await updateItem(supabase, trip.itemId, { sentiment: 'visited' })
+      const newTags = [...trip.tags.filter((tag) => tag !== 'trip_booked:true'), 'trip_booked:true']
+      await updateItem(supabase, trip.itemId, { tags: newTags })
       onDismiss(trip.itemId)
     } finally {
       setIsActing(false)

@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Plus, X, ChevronLeft } from 'lucide-react'
+import { Plus, X, ChevronLeft, Loader2 } from 'lucide-react'
 import type { Person } from '@/entities/person/model/types'
+import type { Category } from '@/entities/category/model/types'
+import { getCategories } from '@/entities/category/api'
+import { createClient } from '@/shared/api/supabase'
 import { AddPersonForm } from '@/features/add-person'
 
 interface QuickAddWidgetProps {
@@ -12,36 +15,26 @@ interface QuickAddWidgetProps {
   isPro: boolean
 }
 
-type CategoryOption = {
-  name: string
-  icon: string
-  labelKey: string
-  proOnly: boolean
-}
+type Step = 'person' | 'category'
 
-const CATEGORIES: CategoryOption[] = [
-  { name: 'food',        icon: '🍽️', labelKey: 'categories.food',        proOnly: false },
-  { name: 'restaurants', icon: '🍴', labelKey: 'categories.restaurants', proOnly: false },
-  { name: 'gifts',       icon: '🎁', labelKey: 'categories.gifts',       proOnly: false },
-  { name: 'movies',      icon: '🎬', labelKey: 'categories.movies',      proOnly: true  },
-  { name: 'travel',      icon: '✈️', labelKey: 'categories.travel',      proOnly: true  },
-]
-
-type Step = 'category' | 'person'
+const DEFAULT_NAMES = ['food', 'restaurants', 'gifts', 'movies', 'travel'] as const
 
 export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
   const t = useTranslations()
   const router = useRouter()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [step, setStep] = useState<Step>('category')
-  const [selectedCategory, setSelectedCategory] = useState<CategoryOption | null>(null)
+  const [step, setStep] = useState<Step>('person')
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [isAddingPerson, setIsAddingPerson] = useState(false)
   const [localPeople, setLocalPeople] = useState<Person[]>(people)
 
   function open() {
-    setStep('category')
-    setSelectedCategory(null)
+    setStep('person')
+    setSelectedPerson(null)
+    setCategories([])
     setIsAddingPerson(false)
     setIsOpen(true)
   }
@@ -50,22 +43,38 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
     setIsOpen(false)
   }
 
-  function handleCategorySelect(cat: CategoryOption) {
-    if (cat.proOnly && !isPro) return
-    setSelectedCategory(cat)
-    setStep('person')
+  async function handlePersonSelect(person: Person) {
+    setSelectedPerson(person)
+    setIsLoadingCategories(true)
+    try {
+      const supabase = createClient()
+      const cats = await getCategories(supabase, person.id)
+      setCategories(cats)
+      setStep('category')
+    } catch {
+      // fallback — показываем пустой список
+    } finally {
+      setIsLoadingCategories(false)
+    }
   }
 
-  function handlePersonSelect(person: Person) {
-    if (!selectedCategory) return
+  function handleCategorySelect(cat: Category) {
+    if (!selectedPerson) return
     close()
-    router.push(`/people/${person.id}?add=${selectedCategory.name}`)
+    router.push(`/people/${selectedPerson.id}?add=${cat.name}`)
   }
 
   function handlePersonCreated(person: Person) {
     setLocalPeople((prev) => [person, ...prev])
     setIsAddingPerson(false)
-    handlePersonSelect(person)
+    void handlePersonSelect(person)
+  }
+
+  function getCategoryLabel(cat: Category): string {
+    if (!cat.is_custom && (DEFAULT_NAMES as readonly string[]).includes(cat.name)) {
+      return t(`categories.${cat.name}` as Parameters<typeof t>[0])
+    }
+    return cat.name
   }
 
   const canAddMorePeople = isPro || localPeople.length === 0
@@ -85,22 +94,19 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
       {/* Оверлей */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={close}
-          />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
 
           <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe">
             {/* Хэдер */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
-              {step === 'person' && !isAddingPerson ? (
+              {step === 'category' && !isAddingPerson ? (
                 <button
                   type="button"
-                  onClick={() => setStep('category')}
+                  onClick={() => { setStep('person'); setSelectedPerson(null); setCategories([]) }}
                   className="flex items-center gap-1 text-sm text-text-secondary"
                 >
                   <ChevronLeft size={16} />
-                  {t('categories.' + selectedCategory?.name)}
+                  {selectedPerson?.name}
                 </button>
               ) : isAddingPerson ? (
                 <button
@@ -118,9 +124,9 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
               <h2 className="text-base font-semibold tracking-[-0.3px] text-text-primary">
                 {isAddingPerson
                   ? t('people.addPerson')
-                  : step === 'category'
-                  ? t('dashboard.selectCategory')
-                  : t('dashboard.selectPerson')}
+                  : step === 'person'
+                  ? t('dashboard.selectPerson')
+                  : t('dashboard.selectCategory')}
               </h2>
 
               <button
@@ -132,48 +138,16 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
               </button>
             </div>
 
-            {/* Шаг 1: выбор категории */}
-            {step === 'category' && (
-              <div className="grid grid-cols-3 gap-3 px-6 pb-6">
-                {CATEGORIES.map((cat) => {
-                  const locked = cat.proOnly && !isPro
-                  return (
-                    <button
-                      key={cat.name}
-                      type="button"
-                      onClick={() => handleCategorySelect(cat)}
-                      disabled={locked}
-                      className={[
-                        'flex flex-col items-center gap-2 rounded-[16px] bg-bg-card border border-border-card p-4 transition-all active:scale-95',
-                        locked
-                          ? 'opacity-40 cursor-not-allowed'
-                          : 'hover:border-primary/40 hover:bg-bg-hover',
-                      ].join(' ')}
-                    >
-                      <span className="text-3xl leading-none">{cat.icon}</span>
-                      <span className="text-xs font-medium text-text-secondary">
-                        {t(cat.labelKey)}
-                      </span>
-                      {locked && (
-                        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
-                          Pro
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Шаг 2: выбор человека */}
+            {/* Шаг 1: выбор человека */}
             {step === 'person' && !isAddingPerson && (
               <div className="flex flex-col gap-2 px-6 pb-6">
                 {localPeople.map((person) => (
                   <button
                     key={person.id}
                     type="button"
-                    onClick={() => handlePersonSelect(person)}
-                    className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 text-left transition-all hover:border-primary/40 active:scale-[0.98]"
+                    onClick={() => void handlePersonSelect(person)}
+                    disabled={isLoadingCategories}
+                    className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 text-left transition-all hover:border-primary/40 active:scale-[0.98] disabled:opacity-60"
                   >
                     {person.avatar_url ? (
                       <img
@@ -186,22 +160,24 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                         {person.name[0].toUpperCase()}
                       </div>
                     )}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col flex-1">
                       <span className="text-sm font-semibold text-text-primary leading-tight">
                         {person.name}
                       </span>
                       {person.relation && (
                         <span className="text-xs text-text-secondary capitalize">
-                          {['partner', 'friend', 'family', 'other'].includes(person.relation)
+                          {(['partner', 'friend', 'family', 'other'] as string[]).includes(person.relation)
                             ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
                             : person.relation}
                         </span>
                       )}
                     </div>
+                    {isLoadingCategories && selectedPerson?.id === person.id && (
+                      <Loader2 size={16} className="text-text-muted animate-spin flex-shrink-0" />
+                    )}
                   </button>
                 ))}
 
-                {/* Добавить нового человека */}
                 {canAddMorePeople && (
                   <button
                     type="button"
@@ -219,6 +195,30 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
 
                 {localPeople.length === 0 && !canAddMorePeople && (
                   <p className="text-center text-sm text-text-muted py-4">
+                    {t('common.empty')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Шаг 2: выбор категории */}
+            {step === 'category' && (
+              <div className="grid grid-cols-3 gap-3 px-6 pb-6">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategorySelect(cat)}
+                    className="flex flex-col items-center gap-2 rounded-[16px] bg-bg-card border border-border-card p-4 transition-all active:scale-95 hover:border-primary/40 hover:bg-bg-hover"
+                  >
+                    <span className="text-3xl leading-none">{cat.icon ?? '📁'}</span>
+                    <span className="text-xs font-medium text-text-secondary text-center leading-tight">
+                      {getCategoryLabel(cat)}
+                    </span>
+                  </button>
+                ))}
+                {categories.length === 0 && (
+                  <p className="col-span-3 text-center text-sm text-text-muted py-4">
                     {t('common.empty')}
                   </p>
                 )}

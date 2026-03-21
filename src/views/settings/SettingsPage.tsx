@@ -5,7 +5,8 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Sun, Moon, Monitor, LogOut, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap } from 'lucide-react'
 import type { Profile } from '@/entities/user/model/types'
 import { useCurrency, CURRENCIES, CURRENCY_SYMBOLS } from '@/shared/lib/currency'
 import { useUpdateName } from '@/features/settings/model/useUpdateName'
@@ -24,6 +25,7 @@ type LocaleKey = (typeof LOCALES)[number]
 
 export function SettingsPage({ profile }: SettingsPageProps) {
   const t = useTranslations()
+  const isPro = profile.subscription_tier === 'pro'
   const { theme, setTheme } = useTheme()
   const locale = useLocale()
   const router = useRouter()
@@ -237,6 +239,35 @@ export function SettingsPage({ profile }: SettingsPageProps) {
           />
         </AccountRow>
       </div>
+
+      {/* ── Pro plan ── */}
+      {isPro ? (
+        <div
+          className="mb-5 flex items-center gap-3 rounded-[14px] px-4 py-4 min-h-[60px]"
+          style={{ background: 'linear-gradient(135deg, #22382A, #345A40)' }}
+        >
+          <Zap size={20} className="text-[#5CBD8A] flex-shrink-0" fill="#5CBD8A" />
+          <div>
+            <p className="text-sm font-semibold text-white">{t('pro.settingsProBanner')}</p>
+            <p className="text-xs text-white/60">{t('pro.settingsProBannerSub')}</p>
+          </div>
+        </div>
+      ) : (
+        <Link
+          href="/pro"
+          className="mb-5 flex items-center justify-between rounded-[14px] px-4 py-4 min-h-[60px] transition-opacity hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #7A3020, #C94F38)' }}
+        >
+          <div className="flex items-center gap-3">
+            <Zap size={20} className="text-white flex-shrink-0" fill="white" />
+            <div>
+              <p className="text-sm font-semibold text-white">{t('pro.settingsBanner')}</p>
+              <p className="text-xs text-white/70">{t('pro.settingsBannerSub')}</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-white/70 flex-shrink-0" />
+        </Link>
+      )}
 
       {/* ── Выход ── */}
       <button

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Star, Bell } from 'lucide-react'
 import { toast } from 'sonner'
@@ -233,10 +234,17 @@ export function AddMovieForm({
             className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
           />
           {releaseDate && (
-            <p className="flex items-center gap-1 text-[11px] text-text-muted">
-              <Bell size={11} />
-              {isPro ? t('movies.releaseDateHint') : t('movies.releaseDateHintPro')}
-            </p>
+            isPro ? (
+              <p className="flex items-center gap-1 text-[11px] text-text-muted">
+                <Bell size={11} />
+                {t('movies.releaseDateHint')}
+              </p>
+            ) : (
+              <Link href="/pro" className="flex items-center gap-1 text-[11px] text-text-muted hover:text-primary transition-colors">
+                <Bell size={11} />
+                {t('movies.releaseDateHintPro')}
+              </Link>
+            )
           )}
         </div>
       )}

@@ -11,12 +11,16 @@ export interface TravelBudget {
   other: number | null
 }
 
+export const REMINDER_DAY_OPTIONS = [7, 14, 30, 60, 90] as const
+export type ReminderDays = typeof REMINDER_DAY_OPTIONS[number]
+
 export interface TravelFormValues {
   city: string
   country: string
   countryCode: string
   sentiment: 'wants' | 'visited'
   tripDate: string
+  reminderDays: ReminderDays
   comment: string
   pinned: boolean
   hasPlanBudget: boolean
@@ -46,6 +50,15 @@ export function getTravelDate(tags: string[] | null): string {
   return t ? t.slice('trip_date:'.length) : ''
 }
 
+export function getTravelReminderDays(tags: string[] | null): ReminderDays {
+  const t = tags?.find((tag) => tag.startsWith('reminder_days:'))
+  if (t) {
+    const n = Number(t.slice('reminder_days:'.length))
+    if ((REMINDER_DAY_OPTIONS as readonly number[]).includes(n)) return n as ReminderDays
+  }
+  return 30
+}
+
 export function getTravelBudget(tags: string[] | null): { plan: TravelBudget; actual: TravelBudget } {
   const num = (prefix: string) => {
     const t = tags?.find((tag) => tag.startsWith(prefix))
@@ -73,7 +86,10 @@ function buildTravelTags(values: TravelFormValues): string[] {
   if (values.city.trim()) tags.push(`city:${values.city.trim()}`)
   if (values.country.trim()) tags.push(`country:${values.country.trim()}`)
   if (values.countryCode.trim()) tags.push(`country_code:${values.countryCode.trim()}`)
-  if (values.tripDate.trim()) tags.push(`trip_date:${values.tripDate.trim()}`)
+  if (values.tripDate.trim()) {
+    tags.push(`trip_date:${values.tripDate.trim()}`)
+    tags.push(`reminder_days:${values.reminderDays}`)
+  }
   if (values.hasPlanBudget) {
     const b = values.planBudget
     if (b.hotel !== null) tags.push(`plan_hotel:${b.hotel}`)

@@ -12,6 +12,7 @@ import type { Category } from '@/entities/category/model/types'
 import { updateItem } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
 import { createCustomCategory, updateCustomCategory, deleteCustomCategory } from '@/entities/category/api'
+import { AddPersonForm } from '@/features/add-person'
 import { AddRestaurantForm } from '@/features/add-restaurant'
 import { useAddRestaurant } from '@/features/add-restaurant/model/useAddRestaurant'
 import { AddFoodForm } from '@/features/add-food'
@@ -69,6 +70,8 @@ export function PersonPage({
   const [filter, setFilter] = useState<'all' | 'visited' | 'wants' | 'likes' | 'dislikes'>('all')
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'dish' | 'food_type' | 'cuisine'>('all')
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
+  const [showEditPerson, setShowEditPerson] = useState(false)
+  const [localPerson, setLocalPerson] = useState(person)
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [movieSubTab, setMovieSubTab] = useState<'movies' | 'actors'>('movies')
@@ -187,21 +190,25 @@ export function PersonPage({
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[18px] font-bold text-white uppercase leading-none overflow-hidden">
-            {person.avatar_url
-              ? <img src={person.avatar_url} alt={person.name} className="h-full w-full object-cover" />
-              : person.name.charAt(0)
+          <button
+            type="button"
+            onClick={() => setShowEditPerson(true)}
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[18px] font-bold text-white uppercase leading-none overflow-hidden hover:opacity-85 transition-opacity"
+          >
+            {localPerson.avatar_url
+              ? <img src={localPerson.avatar_url} alt={localPerson.name} className="h-full w-full object-cover" />
+              : localPerson.name.charAt(0)
             }
-          </div>
+          </button>
           <div>
             <h1 className="text-[24px] font-bold tracking-[-0.5px] text-text-primary leading-tight">
-              {person.name}
+              {localPerson.name}
             </h1>
-            {person.relation && (
+            {localPerson.relation && (
               <p className="text-sm text-text-secondary capitalize">
-                {['partner', 'friend', 'family', 'other'].includes(person.relation)
-                  ? t(`people.relations.${person.relation as 'partner' | 'friend' | 'family' | 'other'}`)
-                  : person.relation}
+                {['partner', 'friend', 'family', 'other'].includes(localPerson.relation)
+                  ? t(`people.relations.${localPerson.relation as 'partner' | 'friend' | 'family' | 'other'}`)
+                  : localPerson.relation}
               </p>
             )}
           </div>
@@ -259,6 +266,21 @@ export function PersonPage({
           <span>{t('categories.addCustom')}</span>
         </button>
       </div>
+
+      {/* Модал редактирования человека */}
+      {showEditPerson && (
+        <BottomSheet title={t('people.editPerson')} onClose={() => setShowEditPerson(false)}>
+          <AddPersonForm
+            isPro={isPro}
+            person={localPerson}
+            onSuccess={(updated) => {
+              setLocalPerson(updated)
+              setShowEditPerson(false)
+            }}
+            onCancel={() => setShowEditPerson(false)}
+          />
+        </BottomSheet>
+      )}
 
       {/* Модал добавления кастомной категории */}
       {showAddCategory && (
@@ -533,12 +555,12 @@ export function PersonPage({
 
         {items.length === 0 ? (
           isMovies && movieSubTab === 'actors' && !isPro ? (
-            <div className="rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center">
+            <Link href="/pro" className="block rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center hover:border-primary/40 transition-colors">
               <p className="text-3xl mb-3">🎭</p>
               <p className="text-sm text-text-secondary leading-relaxed">
                 {t('movies.actorsPro')}
               </p>
-            </div>
+            </Link>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="mb-3 text-5xl">
@@ -2184,12 +2206,12 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
 
         {isLimited ? (
           /* Paywall для Free */
-          <div className="rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-5 text-center">
+          <Link href="/pro" className="block rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-5 text-center hover:border-primary/40 transition-colors">
             <p className="text-2xl mb-3">🔒</p>
             <p className="text-sm text-text-secondary leading-relaxed">
               {t('paywall.categoryLimit')}
             </p>
-          </div>
+          </Link>
         ) : (
           /* Форма */
           <div className="flex flex-col gap-4">
@@ -2327,6 +2349,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
     .reduce((s, v) => s + v, 0)
 
   const isVisited = item.sentiment === 'visited'
+  const isBooked = !isVisited && (item.tags ?? []).includes('trip_booked:true')
   const flagEmoji = travelCountry.code ? getFlagEmoji(travelCountry.code) : null
 
   return (
@@ -2348,10 +2371,14 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
           {/* Бейдж статуса */}
           <span
             className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium flex-shrink-0 ${
-              isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'
+              isVisited ? 'bg-loves-bg text-loves' : isBooked ? 'bg-[#2A2A1A] text-[#F0A500]' : 'bg-wants-bg text-wants'
             }`}
           >
-            {isVisited ? `✅ ${t('travel.statusVisited')}` : `✈️ ${t('travel.statusWants')}`}
+            {isVisited
+              ? `✅ ${t('travel.statusVisited')}`
+              : isBooked
+              ? `🎟️ ${t('travel.statusBooked')}`
+              : `✈️ ${t('travel.statusWants')}`}
           </span>
 
           {/* Меню из трёх точек */}

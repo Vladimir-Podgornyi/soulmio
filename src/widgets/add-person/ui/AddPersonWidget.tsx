@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
 import type { Person } from '@/entities/person/model/types'
@@ -50,12 +51,12 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidge
       {showPaywall && !canAdd && (
         <div className="flex flex-col gap-2 rounded-[14px] border border-primary/30 bg-primary/5 px-4 py-3.5">
           <p className="text-sm text-text-primary">{t('paywall.personLimit')}</p>
-          <button
-            type="button"
+          <Link
+            href="/pro"
             className="self-start rounded-[10px] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition-colors"
           >
             {t('paywall.upgradeToPro')}
-          </button>
+          </Link>
         </div>
       )}
 

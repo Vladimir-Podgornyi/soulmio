@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
 import { MapPin, Bell, Plus, Minus, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -11,9 +12,11 @@ import {
   getTravelDate,
   getTravelBudget,
   getTravelPinned,
+  getTravelReminderDays,
+  REMINDER_DAY_OPTIONS,
 } from '../model/useAddTravel'
 import { getFlagEmoji, searchCountries } from '../model/countries'
-import type { TravelFormValues, TravelBudget } from '../model/useAddTravel'
+import type { TravelFormValues, TravelBudget, ReminderDays } from '../model/useAddTravel'
 
 interface AddTravelFormProps {
   personId: string
@@ -101,6 +104,7 @@ export function AddTravelForm({
     (item?.sentiment as 'wants' | 'visited' | null) ?? 'wants'
   )
   const [tripDate, setTripDate] = useState(getTravelDate(item?.tags ?? null))
+  const [reminderDays, setReminderDays] = useState<ReminderDays>(getTravelReminderDays(item?.tags ?? null))
   const [comment, setComment] = useState(item?.description ?? '')
   const [pinned] = useState(getTravelPinned(item?.tags ?? null))
 
@@ -160,6 +164,7 @@ export function AddTravelForm({
       countryCode,
       sentiment,
       tripDate: sentiment === 'wants' && isPro ? tripDate : '',
+      reminderDays,
       comment,
       pinned,
       hasPlanBudget,
@@ -309,16 +314,37 @@ export function AddTravelForm({
                 className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
               />
               {tripDate && (
-                <p className="flex items-center gap-1 text-[11px] text-text-muted">
-                  <Bell size={11} />
-                  {t('travel.tripDateHint')}
-                </p>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+                    {t('travel.reminderLabel')}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {REMINDER_DAY_OPTIONS.map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setReminderDays(days)}
+                        className={`h-8 rounded-[20px] px-3 text-xs font-medium transition-colors ${
+                          reminderDays === days
+                            ? 'bg-primary text-white'
+                            : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+                        }`}
+                      >
+                        {t(`travel.reminder${days}` as Parameters<typeof t>[0])}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="flex items-center gap-1 text-[11px] text-text-muted">
+                    <Bell size={11} />
+                    {t('travel.tripDateHint')}
+                  </p>
+                </div>
               )}
             </>
           ) : (
-            <div className="h-11 rounded-xl bg-bg-input/40 px-4 flex items-center">
+            <Link href="/pro" className="h-11 rounded-xl bg-bg-input/40 px-4 flex items-center hover:bg-bg-input transition-colors">
               <p className="text-[13px] text-text-muted">{t('travel.tripDateProHint')}</p>
-            </div>
+            </Link>
           )}
         </div>
       )}
