@@ -14,6 +14,8 @@ import { getCuisineType, getFoodType } from '@/features/add-food'
 import { AddFoodForm } from '@/features/add-food'
 import { AddRestaurantForm } from '@/features/add-restaurant'
 import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActorItem } from '@/features/add-movie'
+import { AddTravelForm, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget } from '@/features/add-travel'
+import { getFlagEmoji } from '@/features/add-travel'
 
 interface OverviewPageProps {
   category: string
@@ -47,15 +49,14 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
   const isGifts = category === 'gifts'
   const isFood = category === 'food'
   const isMovies = category === 'movies'
+  const isTravel = category === 'travel'
 
-  // Для подарков: закреплённые сверху
-  const sortedItems = isGifts
-    ? [...items].sort((a, b) => {
-        const aPin = getGiftPinned(a.tags ?? null) ? 0 : 1
-        const bPin = getGiftPinned(b.tags ?? null) ? 0 : 1
-        return aPin - bPin
-      })
-    : items
+  // Закреплённые сверху для всех категорий
+  const sortedItems = [...items].sort((a, b) => {
+    const aPin = getGiftPinned(a.tags ?? null) || getTravelPinned(a.tags ?? null) ? 0 : 1
+    const bPin = getGiftPinned(b.tags ?? null) || getTravelPinned(b.tags ?? null) ? 0 : 1
+    return aPin - bPin
+  })
 
   function handleItemUpdated(updated: Item) {
     setItems((prev) =>
@@ -75,6 +76,7 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
       if (editingItem && isActorItem(editingItem.tags ?? null)) return t('movies.editActor')
       return t('movies.edit')
     }
+    if (isTravel) return t('travel.edit')
     return t('common.edit')
   }
 
@@ -163,6 +165,15 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
                 onCancel={() => setEditingItem(null)}
               />
             )
+          ) : isTravel ? (
+            <AddTravelForm
+              personId={editingItem.person_id}
+              categoryId={editingItem.category_id}
+              item={editingItem}
+              isPro={isPro}
+              onSuccess={handleItemUpdated}
+              onCancel={() => setEditingItem(null)}
+            />
           ) : (
             <AddRestaurantForm
               personId={editingItem.person_id}
@@ -197,18 +208,28 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
   const isGifts = category === 'gifts'
   const isFood = category === 'food'
   const isMovies = category === 'movies'
+  const isTravel = category === 'travel'
   const isVisited = item.sentiment === 'visited'
   const isWants = item.sentiment === 'wants'
   const isLikes = item.sentiment === 'likes'
 
   const addressTag = item.tags?.find((tag) => tag.startsWith('📍'))
   const giftDate = isGifts ? getGiftDate(item.tags ?? null) : ''
-  const isPinned = isGifts ? getGiftPinned(item.tags ?? null) : false
+  const isPinned = isGifts
+    ? getGiftPinned(item.tags ?? null)
+    : isTravel
+    ? getTravelPinned(item.tags ?? null)
+    : false
   const cuisineType = isFood ? getCuisineType(item.tags ?? null) : null
   const foodType = isFood ? getFoodType(item.tags ?? null) : null
   const movieGenres = isMovies ? getMovieGenres(item.tags ?? null) : []
   const movieReleaseDate = isMovies ? getMovieReleaseDate(item.tags ?? null) : ''
   const isActor = isMovies ? isActorItem(item.tags ?? null) : false
+  const travelCity = isTravel ? getTravelCity(item.tags ?? null) : ''
+  const travelCountry = isTravel ? getTravelCountry(item.tags ?? null) : { name: '', code: '' }
+  const travelDate = isTravel ? getTravelDate(item.tags ?? null) : ''
+  const travelBudget = isTravel ? getTravelBudget(item.tags ?? null) : null
+  const flagEmoji = travelCountry.code ? getFlagEmoji(travelCountry.code) : ''
 
   useEffect(() => {
     if (!menuOpen) return
@@ -238,6 +259,13 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
         wants:    { text: `🎬 ${t('movies.statusWants')}`,    cls: 'bg-wants-bg text-wants' },
         likes:    { text: `✅ ${t('movies.statusLikes')}`,    cls: 'bg-loves-bg text-loves' },
         dislikes: { text: `❌ ${t('movies.statusDislikes')}`, cls: 'bg-avoid-bg text-avoid' },
+      }
+      return map[item.sentiment] ?? null
+    }
+    if (isTravel) {
+      const map: Record<string, { text: string; cls: string }> = {
+        wants:   { text: `✈️ ${t('travel.statusWants')}`,   cls: 'bg-wants-bg text-wants' },
+        visited: { text: `✅ ${t('travel.statusVisited')}`, cls: 'bg-loves-bg text-loves' },
       }
       return map[item.sentiment] ?? null
     }
@@ -299,6 +327,30 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
               )}
               {isMovies && isActor && (
                 <p className="text-xs text-text-muted mt-1">👤 {t('movies.actorsTab')}</p>
+              )}
+              {isTravel && (travelCity || travelCountry.name || travelDate || travelBudget) && (
+                <div className="flex flex-col gap-1 mt-1.5">
+                  {(travelCity || travelCountry.name) && (
+                    <p className="text-xs text-text-secondary">
+                      {flagEmoji && <span className="mr-1">{flagEmoji}</span>}
+                      {[travelCity, travelCountry.name].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {travelDate && (
+                    <p className="text-xs text-text-muted">📅 {new Date(travelDate).toLocaleDateString()}</p>
+                  )}
+                  {travelBudget && (() => {
+                    const b = item.sentiment === 'visited' ? travelBudget.actual : travelBudget.plan
+                    const total = [b.hotel, b.transport, b.onsite, b.other]
+                      .filter((v): v is number => v !== null)
+                      .reduce((a, c) => a + c, 0)
+                    return total > 0 ? (
+                      <p className="text-xs text-text-muted">
+                        {item.sentiment === 'visited' ? t('travel.actualBudget') : t('travel.planBudget')}: {total.toLocaleString()}
+                      </p>
+                    ) : null
+                  })()}
+                </div>
               )}
               {isMovies && !isActor && (movieGenres.length > 0 || item.my_rating !== null || item.partner_rating !== null || movieReleaseDate) && (
                 <div className="flex flex-col gap-2 mt-2">
