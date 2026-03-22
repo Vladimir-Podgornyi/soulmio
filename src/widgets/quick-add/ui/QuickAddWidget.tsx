@@ -7,6 +7,7 @@ import { Plus, X, ChevronLeft, Loader2 } from 'lucide-react'
 import type { Person } from '@/entities/person/model/types'
 import type { Category } from '@/entities/category/model/types'
 import { getCategories } from '@/entities/category/api'
+import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { createClient } from '@/shared/api/supabase'
 import { AddPersonForm } from '@/features/add-person'
 
@@ -211,7 +212,11 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                     onClick={() => handleCategorySelect(cat)}
                     className="flex flex-col items-center gap-2 rounded-[16px] bg-bg-card border border-border-card p-4 transition-all active:scale-95 hover:border-primary/40 hover:bg-bg-hover"
                   >
-                    <span className="text-3xl leading-none">{cat.icon ?? '📁'}</span>
+                    <span className="text-3xl leading-none">
+                      {cat.is_custom
+                        ? parseCategoryIconField(cat.icon ?? null).emoji
+                        : (cat.icon ?? '📁')}
+                    </span>
                     <span className="text-xs font-medium text-text-secondary text-center leading-tight">
                       {getCategoryLabel(cat)}
                     </span>

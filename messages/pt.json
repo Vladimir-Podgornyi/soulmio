@@ -115,6 +115,9 @@
     "emojiSearch": "Buscar emoji...",
     "emojiShowMore": "Mostrar mais {count}",
     "emojiShowLess": "Mostrar menos",
+    "customStatuses": "Rótulos de status",
+    "likesLabelPlaceholder": "Ex. Gosto, Feito...",
+    "dislikesLabelPlaceholder": "Ex. Não gosto, Não...",
     "emojiCustom": "Ou digite o seu:"
   },
   "items": {
@@ -482,5 +485,9 @@
     "statYears": "anos",
     "viewProfile": "Ver perfil",
     "turnsAge": "Faz {age} anos"
+  },
+  "meta": {
+    "title": "Soulmio — Lembre-se do que importa para quem você ama",
+    "description": "Acompanhe as preferências, gostos e desejos das pessoas mais próximas a você. Sugestões com IA para restaurantes, presentes, filmes e muito mais."
   }
 }

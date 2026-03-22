@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Star, Link as LinkIcon, Bell, Zap, Pencil } from 'lucide-react'
+import { Star, Link as LinkIcon, Bell, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Item } from '@/entities/item/model/types'
 import {
@@ -23,6 +23,8 @@ interface AddCustomItemFormProps {
   categoryId: string
   item?: Item
   isPro: boolean
+  defaultLikesLabel?: string
+  defaultDislikesLabel?: string
   onSuccess: (item: Item) => void
   onCancel: () => void
 }
@@ -58,6 +60,8 @@ export function AddCustomItemForm({
   categoryId,
   item,
   isPro,
+  defaultLikesLabel = '',
+  defaultDislikesLabel = '',
   onSuccess,
   onCancel,
 }: AddCustomItemFormProps) {
@@ -69,9 +73,13 @@ export function AddCustomItemForm({
   const [sentiment, setSentiment] = useState<'likes' | 'dislikes'>(
     item?.sentiment === 'dislikes' ? 'dislikes' : 'likes'
   )
-  const [likesLabel, setLikesLabel] = useState(getCustomItemLikesLabel(item?.tags ?? null))
-  const [dislikesLabel, setDislikesLabel] = useState(getCustomItemDislikesLabel(item?.tags ?? null))
-  const [editingStatus, setEditingStatus] = useState<'likes' | 'dislikes' | null>(null)
+  // При создании — берём лейблы из категории; при редактировании — из тегов записи
+  const [likesLabel] = useState(
+    isEdit ? getCustomItemLikesLabel(item?.tags ?? null) : defaultLikesLabel
+  )
+  const [dislikesLabel] = useState(
+    isEdit ? getCustomItemDislikesLabel(item?.tags ?? null) : defaultDislikesLabel
+  )
   const [comment, setComment] = useState(item?.description ?? '')
   const [date, setDate] = useState(getCustomItemDate(item?.tags ?? null))
   const [reminderDays, setReminderDays] = useState<CustomReminderDays>(
@@ -145,94 +153,36 @@ export function AddCustomItemForm({
         <div className="flex gap-2">
 
           {/* ❤️ Likes */}
-          <div className={`flex flex-1 h-9 items-center rounded-[20px] transition-colors overflow-hidden ${
-            sentiment === 'likes' ? 'bg-loves-bg' : 'bg-bg-input'
-          }`}>
-            <button
-              type="button"
-              onClick={() => { setSentiment('likes'); setEditingStatus(null) }}
-              className="flex flex-1 min-w-0 items-center gap-1.5 pl-3 h-full"
-            >
-              <span className="text-sm flex-shrink-0">❤️</span>
-              {editingStatus === 'likes' ? (
-                <input
-                  autoFocus
-                  type="text"
-                  value={likesLabel}
-                  onChange={(e) => setLikesLabel(e.target.value)}
-                  onBlur={() => setEditingStatus(null)}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder={t('items.sentiments.likes')}
-                  maxLength={20}
-                  className={`flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:opacity-40 ${
-                    sentiment === 'likes' ? 'text-loves' : 'text-text-secondary'
-                  }`}
-                />
-              ) : (
-                <span className={`flex-1 min-w-0 truncate text-left text-[13px] font-medium ${
-                  sentiment === 'likes' ? 'text-loves' : 'text-text-secondary'
-                }`}>
-                  {likesDisplay}
-                </span>
-              )}
-            </button>
-            {isPro && editingStatus !== 'likes' && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setEditingStatus('likes') }}
-                className={`flex h-full w-7 flex-shrink-0 items-center justify-center transition-colors ${
-                  sentiment === 'likes' ? 'text-loves/50 hover:text-loves' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                <Pencil size={11} />
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setSentiment('likes')}
+            className={`flex flex-1 h-9 items-center gap-1.5 pl-3 pr-3 rounded-[20px] transition-colors ${
+              sentiment === 'likes' ? 'bg-loves-bg' : 'bg-bg-input'
+            }`}
+          >
+            <span className="text-sm flex-shrink-0">❤️</span>
+            <span className={`flex-1 min-w-0 truncate text-left text-[13px] font-medium ${
+              sentiment === 'likes' ? 'text-loves' : 'text-text-secondary'
+            }`}>
+              {likesDisplay}
+            </span>
+          </button>
 
           {/* 😕 Dislikes */}
-          <div className={`flex flex-1 h-9 items-center rounded-[20px] transition-colors overflow-hidden ${
-            sentiment === 'dislikes' ? 'bg-avoid-bg' : 'bg-bg-input'
-          }`}>
-            <button
-              type="button"
-              onClick={() => { setSentiment('dislikes'); setEditingStatus(null) }}
-              className="flex flex-1 min-w-0 items-center gap-1.5 pl-3 h-full"
-            >
-              <span className="text-sm flex-shrink-0">😕</span>
-              {editingStatus === 'dislikes' ? (
-                <input
-                  autoFocus
-                  type="text"
-                  value={dislikesLabel}
-                  onChange={(e) => setDislikesLabel(e.target.value)}
-                  onBlur={() => setEditingStatus(null)}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder={t('items.sentiments.dislikes')}
-                  maxLength={20}
-                  className={`flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:opacity-40 ${
-                    sentiment === 'dislikes' ? 'text-avoid' : 'text-text-secondary'
-                  }`}
-                />
-              ) : (
-                <span className={`flex-1 min-w-0 truncate text-left text-[13px] font-medium ${
-                  sentiment === 'dislikes' ? 'text-avoid' : 'text-text-secondary'
-                }`}>
-                  {dislikesDisplay}
-                </span>
-              )}
-            </button>
-            {isPro && editingStatus !== 'dislikes' && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setEditingStatus('dislikes') }}
-                className={`flex h-full w-7 flex-shrink-0 items-center justify-center transition-colors ${
-                  sentiment === 'dislikes' ? 'text-avoid/50 hover:text-avoid' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                <Pencil size={11} />
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setSentiment('dislikes')}
+            className={`flex flex-1 h-9 items-center gap-1.5 pl-3 pr-3 rounded-[20px] transition-colors ${
+              sentiment === 'dislikes' ? 'bg-avoid-bg' : 'bg-bg-input'
+            }`}
+          >
+            <span className="text-sm flex-shrink-0">😕</span>
+            <span className={`flex-1 min-w-0 truncate text-left text-[13px] font-medium ${
+              sentiment === 'dislikes' ? 'text-avoid' : 'text-text-secondary'
+            }`}>
+              {dislikesDisplay}
+            </span>
+          </button>
 
         </div>
       </div>

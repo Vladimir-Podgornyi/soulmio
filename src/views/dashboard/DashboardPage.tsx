@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles } from 'lucide-react'
@@ -13,7 +13,7 @@ import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMov
 import type { UpcomingBirthday } from '@/entities/person/api'
 import type { UpcomingPersonDate } from '@/entities/person/api/personDates'
 import { QuickAddWidget } from '@/widgets/quick-add'
-import { parseCategoryIconField } from '@/views/person/PersonPage'
+import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { getMilestoneToday, getRelationStats, type MilestoneMatch, type RelationStats } from '@/shared/lib/milestones'
 
 interface DashboardPageProps {
@@ -92,21 +92,19 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   const [selectedMilestone, setSelectedMilestone] = useState<MilestonePerson | null>(null)
   const [selectedBirthday, setSelectedBirthday] = useState<UpcomingBirthday | null>(null)
   const [selectedPersonDate, setSelectedPersonDate] = useState<UpcomingPersonDate | null>(null)
-  const [dismissedPersonDateIds, setDismissedPersonDateIds] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set()
-    try {
-      const stored = localStorage.getItem('dismissedPersonDates')
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
-    } catch { return new Set() }
-  })
+  const [dismissedPersonDateIds, setDismissedPersonDateIds] = useState<Set<string>>(new Set())
+  const [dismissedBirthdayIds, setDismissedBirthdayIds] = useState<Set<string>>(new Set())
 
-  const [dismissedBirthdayIds, setDismissedBirthdayIds] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set()
+  useEffect(() => {
     try {
-      const stored = localStorage.getItem('dismissedBirthdays')
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
-    } catch { return new Set() }
-  })
+      const dates = localStorage.getItem('dismissedPersonDates')
+      const birthdays = localStorage.getItem('dismissedBirthdays')
+      startTransition(() => {
+        if (dates) setDismissedPersonDateIds(new Set(JSON.parse(dates) as string[]))
+        if (birthdays) setDismissedBirthdayIds(new Set(JSON.parse(birthdays) as string[]))
+      })
+    } catch { /* ignore */ }
+  }, [])
 
   function handleHidePersonDate(id: string) {
     setDismissedPersonDateIds((prev) => {

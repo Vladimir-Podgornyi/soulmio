@@ -115,6 +115,9 @@
     "emojiSearch": "Emoji suchen...",
     "emojiShowMore": "Noch {count} mehr",
     "emojiShowLess": "Weniger anzeigen",
+    "customStatuses": "Statusbezeichnungen",
+    "likesLabelPlaceholder": "z.B. Mag ich, Erledigt...",
+    "dislikesLabelPlaceholder": "z.B. Mag ich nicht, Nein...",
     "emojiCustom": "Oder eigenes eingeben:"
   },
   "items": {
@@ -483,5 +486,9 @@
     "statYears": "Jahre",
     "viewProfile": "Profil anzeigen",
     "turnsAge": "Wird {age}"
+  },
+  "meta": {
+    "title": "Soulmio — Vergiss nie, was deinen Liebsten wichtig ist",
+    "description": "Behalte die Vorlieben, Geschmäcker und Wünsche deiner Liebsten im Blick. KI-gestützte Empfehlungen für Restaurants, Geschenke, Filme und mehr."
   }
 }

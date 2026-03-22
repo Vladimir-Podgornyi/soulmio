@@ -116,6 +116,9 @@
     "emojiSearch": "Поиск эмодзи...",
     "emojiShowMore": "Ещё {count}",
     "emojiShowLess": "Скрыть",
+    "customStatuses": "Статусы",
+    "likesLabelPlaceholder": "Напр. Нравится, Сделано...",
+    "dislikesLabelPlaceholder": "Напр. Не нравится, Нет...",
     "emojiCustom": "Или введите свой:"
   },
   "items": {
@@ -483,5 +486,9 @@
     "statYears": "лет",
     "viewProfile": "Открыть профиль",
     "turnsAge": "Исполняется {age}"
+  },
+  "meta": {
+    "title": "Soulmio — Помни, что важно для твоих близких",
+    "description": "Отслеживай предпочтения, вкусы и желания близких тебе людей. Рекомендации по ресторанам, подаркам, фильмам и многому другому."
   }
 }
