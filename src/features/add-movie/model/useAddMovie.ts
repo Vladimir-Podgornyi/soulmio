@@ -27,6 +27,7 @@ export interface ActorFormValues {
   description: string
   films: string[]
   pinned: boolean
+  sentiment: 'likes' | 'dislikes' | null
 }
 
 export function getMovieGenres(tags: string[] | null): string[] {
@@ -137,7 +138,7 @@ export function useAddMovie(
         image_url: null,
         external_url: null,
         price: null,
-        sentiment: null,
+        sentiment: values.sentiment,
         my_rating: null,
         partner_rating: null,
         tags: buildActorTags(values.films, values.pinned),
@@ -155,6 +156,7 @@ export function useAddMovie(
       const item = await updateItem(supabase, itemId, {
         title: values.name.trim(),
         description: values.description.trim() || null,
+        sentiment: values.sentiment,
         tags: buildActorTags(values.films, values.pinned),
       })
       onSuccess(item)

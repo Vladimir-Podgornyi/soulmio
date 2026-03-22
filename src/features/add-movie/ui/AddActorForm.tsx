@@ -34,6 +34,9 @@ export function AddActorForm({
     return f.length > 0 ? f : ['']
   })
   const [pinned] = useState(getMoviePinned(item?.tags ?? null))
+  const [sentiment, setSentiment] = useState<'likes' | 'dislikes' | null>(
+    item?.sentiment === 'likes' ? 'likes' : item?.sentiment === 'dislikes' ? 'dislikes' : null
+  )
 
   function updateFilm(index: number, value: string) {
     setFilms((prev) => prev.map((f, i) => (i === index ? value : f)))
@@ -58,6 +61,7 @@ export function AddActorForm({
       description,
       films: films.filter((f) => f.trim()),
       pinned,
+      sentiment,
     }
     try {
       if (isEdit) {
@@ -125,6 +129,37 @@ export function AddActorForm({
           <Plus size={13} />
           {t('movies.actorAddFilm')}
         </button>
+      </div>
+
+      {/* Отношение к актёру */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          {t('movies.actorSentiment')}
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setSentiment(sentiment === 'likes' ? null : 'likes')}
+            className={`h-9 flex-1 rounded-[20px] text-[13px] font-medium transition-colors ${
+              sentiment === 'likes'
+                ? 'bg-loves-bg text-loves'
+                : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+            }`}
+          >
+            ❤️ {t('items.sentiments.likes')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSentiment(sentiment === 'dislikes' ? null : 'dislikes')}
+            className={`h-9 flex-1 rounded-[20px] text-[13px] font-medium transition-colors ${
+              sentiment === 'dislikes'
+                ? 'bg-avoid-bg text-avoid'
+                : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+            }`}
+          >
+            😕 {t('items.sentiments.dislikes')}
+          </button>
+        </div>
       </div>
 
       {/* Заметки */}

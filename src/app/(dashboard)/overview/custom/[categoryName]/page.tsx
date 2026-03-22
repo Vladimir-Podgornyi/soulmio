@@ -7,15 +7,12 @@ import { getPeople } from '@/entities/person/api'
 import { OverviewPage } from '@/views/overview/OverviewPage'
 
 interface Props {
-  params: Promise<{ category: string }>
+  params: Promise<{ categoryName: string }>
 }
 
-const VALID_CATEGORIES = ['food', 'restaurants', 'gifts', 'movies', 'travel']
-
 export default async function Page({ params }: Props) {
-  const { category } = await params
-
-  if (!VALID_CATEGORIES.includes(category)) redirect('/dashboard')
+  const { categoryName } = await params
+  const name = decodeURIComponent(categoryName)
 
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,12 +21,30 @@ export default async function Page({ params }: Props) {
   const db = supabase as DbClient
 
   const [items, profile, people] = await Promise.all([
-    getAllItemsByCategoryName(db, user.id, category),
+    getAllItemsByCategoryName(db, user.id, name),
     getProfile(db, user.id),
     getPeople(db, user.id),
   ])
 
+  // Получаем иконку кастомной категории из первой попавшейся категории с таким именем
+  const { data: categoryRow } = await (supabase as DbClient)
+    .from('categories')
+    .select('icon')
+    .eq('name', name)
+    .eq('is_custom', true)
+    .limit(1)
+    .single()
+
   const isPro = profile?.subscription_tier === 'pro'
 
-  return <OverviewPage category={category} items={items} isPro={isPro} people={people} />
+  return (
+    <OverviewPage
+      category={name}
+      items={items}
+      isPro={isPro}
+      isCustom
+      categoryIcon={categoryRow?.icon ?? null}
+      people={people}
+    />
+  )
 }

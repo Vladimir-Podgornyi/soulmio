@@ -20,7 +20,7 @@ interface SettingsPageProps {
 
 type EditingField = 'name' | 'email' | 'password' | null
 
-const LOCALES = ['en', 'de', 'ru'] as const
+const LOCALES = ['en', 'de', 'ru', 'fr', 'es', 'pt'] as const
 type LocaleKey = (typeof LOCALES)[number]
 
 export function SettingsPage({ profile }: SettingsPageProps) {
@@ -116,12 +116,12 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         {/* Язык */}
         <div className="px-4 py-3">
           <p className="mb-2 text-sm font-medium text-text-primary">{t('settings.language')}</p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {LOCALES.map((l) => (
               <button
                 key={l}
                 onClick={() => changeLocale(l)}
-                className={`flex flex-1 items-center justify-center rounded-[8px] py-2 text-xs font-medium transition-colors ${
+                className={`flex items-center justify-center rounded-[8px] py-2 text-xs font-medium transition-colors ${
                   mounted && locale === l
                     ? 'bg-primary text-white'
                     : 'bg-bg-input text-text-secondary hover:bg-bg-hover'

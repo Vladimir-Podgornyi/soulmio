@@ -74,6 +74,8 @@ export async function deleteItem(
 export interface ItemCategorySummary {
   categoryName: string
   count: number
+  icon?: string | null
+  isCustom?: boolean
 }
 
 export async function getItemSummary(
@@ -91,13 +93,13 @@ export async function getItemSummary(
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name')
+    .select('id, name, icon, is_custom')
     .in('person_id', peopleIds)
 
   if (!categories?.length) return []
 
   const categoryIds = categories.map((c) => c.id)
-  const categoryMap = new Map(categories.map((c) => [c.id, c.name]))
+  const categoryMeta = new Map(categories.map((c) => [c.id, { name: c.name, icon: c.icon, isCustom: c.is_custom }]))
 
   const { data: items } = await supabase
     .from('items')
@@ -106,15 +108,19 @@ export async function getItemSummary(
 
   if (!items?.length) return []
 
-  const counts: Record<string, number> = {}
+  const counts: Record<string, { count: number; icon: string | null; isCustom: boolean }> = {}
   for (const item of items) {
-    const name = categoryMap.get(item.category_id) ?? 'other'
-    counts[name] = (counts[name] ?? 0) + 1
+    const meta = categoryMeta.get(item.category_id)
+    const name = meta?.name ?? 'other'
+    if (!counts[name]) counts[name] = { count: 0, icon: meta?.icon ?? null, isCustom: meta?.isCustom ?? false }
+    counts[name].count += 1
   }
 
-  return Object.entries(counts).map(([categoryName, count]) => ({
+  return Object.entries(counts).map(([categoryName, { count, icon, isCustom }]) => ({
     categoryName,
     count,
+    icon,
+    isCustom,
   }))
 }
 
@@ -437,6 +443,85 @@ export async function getUpcomingTrips(
         personId: item.person_id,
         daysLeft,
         tripDate: dateStr,
+        tags,
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.daysLeft - b.daysLeft)
+}
+
+export interface UpcomingCustomItem {
+  itemId: string
+  title: string
+  categoryName: string
+  categoryIcon: string | null
+  personName: string
+  personId: string
+  daysLeft: number
+  customDate: string
+  tags: string[]
+}
+
+export async function getUpcomingCustomItems(
+  supabase: DbClient,
+  userId: string
+): Promise<UpcomingCustomItem[]> {
+  const { data: people } = await supabase
+    .from('people')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!people?.length) return []
+
+  const peopleIds = people.map((p) => p.id)
+  const peopleMap = new Map(people.map((p) => [p.id, p.name]))
+
+  const { data: customCats } = await supabase
+    .from('categories')
+    .select('id, name, icon')
+    .in('person_id', peopleIds)
+    .eq('is_custom', true)
+
+  if (!customCats?.length) return []
+
+  const catIds = customCats.map((c) => c.id)
+  const catMeta = new Map(customCats.map((c) => [c.id, { name: c.name, icon: c.icon }]))
+
+  const { data: items } = await supabase
+    .from('items')
+    .select('id, title, person_id, category_id, tags')
+    .in('category_id', catIds)
+
+  if (!items?.length) return []
+
+  const now = new Date()
+  const upcoming: UpcomingCustomItem[] = []
+
+  for (const item of items) {
+    const tags = (item.tags ?? []) as string[]
+    const dateTag = tags.find((t) => t.startsWith('custom_date:'))
+    if (!dateTag) continue
+
+    const dateStr = dateTag.slice('custom_date:'.length)
+    const date = new Date(dateStr)
+    const msLeft = date.getTime() - now.getTime()
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+
+    const reminderTag = tags.find((t) => t.startsWith('reminder_days:'))
+    const reminderDays = reminderTag ? Number(reminderTag.slice('reminder_days:'.length)) : 7
+
+    if (daysLeft >= 0 && daysLeft <= reminderDays) {
+      const meta = catMeta.get(item.category_id)
+      upcoming.push({
+        itemId: item.id,
+        title: item.title,
+        categoryName: meta?.name ?? '',
+        categoryIcon: meta?.icon ?? null,
+        personName: peopleMap.get(item.person_id) ?? '',
+        personId: item.person_id,
+        daysLeft,
+        customDate: dateStr,
         tags,
       })
     }

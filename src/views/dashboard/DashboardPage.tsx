@@ -9,8 +9,9 @@ import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 import type { Profile } from '@/entities/user/model/types'
 import type { Person } from '@/entities/person/model/types'
-import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie, UpcomingTrip } from '@/entities/item/api'
+import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie, UpcomingTrip, UpcomingCustomItem } from '@/entities/item/api'
 import { QuickAddWidget } from '@/widgets/quick-add'
+import { parseCategoryIconField } from '@/views/person/PersonPage'
 
 interface DashboardPageProps {
   profile: Profile
@@ -20,6 +21,7 @@ interface DashboardPageProps {
   upcomingRestaurants: UpcomingRestaurant[]
   upcomingMovies: UpcomingMovie[]
   upcomingTrips: UpcomingTrip[]
+  upcomingCustomItems: UpcomingCustomItem[]
 }
 
 type StatCard = {
@@ -62,7 +64,7 @@ const STAT_CARDS: StatCard[] = [
   },
 ]
 
-export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips }: DashboardPageProps) {
+export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips, upcomingCustomItems: initialCustomItems }: DashboardPageProps) {
   const t = useTranslations()
   const isPro = profile.subscription_tier === 'pro'
   const displayName = profile.full_name?.split(' ')[0] ?? profile.email ?? 'there'
@@ -75,6 +77,8 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   const [selectedMovie, setSelectedMovie] = useState<UpcomingMovie | null>(null)
   const [trips, setTrips] = useState<UpcomingTrip[]>(initialTrips)
   const [selectedTrip, setSelectedTrip] = useState<UpcomingTrip | null>(null)
+  const [customItems, setCustomItems] = useState<UpcomingCustomItem[]>(initialCustomItems)
+  const [selectedCustomItem, setSelectedCustomItem] = useState<UpcomingCustomItem | null>(null)
 
   const summaryMap = new Map(summary.map((s) => [s.categoryName, s.count]))
   const totalItems = summary.reduce((acc, s) => acc + s.count, 0)
@@ -103,6 +107,11 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   function handleRestaurantDismiss(restaurantId: string) {
     setRestaurants((prev) => prev.filter((r) => r.itemId !== restaurantId))
     setSelectedRestaurant(null)
+  }
+
+  function handleCustomItemDismiss(itemId: string) {
+    setCustomItems((prev) => prev.filter((ci) => ci.itemId !== itemId))
+    setSelectedCustomItem(null)
   }
 
   return (
@@ -236,6 +245,41 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               ))}
             </section>
           )}
+
+          {customItems.length > 0 && (
+            <section className="px-4 mb-5">
+              {customItems.map((ci) => {
+                const { gradient, emoji } = parseCategoryIconField(ci.categoryIcon)
+                return (
+                  <button
+                    key={ci.itemId}
+                    type="button"
+                    onClick={() => setSelectedCustomItem(ci)}
+                    className="w-full relative overflow-hidden flex items-center gap-3 rounded-[16px] border border-border-card px-4 py-3.5 mb-2 transition-colors text-left"
+                    suppressHydrationWarning
+                  >
+                    {/* Тинт фона из цвета категории */}
+                    <div className="absolute inset-0 opacity-[0.18] pointer-events-none" style={{ background: gradient }} suppressHydrationWarning />
+                    {/* Контент */}
+                    <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xl" style={{ background: gradient }} suppressHydrationWarning>
+                      {emoji}
+                    </div>
+                    <div className="relative z-10 flex-1 min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-0.5 truncate">
+                        {ci.categoryName}
+                      </p>
+                      <p className="text-sm font-medium text-text-primary truncate">{ci.title}</p>
+                      <p className="text-xs text-text-secondary">
+                        {t('dashboard.giftReminderFor', { name: ci.personName })}
+                        {' · '}
+                        {t('dashboard.giftReminderDays', { days: ci.daysLeft })}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </section>
+          )}
         </>
       ) : (
         <section className="px-4 mb-5">
@@ -302,6 +346,46 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                     </p>
                   </div>
                 </Link>
+              )
+            })}
+
+            {summary.filter((s) => s.isCustom && s.count > 0).map((s) => {
+              const { gradient, emoji } = parseCategoryIconField(s.icon ?? null)
+              return (
+              <Link
+                key={s.categoryName}
+                href={`/overview/custom/${encodeURIComponent(s.categoryName)}`}
+                className="relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between active:scale-[0.97] transition-transform"
+                style={{ background: gradient }}
+                suppressHydrationWarning
+              >
+                <span className="absolute -right-2 -bottom-2 text-[56px] opacity-20 select-none pointer-events-none">
+                  {emoji}
+                </span>
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate pr-6"
+                  style={{ color: 'rgba(255,255,255,0.6)' }}
+                  suppressHydrationWarning
+                >
+                  {s.categoryName}
+                </p>
+                <div>
+                  <p
+                    className="text-[30px] font-bold leading-none tracking-[-1px]"
+                    style={{ color: '#fff' }}
+                    suppressHydrationWarning
+                  >
+                    {s.count}
+                  </p>
+                  <p
+                    className="text-[11px] mt-1"
+                    style={{ color: 'rgba(255,255,255,0.45)' }}
+                    suppressHydrationWarning
+                  >
+                    {t('dashboard.itemCount', { count: s.count })}
+                  </p>
+                </div>
+              </Link>
               )
             })}
           </div>
@@ -389,6 +473,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           trip={selectedTrip}
           onClose={() => setSelectedTrip(null)}
           onDismiss={handleTripDismiss}
+        />
+      )}
+
+      {/* Модальное окно кастомного напоминания */}
+      {selectedCustomItem && (
+        <CustomItemReminderModal
+          item={selectedCustomItem}
+          onClose={() => setSelectedCustomItem(null)}
+          onDismiss={handleCustomItemDismiss}
         />
       )}
     </div>
@@ -860,6 +953,100 @@ function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps)
               className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
             >
               {isActing && action === 'cancelled' ? '...' : t('travel.reminderCancelled')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модальное окно кастомного напоминания ── */
+
+interface CustomItemReminderModalProps {
+  item: UpcomingCustomItem
+  onClose: () => void
+  onDismiss: (itemId: string) => void
+}
+
+function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminderModalProps) {
+  const t = useTranslations()
+  const [isActing, setIsActing] = useState(false)
+  const { gradient, emoji } = parseCategoryIconField(item.categoryIcon)
+
+  async function handleDone() {
+    setIsActing(true)
+    try {
+      const supabase = createClient()
+      const newTags = item.tags.filter((tag) => !tag.startsWith('custom_date:'))
+      await updateItem(supabase, item.itemId, { tags: newTags })
+      onDismiss(item.itemId)
+    } finally {
+      setIsActing(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        <div className="px-6 pt-5 pb-6">
+          {/* Хэдер */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div
+                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-2xl"
+                style={{ background: gradient }}
+              >
+                {emoji}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-0.5 truncate">
+                  {item.categoryName} · {t('dashboard.giftReminderFor', { name: item.personName })}
+                </p>
+                <h2 className="text-lg font-bold tracking-[-0.3px] text-text-primary leading-tight truncate">
+                  {item.title}
+                </h2>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Дата */}
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-base">📅</span>
+            <p className="text-sm text-text-secondary">
+              {t('dashboard.giftReminderDays', { days: item.daysLeft })}
+              <span className="ml-1 text-text-muted">
+                ({new Date(item.customDate).toLocaleDateString()})
+              </span>
+            </p>
+          </div>
+
+          {/* Кнопки */}
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleDone}
+              disabled={isActing}
+              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+            >
+              {isActing ? '...' : t('dashboard.customItemDone')}
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              {t('dashboard.customItemHide')}
             </button>
           </div>
         </div>

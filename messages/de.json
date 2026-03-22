@@ -89,6 +89,7 @@
     "addCustom": "Kategorie hinzufügen",
     "custom": "Benutzerdefiniert",
     "icon": "Symbol",
+    "color": "Kartenfarbe",
     "name": "Name",
     "namePlaceholder": "z. B. Bücher, Fitness...",
     "scopeOne": "Nur für {name}",
@@ -263,6 +264,7 @@
     "actorNotesPlaceholder": "Notizen zum Schauspieler...",
     "buyTickets": "Tickets kaufen",
     "notGoing": "Wir gehen nicht",
+    "actorSentiment": "Ihre Haltung",
     "actorAdded": "Schauspieler hinzugefügt",
     "actorUpdated": "Schauspieler aktualisiert",
     "actorDeleted": "Schauspieler gelöscht",
@@ -304,7 +306,9 @@
     "overviewEmpty": "In dieser Kategorie noch nichts gespeichert",
     "overviewPersonTag": "{name}",
     "goToList": "Zur Liste gehen",
-    "remindersProHint": "Erinnerungen für Geschenke & Restaurants sind in Pro verfügbar"
+    "remindersProHint": "Erinnerungen für Geschenke & Restaurants sind in Pro verfügbar",
+    "customItemDone": "Erledigt",
+    "customItemHide": "Erinnerung ausblenden"
   },
   "settings": {
     "title": "Einstellungen",
@@ -327,7 +331,10 @@
     "languages": {
       "en": "English",
       "de": "Deutsch",
-      "ru": "Русский"
+      "ru": "Русский",
+      "fr": "Français",
+      "es": "Español",
+      "pt": "Português"
     },
     "account": "Konto",
     "name": "Name",
@@ -420,6 +427,30 @@
     "settingsBanner": "Du bist im Free-Plan",
     "settingsBannerSub": "Wechsel zu Pro, um alle Funktionen freizuschalten",
     "settingsProBanner": "Du bist auf Pro ✦",
-    "settingsProBannerSub": "Alle Funktionen sind freigeschaltet"
+    "settingsProBannerSub": "Alle Funktionen sind freigeschaltet",
+    "customItems": "Eigene Kategorien",
+    "customItemsFree": "Basis (Name + Status + Notizen)",
+    "customItemsPro": "Vollständig (Daten, Erinnerungen, Bewertungen, Links)"
+  },
+  "customItem": {
+    "add": "Eintrag hinzufügen",
+    "edit": "Eintrag bearbeiten",
+    "added": "Eintrag hinzugefügt",
+    "updated": "Eintrag aktualisiert",
+    "deleted": "Eintrag gelöscht",
+    "deleteConfirm": "Diesen Eintrag löschen?",
+    "nameRequired": "Name ist erforderlich",
+    "namePlaceholder": "z.B. Lesen, Gitarre...",
+    "title": "Name",
+    "status": "Status",
+    "comment": "Notizen",
+    "commentPlaceholder": "Beliebige Notizen...",
+    "date": "Datum",
+    "reminderLabel": "Erinnern",
+    "dateHint": "Du erhältst eine Erinnerung vor diesem Datum",
+    "link": "Link",
+    "linkPlaceholder": "https://...",
+    "pinned": "Oben anheften",
+    "proHint": "Mit Pro: Daten, Erinnerungen, Bewertungen und Links"
   }
 }

@@ -89,6 +89,7 @@
     "addCustom": "Add category",
     "custom": "Custom",
     "icon": "Icon",
+    "color": "Card color",
     "name": "Name",
     "namePlaceholder": "e.g. Books, Fitness...",
     "scopeOne": "Only for {name}",
@@ -262,6 +263,7 @@
     "actorNotesPlaceholder": "Any notes about this actor...",
     "buyTickets": "Buy tickets",
     "notGoing": "We're not going",
+    "actorSentiment": "Your attitude",
     "actorAdded": "Actor added",
     "actorUpdated": "Actor updated",
     "actorDeleted": "Actor deleted",
@@ -303,7 +305,9 @@
     "overviewEmpty": "Nothing saved in this category yet",
     "overviewPersonTag": "{name}",
     "goToList": "Go to list",
-    "remindersProHint": "Gift & restaurant reminders are available in Pro"
+    "remindersProHint": "Gift & restaurant reminders are available in Pro",
+    "customItemDone": "Done",
+    "customItemHide": "Hide reminder"
   },
   "settings": {
     "title": "Settings",
@@ -326,7 +330,10 @@
     "languages": {
       "en": "English",
       "de": "Deutsch",
-      "ru": "Русский"
+      "ru": "Русский",
+      "fr": "Français",
+      "es": "Español",
+      "pt": "Português"
     },
     "account": "Account",
     "name": "Name",
@@ -419,6 +426,30 @@
     "settingsBanner": "You're on Free",
     "settingsBannerSub": "Upgrade to unlock all features",
     "settingsProBanner": "You're on Pro ✦",
-    "settingsProBannerSub": "All features are unlocked"
+    "settingsProBannerSub": "All features are unlocked",
+    "customItems": "Custom categories",
+    "customItemsFree": "Basic (name + status + notes)",
+    "customItemsPro": "Full (dates, reminders, ratings, links)"
+  },
+  "customItem": {
+    "add": "Add item",
+    "edit": "Edit item",
+    "added": "Item added",
+    "updated": "Item updated",
+    "deleted": "Item deleted",
+    "deleteConfirm": "Delete this item?",
+    "nameRequired": "Name is required",
+    "namePlaceholder": "e.g. Reading, Guitar...",
+    "title": "Name",
+    "status": "Status",
+    "comment": "Notes",
+    "commentPlaceholder": "Any notes...",
+    "date": "Date",
+    "reminderLabel": "Remind me",
+    "dateHint": "You'll get a reminder before this date",
+    "link": "Link",
+    "linkPlaceholder": "https://...",
+    "pinned": "Pin to top",
+    "proHint": "Upgrade to Pro for dates, reminders, ratings and links"
   }
 }

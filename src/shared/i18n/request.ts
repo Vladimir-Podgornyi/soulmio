@@ -24,6 +24,12 @@ async function loadMessages(locale: Locale) {
       return (await import('../../../messages/de.json')).default
     case 'ru':
       return (await import('../../../messages/ru.json')).default
+    case 'fr':
+      return (await import('../../../messages/fr.json')).default
+    case 'es':
+      return (await import('../../../messages/es.json')).default
+    case 'pt':
+      return (await import('../../../messages/pt.json')).default
     default:
       return (await import('../../../messages/en.json')).default
   }
