@@ -1,4 +1,9 @@
+import type { Metadata } from 'next'
 import { BottomNavClient } from '@/widgets/bottom-nav/ui/BottomNavClient'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default function DashboardLayout({
   children,

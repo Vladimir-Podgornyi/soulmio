@@ -23,6 +23,7 @@ import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleas
 import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji } from '@/features/add-travel'
 import { AddCustomItemForm, useAddCustomItem, getCustomItemPinned, getCustomItemDate, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
+import { CATEGORY_GRADIENTS, DEFAULT_CATEGORY_GRADIENT, parseCategoryIconField, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
 
 interface PersonPageProps {
   person: Person
@@ -38,47 +39,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   gifts:       '🎁',
   movies:      '🎬',
   travel:      '✈️',
-}
-
-/* ── Градиенты для кастомных категорий ── */
-
-export const CATEGORY_GRADIENTS = [
-  { key: 'gray',    gradient: 'linear-gradient(145deg, #2A2826, #3A3630)' }, // default
-  { key: 'coral',   gradient: 'linear-gradient(145deg, #7A3020, #B04228)' },
-  { key: 'rose',    gradient: 'linear-gradient(145deg, #5C2240, #904060)' },
-  { key: 'ocean',   gradient: 'linear-gradient(145deg, #182E48, #285078)' },
-  { key: 'sage',    gradient: 'linear-gradient(145deg, #22382A, #345A40)' },
-  { key: 'purple',  gradient: 'linear-gradient(145deg, #2A2230, #483060)' },
-  { key: 'amber',   gradient: 'linear-gradient(145deg, #3A2A10, #5A4010)' },
-  { key: 'teal',    gradient: 'linear-gradient(145deg, #1A3038, #205048)' },
-  { key: 'crimson', gradient: 'linear-gradient(145deg, #5A1020, #8A2030)' },
-  { key: 'indigo',  gradient: 'linear-gradient(145deg, #1A1A48, #283080)' },
-  { key: 'olive',   gradient: 'linear-gradient(145deg, #2A3010, #405018)' },
-  { key: 'brown',   gradient: 'linear-gradient(145deg, #3A2010, #5A3018)' },
-  { key: 'pink',    gradient: 'linear-gradient(145deg, #4A1A3A, #703060)' },
-  { key: 'mint',    gradient: 'linear-gradient(145deg, #183028, #285840)' },
-  { key: 'slate',   gradient: 'linear-gradient(145deg, #1A2030, #283848)' },
-  { key: 'gold',    gradient: 'linear-gradient(145deg, #3A3010, #605010)' },
-]
-
-const DEFAULT_CATEGORY_GRADIENT = CATEGORY_GRADIENTS[0].gradient
-
-/** Разбирает поле icon: 'coral:📚' → { gradient, emoji }, '📚' → { DEFAULT, emoji } */
-export function parseCategoryIconField(raw: string | null): { gradient: string; emoji: string } {
-  if (!raw) return { gradient: DEFAULT_CATEGORY_GRADIENT, emoji: '📋' }
-  const colonIdx = raw.indexOf(':')
-  if (colonIdx > 0 && colonIdx <= 8) {
-    const key = raw.slice(0, colonIdx)
-    const found = CATEGORY_GRADIENTS.find((g) => g.key === key)
-    if (found) return { gradient: found.gradient, emoji: raw.slice(colonIdx + 1) }
-  }
-  return { gradient: DEFAULT_CATEGORY_GRADIENT, emoji: raw }
-}
-
-/** Собирает поле icon из ключа цвета и эмодзи */
-function buildCategoryIconField(colorKey: string, emoji: string): string {
-  if (colorKey === 'gray') return emoji
-  return `${colorKey}:${emoji}`
 }
 
 export function PersonPage({
@@ -502,6 +462,39 @@ export function PersonPage({
         </div>
       )}
 
+      {/* Фильтр — кастомные категории */}
+      {isCustom && allItems.length > 0 && (() => {
+        const { likesLabel, dislikesLabel } = parseCategoryIconField(activeCategory?.icon ?? null)
+        const likesFilterLabel = likesLabel || t('items.sentiments.likes')
+        const dislikesFilterLabel = dislikesLabel || t('items.sentiments.dislikes')
+        return (
+          <div className="flex gap-2 px-4 pb-4">
+            {([
+              { key: 'all',      label: t('common.all') },
+              { key: 'likes',    label: `❤️ ${likesFilterLabel}` },
+              { key: 'dislikes', label: `😕 ${dislikesFilterLabel}` },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                  filter === key
+                    ? 'bg-bg-input text-text-primary'
+                    : 'text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                {label}
+                {key !== 'all' && (
+                  <span className="ml-1.5 text-text-muted">
+                    {allItems.filter((it) => it.sentiment === key).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* Фильтры — фильмы */}
       {isMovies && (
         <div className="px-4 pb-4 flex flex-col gap-3">
@@ -868,31 +861,41 @@ export function PersonPage({
       )}
 
       {/* Нижний лист добавления — кастомная категория */}
-      {isAddOpen && isCustom && (
-        <BottomSheet title={t('customItem.add')} onClose={() => setIsAddOpen(false)}>
-          <AddCustomItemForm
-            personId={person.id}
-            categoryId={activeCategoryId}
-            isPro={isPro}
-            onSuccess={handleItemAdded}
-            onCancel={() => setIsAddOpen(false)}
-          />
-        </BottomSheet>
-      )}
+      {isAddOpen && isCustom && (() => {
+        const { likesLabel, dislikesLabel } = parseCategoryIconField(activeCategory?.icon ?? null)
+        return (
+          <BottomSheet title={t('customItem.add')} onClose={() => setIsAddOpen(false)}>
+            <AddCustomItemForm
+              personId={person.id}
+              categoryId={activeCategoryId}
+              isPro={isPro}
+              defaultLikesLabel={likesLabel}
+              defaultDislikesLabel={dislikesLabel}
+              onSuccess={handleItemAdded}
+              onCancel={() => setIsAddOpen(false)}
+            />
+          </BottomSheet>
+        )
+      })()}
 
       {/* Нижний лист редактирования — кастомная категория */}
-      {editingItem && isCustom && (
-        <BottomSheet title={t('customItem.edit')} onClose={() => setEditingItem(null)}>
-          <AddCustomItemForm
-            personId={person.id}
-            categoryId={activeCategoryId}
-            item={editingItem}
-            isPro={isPro}
-            onSuccess={handleItemUpdated}
-            onCancel={() => setEditingItem(null)}
-          />
-        </BottomSheet>
-      )}
+      {editingItem && isCustom && (() => {
+        const { likesLabel, dislikesLabel } = parseCategoryIconField(activeCategory?.icon ?? null)
+        return (
+          <BottomSheet title={t('customItem.edit')} onClose={() => setEditingItem(null)}>
+            <AddCustomItemForm
+              personId={person.id}
+              categoryId={activeCategoryId}
+              item={editingItem}
+              isPro={isPro}
+              defaultLikesLabel={likesLabel}
+              defaultDislikesLabel={dislikesLabel}
+              onSuccess={handleItemUpdated}
+              onCancel={() => setEditingItem(null)}
+            />
+          </BottomSheet>
+        )
+      })()}
     </div>
   )
 }
@@ -2225,14 +2228,19 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
   const parsed = parseCategoryIconField(category.icon ?? null)
   const [colorKey, setColorKey] = useState(() => {
     const raw = category.icon ?? ''
-    const colonIdx = raw.indexOf(':')
+    // Strip labels part before parsing color key
+    const pipeIdx = raw.indexOf('|')
+    const iconPart = pipeIdx > 0 ? raw.slice(0, pipeIdx) : raw
+    const colonIdx = iconPart.indexOf(':')
     if (colonIdx > 0 && colonIdx <= 8) {
-      const key = raw.slice(0, colonIdx)
+      const key = iconPart.slice(0, colonIdx)
       if (CATEGORY_GRADIENTS.some((g) => g.key === key)) return key
     }
     return 'gray'
   })
   const [icon, setIcon] = useState(parsed.emoji === '📋' ? '📁' : parsed.emoji)
+  const [likesLabel, setLikesLabel] = useState(parsed.likesLabel)
+  const [dislikesLabel, setDislikesLabel] = useState(parsed.dislikesLabel)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -2241,7 +2249,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
     setIsSaving(true)
     try {
       const supabase = createClient()
-      const updated = await updateCustomCategory(supabase, category.id, name.trim(), buildCategoryIconField(colorKey, icon))
+      const updated = await updateCustomCategory(supabase, category.id, name.trim(), buildCategoryIconField(colorKey, icon, likesLabel, dislikesLabel))
       if (updated) onUpdated(updated)
       else toast.error(t('common.error'))
     } finally {
@@ -2266,7 +2274,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
@@ -2326,6 +2334,37 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
               autoFocus
               className="w-full rounded-[12px] bg-bg-input px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
             />
+          </div>
+
+          {/* Статусы */}
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+              {t('categories.customStatuses')}
+            </p>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                <span className="text-sm flex-shrink-0">❤️</span>
+                <input
+                  type="text"
+                  value={likesLabel}
+                  onChange={(e) => setLikesLabel(e.target.value)}
+                  placeholder={t('categories.likesLabelPlaceholder')}
+                  maxLength={20}
+                  className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                <span className="text-sm flex-shrink-0">😕</span>
+                <input
+                  type="text"
+                  value={dislikesLabel}
+                  onChange={(e) => setDislikesLabel(e.target.value)}
+                  placeholder={t('categories.dislikesLabelPlaceholder')}
+                  maxLength={20}
+                  className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Кнопка сохранить */}
@@ -2394,6 +2433,8 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📁')
   const [colorKey, setColorKey] = useState('gray')
+  const [likesLabel, setLikesLabel] = useState('')
+  const [dislikesLabel, setDislikesLabel] = useState('')
   const [scope, setScope] = useState<'one' | 'all'>('one')
   const [isSaving, setIsSaving] = useState(false)
   const isLimited = !isPro && customCategoryCount >= FREE_CUSTOM_LIMIT
@@ -2401,7 +2442,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   async function handleSave() {
     if (!name.trim() || isSaving) return
     setIsSaving(true)
-    const iconField = buildCategoryIconField(colorKey, icon)
+    const iconField = buildCategoryIconField(colorKey, icon, likesLabel, dislikesLabel)
     try {
       const supabase = createClient()
 
@@ -2431,7 +2472,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
@@ -2502,6 +2543,37 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
                 autoFocus
                 className="w-full rounded-[12px] bg-bg-input px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none focus:ring-1 focus:ring-primary"
               />
+            </div>
+
+            {/* Статусы */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+                {t('categories.customStatuses')}
+              </p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                  <span className="text-sm flex-shrink-0">❤️</span>
+                  <input
+                    type="text"
+                    value={likesLabel}
+                    onChange={(e) => setLikesLabel(e.target.value)}
+                    placeholder={t('categories.likesLabelPlaceholder')}
+                    maxLength={20}
+                    className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                  <span className="text-sm flex-shrink-0">😕</span>
+                  <input
+                    type="text"
+                    value={dislikesLabel}
+                    onChange={(e) => setDislikesLabel(e.target.value)}
+                    placeholder={t('categories.dislikesLabelPlaceholder')}
+                    maxLength={20}
+                    className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Для кого */}

@@ -115,6 +115,9 @@
     "emojiSearch": "Search emoji...",
     "emojiShowMore": "Show {count} more",
     "emojiShowLess": "Show less",
+    "customStatuses": "Statuses",
+    "likesLabelPlaceholder": "e.g. Love, Done, Yes...",
+    "dislikesLabelPlaceholder": "e.g. Dislike, Skip, No...",
     "emojiCustom": "Or type your own:"
   },
   "items": {
@@ -482,5 +485,9 @@
     "statYears": "years",
     "viewProfile": "View profile",
     "turnsAge": "Turns {age}"
+  },
+  "meta": {
+    "title": "Soulmio — Remember what matters to the people you love",
+    "description": "Track preferences, tastes and wishes of the people closest to you. Get AI-powered suggestions for restaurants, gifts, movies and more."
   }
 }
