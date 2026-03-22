@@ -7,10 +7,10 @@ const DEFAULT_CATEGORIES: Array<{
   sort_order: number
   proOnly: boolean
 }> = [
-  { name: 'food',        icon: '🍽️', sort_order: 0, proOnly: false },
-  { name: 'restaurants', icon: '🍴', sort_order: 1, proOnly: false },
-  { name: 'gifts',       icon: '🎁', sort_order: 2, proOnly: false },
-  { name: 'movies',      icon: '🎬', sort_order: 3, proOnly: true  },
+  { name: 'restaurants', icon: '🍴', sort_order: 0, proOnly: false },
+  { name: 'gifts',       icon: '🎁', sort_order: 1, proOnly: false },
+  { name: 'movies',      icon: '🎬', sort_order: 2, proOnly: true  },
+  { name: 'food',        icon: '🍽️', sort_order: 3, proOnly: false },
   { name: 'travel',      icon: '✈️', sort_order: 4, proOnly: true  },
 ]
 
@@ -83,10 +83,19 @@ export async function ensureDefaultCategories(
   isPro: boolean
 ): Promise<Category[]> {
   const existing = await getCategories(supabase, personId)
-  const existingNames = new Set(existing.map((c) => c.name))
+  const existingByName = new Map(existing.map((c) => [c.name, c]))
+
+  // Обновляем sort_order у уже существующих дефолтных категорий
+  const toUpdate = DEFAULT_CATEGORIES
+    .filter((c) => existingByName.has(c.name) && existingByName.get(c.name)!.sort_order !== c.sort_order)
+  await Promise.all(
+    toUpdate.map((c) =>
+      supabase.from('categories').update({ sort_order: c.sort_order }).eq('id', existingByName.get(c.name)!.id)
+    )
+  )
 
   const toInsert = DEFAULT_CATEGORIES
-    .filter((c) => !existingNames.has(c.name) && (isPro || !c.proOnly))
+    .filter((c) => !existingByName.has(c.name) && (isPro || !c.proOnly))
     .map((c) => ({
       person_id: personId,
       name: c.name,
@@ -95,7 +104,14 @@ export async function ensureDefaultCategories(
       sort_order: c.sort_order,
     }))
 
-  if (toInsert.length === 0) return existing
+  if (toInsert.length === 0) {
+    // Обновим sort_order в памяти и вернём
+    const merged = existing.map((c) => {
+      const def = DEFAULT_CATEGORIES.find((d) => d.name === c.name)
+      return def ? { ...c, sort_order: def.sort_order } : c
+    })
+    return merged.sort((a, b) => a.sort_order - b.sort_order)
+  }
 
   const { data, error } = await supabase
     .from('categories')
@@ -104,7 +120,9 @@ export async function ensureDefaultCategories(
 
   if (error || !data) return existing
 
-  return [...existing, ...(data as Category[])].sort(
-    (a, b) => a.sort_order - b.sort_order
-  )
+  const merged = [...existing, ...(data as Category[])].map((c) => {
+    const def = DEFAULT_CATEGORIES.find((d) => d.name === c.name)
+    return def ? { ...c, sort_order: def.sort_order } : c
+  })
+  return merged.sort((a, b) => a.sort_order - b.sort_order)
 }

@@ -11,9 +11,10 @@ interface AddPersonWidgetProps {
   isPro: boolean
   canAdd: boolean
   onPersonAdded?: (person: Person) => void
+  compact?: boolean
 }
 
-export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidgetProps) {
+export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPersonWidgetProps) {
   const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
@@ -33,19 +34,30 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidge
 
   return (
     <>
-      {/* Карточка-триггер */}
-      <button
-        type="button"
-        onClick={handleTriggerClick}
-        className="flex w-full items-center gap-4 rounded-[14px] bg-bg-card border border-dashed border-border p-4 text-left transition-colors hover:bg-bg-hover min-h-[60px]"
-      >
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted overflow-hidden">
-          <Plus size={18} />
-        </div>
-        <span className="text-sm font-medium text-text-secondary">
-          {t('people.addPerson')}
-        </span>
-      </button>
+      {/* Кнопка-триггер */}
+      {compact ? (
+        <button
+          type="button"
+          onClick={handleTriggerClick}
+          className="flex h-9 flex-shrink-0 items-center gap-1 rounded-[20px] px-3 text-sm font-medium bg-bg-input text-text-muted hover:bg-bg-hover transition-colors"
+        >
+          <Plus size={14} />
+          <span>{t('people.addPerson')}</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleTriggerClick}
+          className="flex w-full items-center gap-4 rounded-[14px] bg-bg-card border border-dashed border-border p-4 text-left transition-colors hover:bg-bg-hover min-h-[60px]"
+        >
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted overflow-hidden">
+            <Plus size={18} />
+          </div>
+          <span className="text-sm font-medium text-text-secondary">
+            {t('people.addPerson')}
+          </span>
+        </button>
+      )}
 
       {/* Сообщение пейволла */}
       {showPaywall && !canAdd && (
@@ -70,8 +82,8 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidge
           />
 
           {/* Лист */}
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe">
-            <div className="mb-5 flex items-center justify-between">
+          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary flex flex-col max-h-[90dvh]">
+            <div className="flex items-center justify-between px-6 pt-6 pb-5 flex-shrink-0">
               <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
                 {t('people.addPerson')}
               </h2>
@@ -84,11 +96,13 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded }: AddPersonWidge
               </button>
             </div>
 
-            <AddPersonForm
-              isPro={isPro}
-              onSuccess={handleSuccess}
-              onCancel={() => setIsOpen(false)}
-            />
+            <div className="overflow-y-auto px-6 pb-safe pb-6">
+              <AddPersonForm
+                isPro={isPro}
+                onSuccess={handleSuccess}
+                onCancel={() => setIsOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}

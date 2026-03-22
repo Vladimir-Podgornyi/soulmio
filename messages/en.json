@@ -73,6 +73,20 @@
     "uploadError": "Failed to upload photo",
     "deleteConfirm": "Delete this person?",
     "deleted": "Person deleted",
+    "relationSince": "Together since",
+    "relationSinceHint": "Optional — track meaningful milestones",
+    "birthDate": "Birthday",
+    "birthNotifyLabel": "Remind me",
+    "birthNotify0": "On the day",
+    "birthNotify1": "1 day before",
+    "birthNotify3": "3 days before",
+    "birthNotify7": "1 week before",
+    "birthNotify14": "2 weeks before",
+    "birthNotify30": "1 month before",
+    "importantDates": "Important dates",
+    "addDate": "Add date",
+    "dateTitlePlaceholder": "e.g. Anniversary, First date...",
+    "beforeLabel": "before",
     "relations": {
       "partner": "Partner",
       "friend": "Friend",
@@ -296,6 +310,8 @@
     "noStats": "Nothing saved yet",
     "giftReminder": "Gift reminder",
     "giftReminderDays": "{days, plural, =0 {Today!} =1 {Tomorrow} other {# days left}}",
+    "daysLeft": "days left",
+    "hideDateReminder": "Hide reminder",
     "giftReminderFor": "For {name}",
     "itemCount": "{count, plural, =0 {nothing} =1 {# item} other {# items}}",
     "giftAlreadyBought": "Already bought",
@@ -306,8 +322,10 @@
     "overviewPersonTag": "{name}",
     "goToList": "Go to list",
     "remindersProHint": "Gift & restaurant reminders are available in Pro",
-    "customItemDone": "Done",
-    "customItemHide": "Hide reminder"
+    "customItemDone": "Got it",
+    "customItemHide": "Hide reminder",
+    "birthdayReminder": "Birthday",
+    "importantDateReminder": "Important date"
   },
   "settings": {
     "title": "Settings",
@@ -451,5 +469,18 @@
     "linkPlaceholder": "https://...",
     "pinned": "Pin to top",
     "proHint": "Upgrade to Pro for dates, reminders, ratings and links"
+  },
+  "milestones": {
+    "notification": "Special date",
+    "dayMilestone": "{days} days together!",
+    "monthMilestone": "{months} months together!",
+    "yearMilestone": "{years, plural, =1 {1 year together!} other {# years together!}}",
+    "since": "Together since",
+    "statDays": "days",
+    "statWeeks": "weeks",
+    "statMonths": "months",
+    "statYears": "years",
+    "viewProfile": "View profile",
+    "turnsAge": "Turns {age}"
   }
 }

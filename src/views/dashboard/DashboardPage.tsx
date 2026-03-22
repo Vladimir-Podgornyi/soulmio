@@ -3,15 +3,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight } from 'lucide-react'
+import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles } from 'lucide-react'
 import { createClient } from '@/shared/api/supabase'
 import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 import type { Profile } from '@/entities/user/model/types'
 import type { Person } from '@/entities/person/model/types'
 import type { ItemCategorySummary, UpcomingGift, UpcomingRestaurant, UpcomingMovie, UpcomingTrip, UpcomingCustomItem } from '@/entities/item/api'
+import type { UpcomingBirthday } from '@/entities/person/api'
+import type { UpcomingPersonDate } from '@/entities/person/api/personDates'
 import { QuickAddWidget } from '@/widgets/quick-add'
 import { parseCategoryIconField } from '@/views/person/PersonPage'
+import { getMilestoneToday, getRelationStats, type MilestoneMatch, type RelationStats } from '@/shared/lib/milestones'
 
 interface DashboardPageProps {
   profile: Profile
@@ -22,6 +25,8 @@ interface DashboardPageProps {
   upcomingMovies: UpcomingMovie[]
   upcomingTrips: UpcomingTrip[]
   upcomingCustomItems: UpcomingCustomItem[]
+  upcomingBirthdays: UpcomingBirthday[]
+  upcomingPersonDates: UpcomingPersonDate[]
 }
 
 type StatCard = {
@@ -32,12 +37,6 @@ type StatCard = {
 }
 
 const STAT_CARDS: StatCard[] = [
-  {
-    categoryName: 'food',
-    icon: '🍽️',
-    labelKey: 'categories.food',
-    gradient: 'linear-gradient(145deg, #7A3020, #B04228)',
-  },
   {
     categoryName: 'restaurants',
     icon: '🍴',
@@ -57,6 +56,12 @@ const STAT_CARDS: StatCard[] = [
     gradient: 'linear-gradient(145deg, #182E48, #285078)',
   },
   {
+    categoryName: 'food',
+    icon: '🍽️',
+    labelKey: 'categories.food',
+    gradient: 'linear-gradient(145deg, #7A3020, #B04228)',
+  },
+  {
     categoryName: 'travel',
     icon: '✈️',
     labelKey: 'categories.travel',
@@ -64,11 +69,67 @@ const STAT_CARDS: StatCard[] = [
   },
 ]
 
-export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips, upcomingCustomItems: initialCustomItems }: DashboardPageProps) {
+interface MilestonePerson {
+  person: Person
+  milestone: MilestoneMatch
+  stats: RelationStats
+}
+
+export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips, upcomingCustomItems: initialCustomItems, upcomingBirthdays, upcomingPersonDates }: DashboardPageProps) {
   const t = useTranslations()
   const isPro = profile.subscription_tier === 'pro'
   const displayName = profile.full_name?.split(' ')[0] ?? profile.email ?? 'there'
 
+  // Вычисляем milestone для каждого человека с relation_since
+  const milestonePeople: MilestonePerson[] = people
+    .filter((p) => !!p.relation_since)
+    .flatMap((p) => {
+      const milestone = getMilestoneToday(p.relation_since!)
+      if (!milestone) return []
+      return [{ person: p, milestone, stats: getRelationStats(p.relation_since!) }]
+    })
+
+  const [selectedMilestone, setSelectedMilestone] = useState<MilestonePerson | null>(null)
+  const [selectedBirthday, setSelectedBirthday] = useState<UpcomingBirthday | null>(null)
+  const [selectedPersonDate, setSelectedPersonDate] = useState<UpcomingPersonDate | null>(null)
+  const [dismissedPersonDateIds, setDismissedPersonDateIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const stored = localStorage.getItem('dismissedPersonDates')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch { return new Set() }
+  })
+
+  const [dismissedBirthdayIds, setDismissedBirthdayIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const stored = localStorage.getItem('dismissedBirthdays')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch { return new Set() }
+  })
+
+  function handleHidePersonDate(id: string) {
+    setDismissedPersonDateIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      try { localStorage.setItem('dismissedPersonDates', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
+    setSelectedPersonDate(null)
+  }
+
+  function handleHideBirthday(personId: string) {
+    setDismissedBirthdayIds((prev) => {
+      const next = new Set(prev)
+      next.add(personId)
+      try { localStorage.setItem('dismissedBirthdays', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
+    setSelectedBirthday(null)
+  }
+
+  const visiblePersonDates = upcomingPersonDates.filter((d) => !dismissedPersonDateIds.has(d.id))
+  const visibleBirthdays = upcomingBirthdays.filter((b) => !dismissedBirthdayIds.has(b.personId))
   const [gifts, setGifts] = useState<UpcomingGift[]>(initialGifts)
   const [selectedGift, setSelectedGift] = useState<UpcomingGift | null>(null)
   const [restaurants, setRestaurants] = useState<UpcomingRestaurant[]>(initialRestaurants)
@@ -130,6 +191,92 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           </p>
         )}
       </div>
+
+      {/* Milestone уведомления — для всех пользователей */}
+      {milestonePeople.length > 0 && (
+        <section className="px-4 mb-5">
+          {milestonePeople.map(({ person, milestone }) => (
+            <button
+              key={person.id}
+              type="button"
+              onClick={() => setSelectedMilestone({ person, milestone, stats: getRelationStats(person.relation_since!) })}
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#241A30] border border-[#7C4A9C]/30 px-4 py-3.5 mb-2 hover:border-[#7C4A9C]/60 transition-colors text-left"
+            >
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#7C4A9C]/20">
+                <Sparkles size={18} className="text-[#C080E0]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#C080E0] mb-0.5">
+                  {t('milestones.notification')}
+                </p>
+                <p className="text-sm font-medium text-text-primary">
+                  {t(milestone.labelKey as Parameters<typeof t>[0], milestone.labelParams)}
+                </p>
+                <p className="text-xs text-text-secondary">{person.name}</p>
+              </div>
+            </button>
+          ))}
+        </section>
+      )}
+
+      {/* Дни рождения — для всех пользователей */}
+      {visibleBirthdays.length > 0 && (
+        <section className="px-4 mb-5">
+          {visibleBirthdays.map((b) => (
+            <button
+              key={b.personId}
+              type="button"
+              onClick={() => setSelectedBirthday(b)}
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A1020] border border-[#C04080]/30 px-4 py-3.5 mb-2 hover:border-[#C04080]/60 transition-colors text-left"
+            >
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#C04080]/20 text-xl">
+                🎂
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#E070B0] mb-0.5">
+                  {t('dashboard.birthdayReminder')}
+                </p>
+                <p className="text-sm font-medium text-text-primary">{b.personName}</p>
+                <p className="text-xs text-text-secondary">
+                  {t('milestones.turnsAge', { age: b.age })}
+                  {' · '}
+                  {t('dashboard.giftReminderDays', { days: b.daysLeft })}
+                </p>
+              </div>
+            </button>
+          ))}
+        </section>
+      )}
+
+      {/* Важные даты — для всех пользователей */}
+      {visiblePersonDates.length > 0 && (
+        <section className="px-4 mb-5">
+          {visiblePersonDates.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => setSelectedPersonDate(d)}
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#0E1E3A] border border-[#2060B0]/30 px-4 py-3.5 mb-2 hover:border-[#2060B0]/60 transition-colors text-left"
+            >
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#2060B0]/20 text-xl">
+                📅
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6090D0] mb-0.5">
+                  {t('dashboard.importantDateReminder')}
+                </p>
+                <p className="text-sm font-medium text-text-primary">{d.title}</p>
+                <p className="text-xs text-text-secondary">
+                  {d.personName}
+                  {d.yearsSince != null && ` · ${d.yearsSince} ${t('milestones.statYears')}`}
+                  {' · '}
+                  {t('dashboard.giftReminderDays', { days: d.daysLeft })}
+                </p>
+              </div>
+            </button>
+          ))}
+        </section>
+      )}
 
       {/* Напоминания — только для Pro */}
       {isPro ? (
@@ -482,6 +629,30 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           item={selectedCustomItem}
           onClose={() => setSelectedCustomItem(null)}
           onDismiss={handleCustomItemDismiss}
+        />
+      )}
+
+      {/* Модальное окно milestone */}
+      {selectedMilestone && (
+        <MilestoneModal
+          milestonePerson={selectedMilestone}
+          onClose={() => setSelectedMilestone(null)}
+        />
+      )}
+
+      {selectedBirthday && (
+        <BirthdayModal
+          birthday={selectedBirthday}
+          onClose={() => setSelectedBirthday(null)}
+          onHide={handleHideBirthday}
+        />
+      )}
+
+      {selectedPersonDate && (
+        <PersonDateModal
+          personDate={selectedPersonDate}
+          onClose={() => setSelectedPersonDate(null)}
+          onHide={handleHidePersonDate}
         />
       )}
     </div>
@@ -1034,21 +1205,301 @@ function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminde
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              onClick={handleDone}
-              disabled={isActing}
-              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+              onClick={onClose}
+              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark transition-colors"
             >
-              {isActing ? '...' : t('dashboard.customItemDone')}
+              {t('dashboard.customItemDone')}
             </button>
 
             <button
               type="button"
-              onClick={onClose}
-              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+              onClick={handleDone}
+              disabled={isActing}
+              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
             >
-              {t('dashboard.customItemHide')}
+              {isActing ? '...' : t('dashboard.customItemHide')}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модальное окно milestone ── */
+
+interface MilestoneModalProps {
+  milestonePerson: MilestonePerson
+  onClose: () => void
+}
+
+function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
+  const t = useTranslations()
+  const { person, milestone, stats } = milestonePerson
+
+  const startDate = person.relation_since
+    ? new Date(person.relation_since + 'T00:00:00').toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        {/* Градиентная шапка */}
+        <div
+          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(145deg, #3A1A50, #6C2A90)' }}
+        >
+          <Sparkles size={28} className="text-[#E0A0FF]" />
+          <p className="text-base font-bold text-white text-center px-6">
+            {t(milestone.labelKey as Parameters<typeof t>[0], milestone.labelParams)}
+          </p>
+        </div>
+
+        <div className="px-6 pt-5 pb-6">
+          {/* Закрыть */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <X size={16} />
+          </button>
+
+          {/* Аватар + имя */}
+          <div className="flex items-center gap-3 mb-5">
+            {person.avatar_url ? (
+              <img
+                src={person.avatar_url}
+                alt={person.name}
+                className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#7C4A9C]/60 to-[#7C4A9C] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+                {person.name[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-base font-semibold text-text-primary">{person.name}</p>
+              <p className="text-xs text-text-secondary">
+                {t('milestones.since')} {startDate}
+              </p>
+            </div>
+          </div>
+
+          {/* Статистика */}
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            {[
+              { value: stats.totalDays, key: 'milestones.statDays' },
+              { value: stats.weeks, key: 'milestones.statWeeks' },
+              { value: stats.months, key: 'milestones.statMonths' },
+              { value: stats.years, key: 'milestones.statYears' },
+            ].map(({ value, key }) => (
+              <div
+                key={key}
+                className="rounded-[12px] bg-[#241A30] border border-[#7C4A9C]/20 px-4 py-3 text-center"
+              >
+                <p className="text-xl font-bold text-[#C080E0] tracking-tight">{value}</p>
+                <p className="text-[11px] text-text-secondary mt-0.5">
+                  {t(key as Parameters<typeof t>[0])}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href={`/people/${person.id}`}
+            onClick={onClose}
+            className="flex w-full items-center justify-center rounded-[12px] bg-[#7C4A9C] py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            {t('milestones.viewProfile')}
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модал дня рождения ── */
+
+interface BirthdayModalProps {
+  birthday: UpcomingBirthday
+  onClose: () => void
+  onHide: (personId: string) => void
+}
+
+function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
+  const t = useTranslations()
+
+  const birthDateFormatted = new Date(birthday.birthDate + 'T00:00:00').toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        <div
+          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(145deg, #3A0A28, #901050)' }}
+        >
+          <span className="text-3xl">🎂</span>
+          <p className="text-sm font-semibold text-[#FFB0D8]">{t('dashboard.birthdayReminder')}</p>
+        </div>
+
+        <div className="px-6 pt-5 pb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <X size={16} />
+          </button>
+
+          <div className="flex items-center gap-3 mb-5">
+            {birthday.personAvatarUrl ? (
+              <img
+                src={birthday.personAvatarUrl}
+                alt={birthday.personName}
+                className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#C04080] to-[#901050] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+                {birthday.personName[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-base font-semibold text-text-primary">{birthday.personName}</p>
+              <p className="text-xs text-text-secondary">{birthDateFormatted}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <div className="rounded-[12px] bg-[#2A0A18] border border-[#C04080]/20 px-4 py-3 text-center">
+              <p className="text-xl font-bold text-[#E070B0] tracking-tight">{birthday.age}</p>
+              <p className="text-[11px] text-text-secondary mt-0.5">{t('milestones.statYears')}</p>
+            </div>
+            <div className="rounded-[12px] bg-[#2A0A18] border border-[#C04080]/20 px-4 py-3 text-center">
+              <p className="text-xl font-bold text-[#E070B0] tracking-tight">{birthday.daysLeft}</p>
+              <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
+            </div>
+          </div>
+
+          <Link
+            href={`/people/${birthday.personId}`}
+            onClick={onClose}
+            className="flex w-full items-center justify-center rounded-[12px] bg-[#C04080] py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 mb-2"
+          >
+            {t('milestones.viewProfile')}
+          </Link>
+          <button
+            type="button"
+            onClick={() => onHide(birthday.personId)}
+            className="flex w-full items-center justify-center rounded-[12px] border border-border py-3 text-sm text-text-muted transition-colors hover:text-text-secondary hover:border-border-card"
+          >
+            {t('dashboard.hideDateReminder')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Модал важной даты ── */
+
+interface PersonDateModalProps {
+  personDate: UpcomingPersonDate
+  onClose: () => void
+  onHide: (id: string) => void
+}
+
+function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) {
+  const t = useTranslations()
+
+  const dateFormatted = new Date(personDate.date + 'T00:00:00').toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        <div
+          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(145deg, #0A1A38, #204090)' }}
+        >
+          <span className="text-3xl">📅</span>
+          <p className="text-sm font-semibold text-[#90B8FF]">{t('dashboard.importantDateReminder')}</p>
+        </div>
+
+        <div className="px-6 pt-5 pb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <X size={16} />
+          </button>
+
+          <div className="mb-4">
+            <p className="text-lg font-bold text-text-primary mb-0.5">{personDate.title}</p>
+            <p className="text-sm text-text-secondary">{personDate.personName}</p>
+          </div>
+
+          <div className="flex flex-col gap-2 mb-5">
+            {personDate.yearsSince != null ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
+                    <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.yearsSince}</p>
+                    <p className="text-[11px] text-text-secondary mt-0.5">{t('milestones.statYears')}</p>
+                  </div>
+                  <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
+                    <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
+                    <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
+                  </div>
+                </div>
+                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
+                  <p className="text-sm font-medium text-[#6090D0]">{dateFormatted}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
+                  <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
+                </div>
+                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 flex items-center justify-center">
+                  <p className="text-sm font-medium text-[#6090D0]">{dateFormatted}</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <Link
+            href={`/people/${personDate.personId}`}
+            onClick={onClose}
+            className="flex w-full items-center justify-center rounded-[12px] bg-[#2060B0] py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 mb-2"
+          >
+            {t('milestones.viewProfile')}
+          </Link>
+          <button
+            type="button"
+            onClick={() => onHide(personDate.id)}
+            className="flex w-full items-center justify-center rounded-[12px] border border-border py-3 text-sm text-text-muted transition-colors hover:text-text-secondary hover:border-border-card"
+          >
+            {t('dashboard.hideDateReminder')}
+          </button>
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, X, Camera } from 'lucide-react'
+import { Plus, X, Camera, CalendarHeart, Cake, Calendar, Trash2 } from 'lucide-react'
+import { getRelationStats } from '@/shared/lib/milestones'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
@@ -12,6 +13,12 @@ import {
   addCustomRelation,
   deleteCustomRelation,
 } from '@/entities/person/api/customRelations'
+import {
+  getPersonDates,
+  createPersonDate,
+  deletePersonDate,
+  type PersonDate,
+} from '@/entities/person/api/personDates'
 import { useAddPerson } from '../model/useAddPerson'
 import { uploadAvatar } from '@/shared/lib/uploadImage'
 
@@ -29,6 +36,8 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form
 
   const selectedRelation = watch('relation')
+  const relationSinceValue = watch('relation_since')
+  const birthDateValue = watch('birth_date')
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(person?.avatar_url ?? null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -39,6 +48,15 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
   const [customInput, setCustomInput] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
 
+  // Существующие даты (только при редактировании)
+  const [personDates, setPersonDates] = useState<PersonDate[]>([])
+  // Новые даты, которые ещё не сохранены (используются при создании и при редактировании)
+  const [pendingDates, setPendingDates] = useState<{ title: string; date: string; notify_days: number }[]>([])
+  const [addingDate, setAddingDate] = useState(false)
+  const [newDateTitle, setNewDateTitle] = useState('')
+  const [newDateValue, setNewDateValue] = useState('')
+  const [newDateNotify, setNewDateNotify] = useState(0)
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -47,15 +65,60 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
       setUserId(user.id)
       const relations = await getCustomRelations(supabase, user.id)
       setSavedCustom(relations)
+      if (isEdit && person) {
+        const dates = await getPersonDates(supabase, person.id)
+        setPersonDates(dates)
+      }
     }
-    if (isPro) load()
-  }, [isPro])
+    load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  // При редактировании предустанавливаем relation в форме
+  // При редактировании предустанавливаем relation + isPro в форме
   useEffect(() => {
     if (person?.relation) setValue('relation', person.relation)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function handleAddDate() {
+    if (!newDateTitle.trim() || !newDateValue) return
+
+    if (isEdit && person && userId) {
+      // Режим редактирования: сохраняем сразу в БД
+      const supabase = createClient()
+      try {
+        const created = await createPersonDate(supabase, {
+          person_id: person.id,
+          user_id: userId,
+          title: newDateTitle.trim(),
+          date: newDateValue,
+          notify_days: newDateNotify,
+        })
+        setPersonDates((prev) => [...prev, created])
+      } catch {
+        toast.error(t('common.error'))
+        return
+      }
+    } else {
+      // Режим создания: добавляем в pending-список
+      setPendingDates((prev) => [...prev, { title: newDateTitle.trim(), date: newDateValue, notify_days: newDateNotify }])
+    }
+
+    setNewDateTitle('')
+    setNewDateValue('')
+    setNewDateNotify(0)
+    setAddingDate(false)
+  }
+
+  async function handleDeleteDate(id: string) {
+    const supabase = createClient()
+    try {
+      await deletePersonDate(supabase, id)
+      setPersonDates((prev) => prev.filter((d) => d.id !== id))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
 
   async function handleAvatarSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -112,7 +175,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => onSubmit(v, avatarUrl))} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit((v) => onSubmit(v, avatarUrl, pendingDates))} className="flex flex-col gap-5">
       {/* Аватар */}
       {!isPro && (
         <div className="flex items-center gap-3 pb-1">
@@ -299,6 +362,171 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
           className="rounded-xl bg-bg-input px-4 py-3 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 resize-none"
         />
       </div>
+
+      {/* Дата начала отношений */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <CalendarHeart size={12} />
+          {t('people.relationSince')}
+        </label>
+        <input
+          {...register('relation_since')}
+          type="date"
+          max={new Date().toISOString().slice(0, 10)}
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+        />
+        {relationSinceValue && (() => {
+          const stats = getRelationStats(relationSinceValue)
+          if (stats.totalDays < 0) return null
+          return (
+            <p className="text-[11px] text-text-muted">
+              {stats.totalDays} {t('milestones.statDays')} · {stats.months} {t('milestones.statMonths')} · {stats.years} {t('milestones.statYears')}
+            </p>
+          )
+        })()}
+        {!relationSinceValue && (
+          <p className="text-[11px] text-text-muted">{t('people.relationSinceHint')}</p>
+        )}
+      </div>
+
+      {/* День рождения */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <Cake size={12} />
+          {t('people.birthDate')}
+        </label>
+        <input
+          {...register('birth_date')}
+          type="date"
+          max={new Date().toISOString().slice(0, 10)}
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+        />
+        {birthDateValue && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-text-muted">{t('people.birthNotifyLabel')}</span>
+            <select
+              {...register('birth_notify_days', { valueAsNumber: true })}
+              className="h-7 rounded-lg bg-bg-input px-2 text-xs text-text-primary outline-none"
+            >
+              <option value={0}>{t('people.birthNotify0')}</option>
+              <option value={1}>{t('people.birthNotify1')}</option>
+              <option value={3}>{t('people.birthNotify3')}</option>
+              <option value={7}>{t('people.birthNotify7')}</option>
+              <option value={14}>{t('people.birthNotify14')}</option>
+              <option value={30}>{t('people.birthNotify30')}</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Важные даты */}
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <Calendar size={12} />
+          {t('people.importantDates')}
+        </label>
+
+        {/* Список существующих дат (edit mode) */}
+        {personDates.map((d) => (
+          <div key={d.id} className="flex items-center gap-3 rounded-xl bg-bg-input px-3 py-2.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">{d.title}</p>
+              <p className="text-[11px] text-text-muted">
+                {new Date(d.date + 'T00:00:00').toLocaleDateString()}
+                {d.notify_days > 0 && ` · ${d.notify_days}d ${t('people.beforeLabel')}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleDeleteDate(d.id)}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-bg-hover hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        ))}
+
+        {/* Pending-даты (create mode) */}
+        {pendingDates.map((d, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-bg-input px-3 py-2.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">{d.title}</p>
+              <p className="text-[11px] text-text-muted">
+                {new Date(d.date + 'T00:00:00').toLocaleDateString()}
+                {d.notify_days > 0 && ` · ${d.notify_days}d ${t('people.beforeLabel')}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingDates((prev) => prev.filter((_, j) => j !== i))}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-bg-hover hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        ))}
+
+          {/* Форма добавления новой даты */}
+          {addingDate ? (
+            <div className="flex flex-col gap-2 rounded-xl bg-bg-input p-3">
+              <input
+                autoFocus
+                value={newDateTitle}
+                onChange={(e) => setNewDateTitle(e.target.value)}
+                placeholder={t('people.dateTitlePlaceholder')}
+                maxLength={60}
+                className="h-9 rounded-lg bg-bg-secondary px-3 text-sm text-text-primary placeholder:text-text-muted outline-none"
+              />
+              <input
+                type="date"
+                value={newDateValue}
+                onChange={(e) => setNewDateValue(e.target.value)}
+                className="h-9 rounded-lg bg-bg-secondary px-3 text-sm text-text-primary outline-none [color-scheme:dark]"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-text-muted">{t('people.birthNotifyLabel')}</span>
+                <select
+                  value={newDateNotify}
+                  onChange={(e) => setNewDateNotify(Number(e.target.value))}
+                  className="h-7 rounded-lg bg-bg-secondary px-2 text-xs text-text-primary outline-none"
+                >
+                  <option value={0}>{t('people.birthNotify0')}</option>
+                  <option value={1}>{t('people.birthNotify1')}</option>
+                  <option value={3}>{t('people.birthNotify3')}</option>
+                  <option value={7}>{t('people.birthNotify7')}</option>
+                  <option value={14}>{t('people.birthNotify14')}</option>
+                  <option value={30}>{t('people.birthNotify30')}</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setAddingDate(false); setNewDateTitle(''); setNewDateValue('') }}
+                  className="h-8 flex-1 rounded-lg border border-border text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleAddDate()}
+                  disabled={!newDateTitle.trim() || !newDateValue}
+                  className="h-8 flex-1 rounded-lg bg-primary text-xs font-semibold text-white disabled:opacity-40 transition-opacity"
+                >
+                  {t('common.add')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddingDate(true)}
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-border px-3 text-sm font-medium text-text-muted hover:border-text-secondary hover:text-text-secondary transition-colors"
+            >
+              <Plus size={14} />
+              {t('people.addDate')}
+            </button>
+          )}
+        </div>
 
       {/* Кнопки действий */}
       <div className="flex gap-3 pt-1">

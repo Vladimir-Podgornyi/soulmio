@@ -73,6 +73,20 @@
     "uploadError": "Foto konnte nicht hochgeladen werden",
     "deleteConfirm": "Diese Person löschen?",
     "deleted": "Person gelöscht",
+    "relationSince": "Zusammen seit",
+    "relationSinceHint": "Optional — wichtige Meilensteine verfolgen",
+    "birthDate": "Geburtstag",
+    "birthNotifyLabel": "Erinnern",
+    "birthNotify0": "Am Tag selbst",
+    "birthNotify1": "1 Tag vorher",
+    "birthNotify3": "3 Tage vorher",
+    "birthNotify7": "1 Woche vorher",
+    "birthNotify14": "2 Wochen vorher",
+    "birthNotify30": "1 Monat vorher",
+    "importantDates": "Wichtige Daten",
+    "addDate": "Datum hinzufügen",
+    "dateTitlePlaceholder": "z. B. Jahrestag, Erstes Date...",
+    "beforeLabel": "vorher",
     "relations": {
       "partner": "Partner/in",
       "friend": "Freund/in",
@@ -297,6 +311,8 @@
     "noStats": "Noch nichts gespeichert",
     "giftReminder": "Geschenk-Erinnerung",
     "giftReminderDays": "{days, plural, =0 {Heute!} =1 {Morgen} other {Noch # Tage}}",
+    "daysLeft": "Tage verbleibend",
+    "hideDateReminder": "Erinnerung ausblenden",
     "giftReminderFor": "Für {name}",
     "itemCount": "{count, plural, =0 {nichts} =1 {# Eintrag} other {# Einträge}}",
     "giftAlreadyBought": "Schon gekauft",
@@ -307,8 +323,10 @@
     "overviewPersonTag": "{name}",
     "goToList": "Zur Liste gehen",
     "remindersProHint": "Erinnerungen für Geschenke & Restaurants sind in Pro verfügbar",
-    "customItemDone": "Erledigt",
-    "customItemHide": "Erinnerung ausblenden"
+    "customItemDone": "Verstanden",
+    "customItemHide": "Erinnerung ausblenden",
+    "birthdayReminder": "Geburtstag",
+    "importantDateReminder": "Wichtiges Datum"
   },
   "settings": {
     "title": "Einstellungen",
@@ -452,5 +470,18 @@
     "linkPlaceholder": "https://...",
     "pinned": "Oben anheften",
     "proHint": "Mit Pro: Daten, Erinnerungen, Bewertungen und Links"
+  },
+  "milestones": {
+    "notification": "Besonderer Tag",
+    "dayMilestone": "{days} Tage zusammen!",
+    "monthMilestone": "{months} Monate zusammen!",
+    "yearMilestone": "{years, plural, =1 {1 Jahr zusammen!} other {# Jahre zusammen!}}",
+    "since": "Zusammen seit",
+    "statDays": "Tage",
+    "statWeeks": "Wochen",
+    "statMonths": "Monate",
+    "statYears": "Jahre",
+    "viewProfile": "Profil anzeigen",
+    "turnsAge": "Wird {age}"
   }
 }
