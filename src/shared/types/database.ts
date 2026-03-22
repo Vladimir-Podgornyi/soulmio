@@ -45,6 +45,9 @@ export interface Database {
           avatar_url: string | null
           notes: string | null
           is_favorite: boolean
+          relation_since: string | null
+          birth_date: string | null
+          birth_notify_days: number
           created_at: string
         }
         Insert: {
@@ -55,6 +58,9 @@ export interface Database {
           avatar_url?: string | null
           notes?: string | null
           is_favorite?: boolean
+          relation_since?: string | null
+          birth_date?: string | null
+          birth_notify_days?: number
           created_at?: string
         }
         Update: {
@@ -65,7 +71,36 @@ export interface Database {
           avatar_url?: string | null
           notes?: string | null
           is_favorite?: boolean
+          relation_since?: string | null
+          birth_date?: string | null
+          birth_notify_days?: number
           created_at?: string
+        }
+        Relationships: []
+      }
+      person_dates: {
+        Row: {
+          id: string
+          person_id: string
+          user_id: string
+          title: string
+          date: string
+          notify_days: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          person_id: string
+          user_id: string
+          title: string
+          date: string
+          notify_days?: number
+          created_at?: string
+        }
+        Update: {
+          title?: string
+          date?: string
+          notify_days?: number
         }
         Relationships: []
       }

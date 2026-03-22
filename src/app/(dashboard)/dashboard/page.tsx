@@ -4,6 +4,8 @@ import type { DbClient } from '@/shared/api/supabase'
 import { getProfile } from '@/entities/user/api'
 import { getPeople } from '@/entities/person/api'
 import { getItemSummary, getUpcomingGifts, getUpcomingRestaurants, getUpcomingMovies, getUpcomingTrips, getUpcomingCustomItems } from '@/entities/item/api'
+import { getUpcomingBirthdays } from '@/entities/person/api'
+import { getUpcomingPersonDates } from '@/entities/person/api/personDates'
 import { DashboardPage } from '@/views/dashboard/DashboardPage'
 import type { Profile } from '@/entities/user/model/types'
 
@@ -43,7 +45,7 @@ export default async function Page() {
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? null
   const db = supabase as DbClient
 
-  const [profile, people, summary, upcomingGifts, upcomingRestaurants, upcomingMovies, upcomingTrips, upcomingCustomItems] = await Promise.all([
+  const [profile, people, summary, upcomingGifts, upcomingRestaurants, upcomingMovies, upcomingTrips, upcomingCustomItems, upcomingBirthdays, upcomingPersonDates] = await Promise.all([
     getOrCreateProfile(db, user.id, user.email, fullName),
     getPeople(db, user.id),
     getItemSummary(db, user.id),
@@ -52,6 +54,8 @@ export default async function Page() {
     getUpcomingMovies(db, user.id),
     getUpcomingTrips(db, user.id),
     getUpcomingCustomItems(db, user.id),
+    getUpcomingBirthdays(db, user.id),
+    getUpcomingPersonDates(db, user.id),
   ])
 
   return (
@@ -64,6 +68,8 @@ export default async function Page() {
       upcomingMovies={upcomingMovies}
       upcomingTrips={upcomingTrips}
       upcomingCustomItems={upcomingCustomItems}
+      upcomingBirthdays={upcomingBirthdays}
+      upcomingPersonDates={upcomingPersonDates}
     />
   )
 }

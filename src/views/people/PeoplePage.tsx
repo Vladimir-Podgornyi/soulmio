@@ -10,6 +10,7 @@ import { deletePerson, toggleFavorite } from '@/entities/person/api'
 import { getCustomRelations } from '@/entities/person/api/customRelations'
 import type { Person } from '@/entities/person/model/types'
 import { DEFAULT_RELATIONS } from '@/entities/person/model/types'
+import { getRelationDuration } from '@/shared/lib/milestones'
 import { AddPersonWidget } from '@/widgets/add-person'
 import { AddPersonForm } from '@/features/add-person'
 
@@ -124,6 +125,12 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
       )}
 
       <div className="flex flex-col gap-2">
+        <AddPersonWidget
+          isPro={isPro}
+          canAdd={isPro || people.length === 0}
+          onPersonAdded={handlePersonAdded}
+        />
+
         {filteredPeople.map((person) => (
           <PersonCard
             key={person.id}
@@ -133,12 +140,6 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
             onFavoriteToggled={handleFavoriteToggled}
           />
         ))}
-
-        <AddPersonWidget
-          isPro={isPro}
-          canAdd={isPro || people.length === 0}
-          onPersonAdded={handlePersonAdded}
-        />
       </div>
 
       {/* Bottom sheet редактирования */}
@@ -245,6 +246,23 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
                   : person.relation}
               </span>
             )}
+            {person.relation_since && (() => {
+              const dur = getRelationDuration(person.relation_since!)
+              if (dur.value <= 0) return null
+              const unitLabel = dur.unit === 'years'
+                ? t('milestones.statYears')
+                : dur.unit === 'months'
+                  ? t('milestones.statMonths')
+                  : t('milestones.statDays')
+              const secondary = dur.secondary != null
+                ? ` ${dur.secondary} ${t('milestones.statMonths')}`
+                : ''
+              return (
+                <span className="text-[11px] text-text-muted mt-0.5">
+                  {dur.value} {unitLabel}{secondary}
+                </span>
+              )
+            })()}
           </div>
         </Link>
 
