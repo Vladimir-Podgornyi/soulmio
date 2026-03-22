@@ -28,6 +28,7 @@ export function ProPage({ isPro }: ProPageProps) {
     { type: 'bool',    labelKey: 'pro.avatar' },
     { type: 'bool',    labelKey: 'pro.customRelation' },
     { type: 'bool',    labelKey: 'pro.giftPhoto' },
+    { type: 'compare', labelKey: 'pro.customItems',    freeKey: 'pro.customItemsFree',  proKey: 'pro.customItemsPro' },
     { type: 'bool',    labelKey: 'pro.reminders' },
     { type: 'bool',    labelKey: 'pro.actors' },
     { type: 'compare', labelKey: 'pro.ai',             freeKey: 'pro.aiFree',          proKey: 'pro.aiPro' },

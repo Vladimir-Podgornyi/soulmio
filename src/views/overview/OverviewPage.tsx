@@ -4,10 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronLeft, ExternalLink, Star, MoreVertical, Pencil, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ExternalLink, Star, MoreVertical, Pencil, ArrowRight, Plus, X } from 'lucide-react'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 import type { ItemWithPerson } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
+import type { Person } from '@/entities/person/model/types'
 import { getGiftPinned, getGiftDate } from '@/features/add-gift'
 import { AddGiftForm } from '@/features/add-gift'
 import { getCuisineType, getFoodType } from '@/features/add-food'
@@ -16,11 +17,15 @@ import { AddRestaurantForm } from '@/features/add-restaurant'
 import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActorItem } from '@/features/add-movie'
 import { AddTravelForm, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget } from '@/features/add-travel'
 import { getFlagEmoji } from '@/features/add-travel'
+import { AddCustomItemForm, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
 
 interface OverviewPageProps {
   category: string
   items: ItemWithPerson[]
   isPro: boolean
+  people?: Person[]
+  isCustom?: boolean
+  categoryIcon?: string | null
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -31,16 +36,50 @@ const CATEGORY_ICONS: Record<string, string> = {
   travel: '✈️',
 }
 
+const CATEGORY_GRADIENTS = [
+  { key: 'gray',    gradient: 'linear-gradient(145deg, #2A2826, #3A3630)' },
+  { key: 'coral',   gradient: 'linear-gradient(145deg, #7A3020, #B04228)' },
+  { key: 'rose',    gradient: 'linear-gradient(145deg, #5C2240, #904060)' },
+  { key: 'ocean',   gradient: 'linear-gradient(145deg, #182E48, #285078)' },
+  { key: 'sage',    gradient: 'linear-gradient(145deg, #22382A, #345A40)' },
+  { key: 'purple',  gradient: 'linear-gradient(145deg, #2A2230, #483060)' },
+  { key: 'amber',   gradient: 'linear-gradient(145deg, #3A2A10, #5A4010)' },
+  { key: 'teal',    gradient: 'linear-gradient(145deg, #1A3038, #205048)' },
+  { key: 'crimson', gradient: 'linear-gradient(145deg, #5A1020, #8A2030)' },
+  { key: 'indigo',  gradient: 'linear-gradient(145deg, #1A1A48, #283080)' },
+  { key: 'olive',   gradient: 'linear-gradient(145deg, #2A3010, #405018)' },
+  { key: 'brown',   gradient: 'linear-gradient(145deg, #3A2010, #5A3018)' },
+  { key: 'pink',    gradient: 'linear-gradient(145deg, #4A1A3A, #703060)' },
+  { key: 'mint',    gradient: 'linear-gradient(145deg, #183028, #285840)' },
+  { key: 'slate',   gradient: 'linear-gradient(145deg, #1A2030, #283848)' },
+  { key: 'gold',    gradient: 'linear-gradient(145deg, #3A3010, #605010)' },
+]
+
+function parseCategoryIconField(raw: string | null): { gradient: string; emoji: string } {
+  const defaultGradient = CATEGORY_GRADIENTS[0].gradient
+  if (!raw) return { gradient: defaultGradient, emoji: '📋' }
+  const colonIdx = raw.indexOf(':')
+  if (colonIdx > 0 && colonIdx <= 8) {
+    const key = raw.slice(0, colonIdx)
+    const found = CATEGORY_GRADIENTS.find((g) => g.key === key)
+    if (found) return { gradient: found.gradient, emoji: raw.slice(colonIdx + 1) }
+  }
+  return { gradient: defaultGradient, emoji: raw }
+}
+
 type ValidCategory = 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'
 
-export function OverviewPage({ category, items: initialItems, isPro }: OverviewPageProps) {
+export function OverviewPage({ category, items: initialItems, isPro, people = [], isCustom, categoryIcon }: OverviewPageProps) {
   const t = useTranslations()
   const { currency } = useCurrency()
+  const router = useRouter()
 
   const [items, setItems] = useState<ItemWithPerson[]>(initialItems)
   const [editingItem, setEditingItem] = useState<ItemWithPerson | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
-  const icon = CATEGORY_ICONS[category] ?? '📁'
+  const customParsed = isCustom ? parseCategoryIconField(categoryIcon ?? null) : null
+  const icon = isCustom ? (customParsed?.emoji ?? '📋') : (CATEGORY_ICONS[category] ?? '📁')
   const isValidCategory = ['food', 'restaurants', 'gifts', 'movies', 'travel'].includes(category)
   const categoryLabel = isValidCategory
     ? t(`categories.${category as ValidCategory}`)
@@ -51,12 +90,39 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
   const isMovies = category === 'movies'
   const isTravel = category === 'travel'
 
+  // Фильтр для кастомных категорий
+  const [customFilter, setCustomFilter] = useState<'all' | 'likes' | 'dislikes'>('all')
+
+  // Лейблы для кастомного фильтра: Pro — из тегов, Free — дефолт
+  const customLikesLabel = (() => {
+    if (!isCustom) return ''
+    if (isPro) {
+      const found = items.find((it) => getCustomItemLikesLabel(it.tags ?? null))
+      const label = found ? getCustomItemLikesLabel(found.tags ?? null) : ''
+      if (label) return label
+    }
+    return t('items.sentiments.likes')
+  })()
+
+  const customDislikesLabel = (() => {
+    if (!isCustom) return ''
+    if (isPro) {
+      const found = items.find((it) => getCustomItemDislikesLabel(it.tags ?? null))
+      const label = found ? getCustomItemDislikesLabel(found.tags ?? null) : ''
+      if (label) return label
+    }
+    return t('items.sentiments.dislikes')
+  })()
+
   // Закреплённые сверху для всех категорий
-  const sortedItems = [...items].sort((a, b) => {
+  const baseSorted = [...items].sort((a, b) => {
     const aPin = getGiftPinned(a.tags ?? null) || getTravelPinned(a.tags ?? null) ? 0 : 1
     const bPin = getGiftPinned(b.tags ?? null) || getTravelPinned(b.tags ?? null) ? 0 : 1
     return aPin - bPin
   })
+  const sortedItems = isCustom && customFilter !== 'all'
+    ? baseSorted.filter((it) => it.sentiment === customFilter)
+    : baseSorted
 
   function handleItemUpdated(updated: Item) {
     setItems((prev) =>
@@ -70,6 +136,7 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
   }
 
   function getEditTitle() {
+    if (isCustom) return t('common.edit')
     if (isFood) return t('food.edit')
     if (isGifts) return t('gifts.edit')
     if (isMovies) {
@@ -93,7 +160,16 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
         </Link>
 
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{icon}</span>
+          {isCustom && customParsed ? (
+            <div
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] text-2xl"
+              style={{ background: customParsed.gradient }}
+            >
+              {icon}
+            </div>
+          ) : (
+            <span className="text-3xl">{icon}</span>
+          )}
           <div>
             <h1 className="text-[24px] font-bold tracking-[-0.5px] text-text-primary leading-tight">
               {categoryLabel}
@@ -104,6 +180,34 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
           </div>
         </div>
       </div>
+
+      {/* Фильтр — кастомные категории */}
+      {isCustom && items.length > 0 && (
+        <div className="flex gap-2 px-4 pb-4">
+          {([
+            { key: 'all' as const, label: t('gifts.filterAll') },
+            { key: 'likes' as const, label: customLikesLabel },
+            { key: 'dislikes' as const, label: customDislikesLabel },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setCustomFilter(key)}
+              className={`h-8 flex-shrink-0 rounded-[8px] px-3 text-xs font-medium transition-colors ${
+                customFilter === key
+                  ? 'bg-bg-input text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {label}
+              {key !== 'all' && (
+                <span className="ml-1.5 text-text-muted">
+                  {items.filter((it) => it.sentiment === key).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Список */}
       <div className="px-4 flex flex-col gap-2">
@@ -120,6 +224,9 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
               category={category}
               currency={currency}
               onEdit={() => setEditingItem(item)}
+              isCustom={isCustom}
+              customLikesLabel={customLikesLabel}
+              customDislikesLabel={customDislikesLabel}
               t={t}
             />
           ))
@@ -129,7 +236,16 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
       {/* Модальное окно редактирования */}
       {editingItem && (
         <BottomSheet title={getEditTitle()} onClose={() => setEditingItem(null)}>
-          {isFood ? (
+          {isCustom ? (
+            <AddCustomItemForm
+              personId={editingItem.person_id}
+              categoryId={editingItem.category_id}
+              item={editingItem}
+              isPro={isPro}
+              onSuccess={handleItemUpdated}
+              onCancel={() => setEditingItem(null)}
+            />
+          ) : isFood ? (
             <AddFoodForm
               personId={editingItem.person_id}
               categoryId={editingItem.category_id}
@@ -185,6 +301,76 @@ export function OverviewPage({ category, items: initialItems, isPro }: OverviewP
           )}
         </BottomSheet>
       )}
+
+      {/* FAB — добавить запись */}
+      {people.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary-dark active:scale-95 transition-all"
+        >
+          <Plus size={26} strokeWidth={2.5} className="text-white" />
+        </button>
+      )}
+
+      {/* Модал выбора человека для добавления */}
+      {addOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4">
+              <span />
+              <h2 className="text-base font-semibold tracking-[-0.3px] text-text-primary">
+                {t('dashboard.selectPerson')}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setAddOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 px-6 pb-6">
+              {people.map((person) => (
+                <button
+                  key={person.id}
+                  type="button"
+                  onClick={() => {
+                    setAddOpen(false)
+                    router.push(`/people/${person.id}?add=${encodeURIComponent(category)}`)
+                  }}
+                  className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 text-left transition-all hover:border-primary/40 active:scale-[0.98]"
+                >
+                  {person.avatar_url ? (
+                    <img
+                      src={person.avatar_url}
+                      alt={person.name}
+                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/60 to-primary flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                      {person.name[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-sm font-semibold text-text-primary leading-tight">
+                      {person.name}
+                    </span>
+                    {person.relation && (
+                      <span className="text-xs text-text-secondary capitalize">
+                        {(['partner', 'friend', 'family', 'other'] as string[]).includes(person.relation)
+                          ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
+                          : person.relation}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -196,10 +382,13 @@ interface OverviewItemCardProps {
   category: string
   currency: string
   onEdit: () => void
+  isCustom?: boolean
+  customLikesLabel?: string
+  customDislikesLabel?: string
   t: ReturnType<typeof useTranslations>
 }
 
-function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemCardProps) {
+function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLikesLabel, customDislikesLabel, t }: OverviewItemCardProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -254,6 +443,17 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
 
   function sentimentLabel(): { text: string; cls: string } | null {
     if (!item.sentiment) return null
+    if (isCustom) {
+      if (item.sentiment === 'likes') {
+        const label = customLikesLabel || t('items.sentiments.likes')
+        return { text: `✅ ${label}`, cls: 'bg-loves-bg text-loves' }
+      }
+      if (item.sentiment === 'dislikes') {
+        const label = customDislikesLabel || t('items.sentiments.dislikes')
+        return { text: `❌ ${label}`, cls: 'bg-avoid-bg text-avoid' }
+      }
+      return null
+    }
     if (isMovies) {
       const map: Record<string, { text: string; cls: string }> = {
         wants:    { text: `🎬 ${t('movies.statusWants')}`,    cls: 'bg-wants-bg text-wants' },
@@ -471,7 +671,11 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
 
       {/* Нижняя строка: персона + статус */}
       <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-border-card">
-        <div className="flex items-center gap-2">
+        <Link
+          href={`/people/${item.person_id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           {item.personAvatar ? (
             <img
               src={item.personAvatar}
@@ -484,7 +688,7 @@ function OverviewItemCard({ item, category, currency, onEdit, t }: OverviewItemC
             </div>
           )}
           <span className="text-xs text-text-muted">{item.personName}</span>
-        </div>
+        </Link>
 
         {sentiment && (
           <span className={`flex-shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${sentiment.cls}`}>

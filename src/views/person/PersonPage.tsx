@@ -21,6 +21,7 @@ import { AddGiftForm } from '@/features/add-gift'
 import { useAddGift, getGiftPinned, getGiftDate } from '@/features/add-gift'
 import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleaseDate, isActorItem, getActorFilms, getMoviePinned } from '@/features/add-movie'
 import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji } from '@/features/add-travel'
+import { AddCustomItemForm, useAddCustomItem, getCustomItemPinned, getCustomItemDate, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
 
 interface PersonPageProps {
@@ -37,6 +38,47 @@ const CATEGORY_ICONS: Record<string, string> = {
   gifts:       '🎁',
   movies:      '🎬',
   travel:      '✈️',
+}
+
+/* ── Градиенты для кастомных категорий ── */
+
+export const CATEGORY_GRADIENTS = [
+  { key: 'gray',    gradient: 'linear-gradient(145deg, #2A2826, #3A3630)' }, // default
+  { key: 'coral',   gradient: 'linear-gradient(145deg, #7A3020, #B04228)' },
+  { key: 'rose',    gradient: 'linear-gradient(145deg, #5C2240, #904060)' },
+  { key: 'ocean',   gradient: 'linear-gradient(145deg, #182E48, #285078)' },
+  { key: 'sage',    gradient: 'linear-gradient(145deg, #22382A, #345A40)' },
+  { key: 'purple',  gradient: 'linear-gradient(145deg, #2A2230, #483060)' },
+  { key: 'amber',   gradient: 'linear-gradient(145deg, #3A2A10, #5A4010)' },
+  { key: 'teal',    gradient: 'linear-gradient(145deg, #1A3038, #205048)' },
+  { key: 'crimson', gradient: 'linear-gradient(145deg, #5A1020, #8A2030)' },
+  { key: 'indigo',  gradient: 'linear-gradient(145deg, #1A1A48, #283080)' },
+  { key: 'olive',   gradient: 'linear-gradient(145deg, #2A3010, #405018)' },
+  { key: 'brown',   gradient: 'linear-gradient(145deg, #3A2010, #5A3018)' },
+  { key: 'pink',    gradient: 'linear-gradient(145deg, #4A1A3A, #703060)' },
+  { key: 'mint',    gradient: 'linear-gradient(145deg, #183028, #285840)' },
+  { key: 'slate',   gradient: 'linear-gradient(145deg, #1A2030, #283848)' },
+  { key: 'gold',    gradient: 'linear-gradient(145deg, #3A3010, #605010)' },
+]
+
+const DEFAULT_CATEGORY_GRADIENT = CATEGORY_GRADIENTS[0].gradient
+
+/** Разбирает поле icon: 'coral:📚' → { gradient, emoji }, '📚' → { DEFAULT, emoji } */
+export function parseCategoryIconField(raw: string | null): { gradient: string; emoji: string } {
+  if (!raw) return { gradient: DEFAULT_CATEGORY_GRADIENT, emoji: '📋' }
+  const colonIdx = raw.indexOf(':')
+  if (colonIdx > 0 && colonIdx <= 8) {
+    const key = raw.slice(0, colonIdx)
+    const found = CATEGORY_GRADIENTS.find((g) => g.key === key)
+    if (found) return { gradient: found.gradient, emoji: raw.slice(colonIdx + 1) }
+  }
+  return { gradient: DEFAULT_CATEGORY_GRADIENT, emoji: raw }
+}
+
+/** Собирает поле icon из ключа цвета и эмодзи */
+function buildCategoryIconField(colorKey: string, emoji: string): string {
+  if (colorKey === 'gray') return emoji
+  return `${colorKey}:${emoji}`
 }
 
 export function PersonPage({
@@ -98,6 +140,7 @@ export function PersonPage({
   const isGifts = activeCategory?.name === 'gifts'
   const isMovies = activeCategory?.name === 'movies'
   const isTravel = activeCategory?.name === 'travel'
+  const isCustom = activeCategory?.is_custom ?? false
 
   // Фильмы: разделяем фильмы и актёров
   const movieOnlyItems = isMovies ? allItems.filter((it) => !isActorItem(it.tags ?? null)) : allItems
@@ -122,8 +165,8 @@ export function PersonPage({
     : typeFiltered
   // Закреплённые сверху для всех категорий
   const items = [...genreFiltered].sort((a, b) => {
-    const aPin = getGiftPinned(a.tags ?? null) || getMoviePinned(a.tags ?? null) || getTravelPinned(a.tags ?? null) ? 0 : 1
-    const bPin = getGiftPinned(b.tags ?? null) || getMoviePinned(b.tags ?? null) || getTravelPinned(b.tags ?? null) ? 0 : 1
+    const aPin = getGiftPinned(a.tags ?? null) || getMoviePinned(a.tags ?? null) || getTravelPinned(a.tags ?? null) || getCustomItemPinned(a.tags ?? null) ? 0 : 1
+    const bPin = getGiftPinned(b.tags ?? null) || getMoviePinned(b.tags ?? null) || getTravelPinned(b.tags ?? null) || getCustomItemPinned(b.tags ?? null) ? 0 : 1
     return aPin - bPin
   })
 
@@ -218,7 +261,8 @@ export function PersonPage({
       {/* Вкладки категорий */}
       <div className="flex gap-2 overflow-x-auto px-4 pb-5 scrollbar-none">
         {localCategories.map((cat) => {
-          const icon = cat.icon ?? CATEGORY_ICONS[cat.name] ?? '📁'
+          const rawIcon = cat.icon ?? CATEGORY_ICONS[cat.name] ?? '📁'
+          const icon = cat.is_custom ? parseCategoryIconField(rawIcon).emoji : rawIcon
           const isActive = cat.id === activeCategoryId
           const label = cat.name in { food: 1, restaurants: 1, gifts: 1, movies: 1, travel: 1 }
             ? t(`categories.${cat.name as 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'}`)
@@ -564,7 +608,9 @@ export function PersonPage({
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="mb-3 text-5xl">
-                {activeCategory?.icon ?? CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋'}
+                {activeCategory?.is_custom
+                  ? parseCategoryIconField(activeCategory.icon ?? null).emoji
+                  : (activeCategory?.icon ?? CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋')}
               </span>
               <p className="text-sm text-text-muted">{t('common.empty')}</p>
             </div>
@@ -620,6 +666,17 @@ export function PersonPage({
                   item={item}
                   personId={person.id}
                   categoryId={activeCategoryId}
+                  onEdit={() => setEditingItem(item)}
+                  onDeleted={() => handleItemDeleted(item.id)}
+                  onUpdated={handleItemUpdated}
+                />
+              ) : isCustom ? (
+                <CustomItemCard
+                  key={item.id}
+                  item={item}
+                  personId={person.id}
+                  categoryId={activeCategoryId}
+                  categoryIcon={parseCategoryIconField(activeCategory?.icon ?? null).emoji}
                   onEdit={() => setEditingItem(item)}
                   onDeleted={() => handleItemDeleted(item.id)}
                   onUpdated={handleItemUpdated}
@@ -809,6 +866,33 @@ export function PersonPage({
           />
         </BottomSheet>
       )}
+
+      {/* Нижний лист добавления — кастомная категория */}
+      {isAddOpen && isCustom && (
+        <BottomSheet title={t('customItem.add')} onClose={() => setIsAddOpen(false)}>
+          <AddCustomItemForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            isPro={isPro}
+            onSuccess={handleItemAdded}
+            onCancel={() => setIsAddOpen(false)}
+          />
+        </BottomSheet>
+      )}
+
+      {/* Нижний лист редактирования — кастомная категория */}
+      {editingItem && isCustom && (
+        <BottomSheet title={t('customItem.edit')} onClose={() => setEditingItem(null)}>
+          <AddCustomItemForm
+            personId={person.id}
+            categoryId={activeCategoryId}
+            item={editingItem}
+            isPro={isPro}
+            onSuccess={handleItemUpdated}
+            onCancel={() => setEditingItem(null)}
+          />
+        </BottomSheet>
+      )}
     </div>
   )
 }
@@ -829,14 +913,14 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   const { isSaving, removeFood } = useAddFood(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const desktopMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
+      const target = e.target as Node
+      if (!desktopMenuRef.current?.contains(target) && !mobileMenuRef.current?.contains(target)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -879,106 +963,92 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
     foodType === 'cuisine' ? `🍜 ${t('food.types.cuisine')}` :
     `🥗 ${t('food.types.food_type')}`
 
+  const foodStatusBadge = (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${isLikes ? 'bg-loves-bg text-loves' : 'bg-avoid-bg text-avoid'}`}>
+      {isLikes ? `❤️ ${t('items.sentiments.likes')}` : `😕 ${t('items.sentiments.dislikes')}`}
+    </span>
+  )
+
+  const foodMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
+    </div>
+  )
+
   return (
-    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
-      {/* Верхняя строка */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-1 flex-col gap-0.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
-            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
-            <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted">
-              {typeLabel}
-            </span>
-            {cuisineType && (
-              <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-secondary">
-                {cuisineType}
-              </span>
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col gap-1 min-w-0">
+            {/* Название */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+              <span className="font-semibold text-text-primary leading-tight truncate">{item.title}</span>
+            </div>
+            {/* Типы — под названием */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted whitespace-nowrap">{typeLabel}</span>
+              {cuisineType && (
+                <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-secondary whitespace-nowrap">{cuisineType}</span>
+              )}
+            </div>
+            {linkedRestaurant && (
+              <span className="text-xs text-text-secondary truncate">🍴 {linkedRestaurant.name}</span>
             )}
           </div>
-          {linkedRestaurant && (
-            <span className="text-xs text-text-secondary mt-0.5">🍴 {linkedRestaurant.name}</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Значок отношения */}
-          <span
-            className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${
-              isLikes ? 'bg-loves-bg text-loves' : 'bg-avoid-bg text-avoid'
-            }`}
-          >
-            {isLikes ? `❤️ ${t('items.sentiments.likes')}` : `😕 ${t('items.sentiments.dislikes')}`}
-          </span>
-
-          {/* Меню из трёх точек */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-            >
-              <MoreVertical size={15} />
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
-                <button
-                  onClick={() => { setMenuOpen(false); onEdit() }}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-                >
-                  <Pencil size={14} className="text-text-secondary" />
-                  {t('common.edit')}
-                </button>
-                <div className="mx-3 h-px bg-border-card" />
-                <button
-                  onClick={handleTogglePin}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-                >
-                  <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
-                  {isPinned ? t('common.unpin') : t('common.pin')}
-                </button>
-                <div className="mx-3 h-px bg-border-card" />
-                <button
-                  onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  {t('common.delete')}
-                </button>
-              </div>
-            )}
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={desktopMenuRef}>
+            {foodStatusBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {foodMenuDropdown('top')}
+            </div>
           </div>
         </div>
+
+        {/* Комментарий */}
+        {item.description && (
+          <p className="mt-2 text-[13px] text-text-secondary leading-relaxed line-clamp-3">{item.description}</p>
+        )}
+
+        {/* Подтверждение удаления */}
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('food.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Комментарий */}
-      {item.description && (
-        <p className="mt-2 text-[13px] text-text-secondary leading-relaxed">
-          {item.description}
-        </p>
-      )}
-
-      {/* Подтверждение удаления */}
-      {confirmDelete && (
-        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
-          <span className="text-sm text-red-500">{t('food.deleteConfirm')}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              {isSaving ? '...' : t('common.delete')}
-            </button>
-          </div>
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">{foodStatusBadge}</div>
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={mobileMenuRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {foodMenuDropdown('bottom')}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -999,13 +1069,15 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   const { isSaving, removeRestaurant } = useAddRestaurant(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const restDesktopRef = useRef<HTMLDivElement>(null)
+  const restMobileRef = useRef<HTMLDivElement>(null)
 
   // Закрываем меню по клику снаружи
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const t = e.target as Node
+      if (!restDesktopRef.current?.contains(t) && !restMobileRef.current?.contains(t)) {
         setMenuOpen(false)
       }
     }
@@ -1044,128 +1116,111 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   const isVisited = item.sentiment === 'visited'
   const hasRatings = isVisited && (item.my_rating !== null || item.partner_rating !== null)
 
-  // Иконки, общие для размещения в последней строке
-  const icons = (
-    <div className="flex flex-shrink-0 items-center gap-0.5">
-      {item.external_url && (
-        <a
-          href={item.external_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-        >
-          <ExternalLink size={15} />
-        </a>
-      )}
-      <div className="relative" ref={menuRef}>
-        <button
-          onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-        >
-          <MoreVertical size={15} />
-        </button>
-        {menuOpen && (
-          <div className="absolute right-0 bottom-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
-            <button
-              onClick={() => { setMenuOpen(false); onEdit() }}
-              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-            >
-              <Pencil size={14} className="text-text-secondary" />
-              {t('common.edit')}
-            </button>
-            <div className="mx-3 h-px bg-border-card" />
-            <button
-              onClick={handleTogglePin}
-              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-            >
-              <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
-              {isPinned ? t('common.unpin') : t('common.pin')}
-            </button>
-            <div className="mx-3 h-px bg-border-card" />
-            <button
-              onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
-              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-            >
-              <Trash2 size={14} />
-              {t('common.delete')}
-            </button>
-          </div>
-        )}
-      </div>
+  const restStatusBadge = (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'}`}>
+      {isVisited ? t('items.sentiments.visited') : t('items.sentiments.wants')}
+    </span>
+  )
+
+  const restMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
     </div>
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
-      {/* Верхняя строка: название + адрес + значок отношения */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-          <div className="flex items-center gap-1.5">
-            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
-            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        {/* Верхняя строка */}
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col gap-0.5 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+              <span className="font-semibold text-text-primary leading-tight truncate">{item.title}</span>
+            </div>
+            {addressTag && (
+              <span className="text-xs text-text-secondary truncate">{addressTag}</span>
+            )}
           </div>
-          {addressTag && (
-            <span className="text-xs text-text-secondary">{addressTag}</span>
-          )}
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={restDesktopRef}>
+            {restStatusBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {restMenuDropdown('top')}
+            </div>
+          </div>
         </div>
-        <span
-          className={`flex-shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${
-            isVisited ? 'bg-loves-bg text-loves' : 'bg-wants-bg text-wants'
-          }`}
-        >
-          {isVisited ? t('items.sentiments.visited') : t('items.sentiments.wants')}
-        </span>
+
+        {/* Рейтинги */}
+        {hasRatings && (
+          <div className="mt-3 flex gap-4 border-t border-border-card pt-3">
+            {item.my_rating !== null && <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />}
+            {item.partner_rating !== null && <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />}
+          </div>
+        )}
+
+        {/* Комментарий */}
+        {item.description && (
+          <p className="mt-2 text-[13px] text-text-secondary leading-relaxed">{item.description}</p>
+        )}
+
+        {/* Десктоп: ссылка */}
+        {item.external_url && (
+          <a href={item.external_url} target="_blank" rel="noopener noreferrer"
+            className="hidden md:flex items-center gap-1.5 mt-2 text-xs text-text-muted hover:text-text-secondary transition-colors">
+            <ExternalLink size={12} />
+            {item.external_url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+          </a>
+        )}
+
+        {/* Подтверждение удаления */}
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('restaurants.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Рейтинги — иконки справа, если нет комментария */}
-      {hasRatings && (
-        <div className="mt-3 flex items-end justify-between gap-2 border-t border-border-card pt-3">
-          <div className="flex gap-4">
-            {item.my_rating !== null && (
-              <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />
-            )}
-            {item.partner_rating !== null && (
-              <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />
-            )}
-          </div>
-          {!item.description && icons}
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">{restStatusBadge}</div>
+        {item.external_url && (
+          <>
+            <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+            <a href={item.external_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap">
+              <ExternalLink size={13} />{t('items.link')}
+            </a>
+          </>
+        )}
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={restMobileRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {restMenuDropdown('bottom')}
         </div>
-      )}
-
-      {/* Комментарий — иконки справа в этой последней строке */}
-      {item.description && (
-        <div className="mt-2 flex items-end justify-between gap-2">
-          <p className="flex-1 text-[13px] text-text-secondary leading-relaxed">{item.description}</p>
-          {icons}
-        </div>
-      )}
-
-      {/* Только иконки — когда нет рейтингов и комментария */}
-      {!hasRatings && !item.description && (
-        <div className="mt-2 flex justify-end">{icons}</div>
-      )}
-
-      {/* Подтверждение удаления */}
-      {confirmDelete && (
-        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
-          <span className="text-sm text-red-500">{t('restaurants.deleteConfirm')}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              {isSaving ? '...' : t('common.delete')}
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1370,7 +1425,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
       <div className="md:hidden flex items-center border-t border-border-card">
 
         {/* Статус */}
-        <div className="flex flex-1 items-center justify-center px-3 py-2.5">
+        <div className="flex flex-1 items-center px-3 py-2.5">
           {statusBadge}
         </div>
 
@@ -1445,14 +1500,12 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   const { isSaving, removeMovie } = useAddMovie(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
+      const target = e.target as Node
+      if (!movieDesktopRef.current?.contains(target) && !movieMobileRef.current?.contains(target)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -1500,118 +1553,99 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
     }
   }
 
+  const movieDesktopRef = useRef<HTMLDivElement>(null)
+  const movieMobileRef = useRef<HTMLDivElement>(null)
+
+  const movieStatusBadge = (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${sentimentCls}`}>
+      {sentimentLabel}
+    </span>
+  )
+
+  const movieMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
+    </div>
+  )
+
   return (
-    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
-      <div className="flex items-start gap-2">
-        <div className="flex flex-1 flex-col gap-3 min-w-0">
-          {/* Название + статус */}
-          <div className="flex items-start gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col gap-3 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
               {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
-              <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
+              <span className="font-semibold text-text-primary leading-tight truncate">{item.title}</span>
             </div>
-            <span className={`flex-shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-medium ${sentimentCls}`}>
-              {sentimentLabel}
-            </span>
+            {genres.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {genres.map((g) => (
+                  <span key={g} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary whitespace-nowrap">
+                    {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+                  </span>
+                ))}
+              </div>
+            )}
+            {(item.my_rating !== null || item.partner_rating !== null) && (
+              <div className="flex gap-4">
+                {item.my_rating !== null && <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />}
+                {item.partner_rating !== null && <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />}
+              </div>
+            )}
+            {releaseDate && (
+              <span className="text-xs text-text-secondary">📅 {new Date(releaseDate).toLocaleDateString()}</span>
+            )}
+            {item.description && (
+              <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">{item.description}</p>
+            )}
           </div>
-
-          {/* Жанры */}
-          {genres.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {genres.map((g) => (
-                <span key={g} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary">
-                  {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
-                </span>
-              ))}
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={movieDesktopRef}>
+            {movieStatusBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {movieMenuDropdown('top')}
             </div>
-          )}
-
-          {/* Рейтинги */}
-          {(item.my_rating !== null || item.partner_rating !== null) && (
-            <div className="flex gap-4">
-              {item.my_rating !== null && (
-                <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />
-              )}
-              {item.partner_rating !== null && (
-                <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />
-              )}
-            </div>
-          )}
-
-          {/* Дата выхода */}
-          {releaseDate && (
-            <span className="text-xs text-text-secondary">
-              📅 {new Date(releaseDate).toLocaleDateString()}
-            </span>
-          )}
-
-          {/* Комментарий */}
-          {item.description && (
-            <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">
-              {item.description}
-            </p>
-          )}
+          </div>
         </div>
 
-        {/* Меню */}
-        <div className="relative flex-shrink-0" ref={menuRef}>
-          <button
-            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-          >
-            <MoreVertical size={15} />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
-              <button
-                onClick={() => { setMenuOpen(false); onEdit() }}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-              >
-                <Pencil size={14} className="text-text-secondary" />
-                {t('common.edit')}
-              </button>
-              <div className="mx-3 h-px bg-border-card" />
-              <button
-                onClick={handleTogglePin}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-              >
-                <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
-                {isPinned ? t('common.unpin') : t('common.pin')}
-              </button>
-              <div className="mx-3 h-px bg-border-card" />
-              <button
-                onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-              >
-                <Trash2 size={14} />
-                {t('common.delete')}
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Подтверждение удаления */}
-      {confirmDelete && (
-        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
-          <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              {isSaving ? '...' : t('common.delete')}
-            </button>
-          </div>
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">{movieStatusBadge}</div>
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={movieMobileRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {movieMenuDropdown('bottom')}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1632,14 +1666,14 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   const { isSaving, removeMovie } = useAddMovie(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const actorDesktopRef = useRef<HTMLDivElement>(null)
+  const actorMobileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
+      const target = e.target as Node
+      if (!actorDesktopRef.current?.contains(target) && !actorMobileRef.current?.contains(target)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -1657,6 +1691,8 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
 
   const films = getActorFilms(item.tags ?? null)
   const isPinned = getMoviePinned(item.tags ?? null)
+  const isLikes = item.sentiment === 'likes'
+  const isDislikes = item.sentiment === 'dislikes'
 
   async function handleTogglePin() {
     setMenuOpen(false)
@@ -1673,87 +1709,262 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
     }
   }
 
+  const actorSentimentBadge = (isLikes || isDislikes) ? (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${isLikes ? 'bg-loves-bg text-loves' : 'bg-avoid-bg text-avoid'}`}>
+      {isLikes ? `❤️ ${t('items.sentiments.likes')}` : `😕 ${t('items.sentiments.dislikes')}`}
+    </span>
+  ) : null
+
+  const actorMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
+    </div>
+  )
+
   return (
-    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
-      <div className="flex items-start gap-2">
-        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-          <div className="flex items-center gap-1.5">
-            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
-            <span className="font-semibold text-text-primary leading-tight">👤 {item.title}</span>
-          </div>
-          {films.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {films.map((f, i) => (
-                <span key={i} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary">
-                  🎬 {f}
-                </span>
-              ))}
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+              <span className="font-semibold text-text-primary leading-tight truncate">👤 {item.title}</span>
             </div>
-          )}
-          {item.description && (
-            <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">
-              {item.description}
-            </p>
-          )}
+            {films.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {films.map((f, i) => (
+                  <span key={i} className="rounded-[6px] bg-bg-input px-2 py-0.5 text-[11px] text-text-secondary whitespace-nowrap">
+                    🎬 {f}
+                  </span>
+                ))}
+              </div>
+            )}
+            {item.description && (
+              <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">{item.description}</p>
+            )}
+          </div>
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={actorDesktopRef}>
+            {actorSentimentBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {actorMenuDropdown('top')}
+            </div>
+          </div>
         </div>
 
-        <div className="relative flex-shrink-0" ref={menuRef}>
-          <button
-            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-          >
-            <MoreVertical size={15} />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
-              <button
-                onClick={() => { setMenuOpen(false); onEdit() }}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-              >
-                <Pencil size={14} className="text-text-secondary" />
-                {t('common.edit')}
-              </button>
-              <div className="mx-3 h-px bg-border-card" />
-              <button
-                onClick={handleTogglePin}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-              >
-                <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
-                {isPinned ? t('common.unpin') : t('common.pin')}
-              </button>
-              <div className="mx-3 h-px bg-border-card" />
-              <button
-                onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-              >
-                <Trash2 size={14} />
-                {t('common.delete')}
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {confirmDelete && (
-        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
-          <span className="text-sm text-red-500">{t('movies.deleteConfirm')}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              {isSaving ? '...' : t('common.delete')}
-            </button>
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">
+          {actorSentimentBadge ?? <span className="text-[11px] text-text-muted">👤</span>}
+        </div>
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={actorMobileRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {actorMenuDropdown('bottom')}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Карточка кастомного элемента ── */
+
+interface CustomItemCardProps {
+  item: Item
+  personId: string
+  categoryId: string
+  categoryIcon: string
+  onEdit: () => void
+  onDeleted: () => void
+  onUpdated: (item: Item) => void
+}
+
+function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDeleted, onUpdated }: CustomItemCardProps) {
+  const t = useTranslations()
+  const { isSaving, removeCustomItem } = useAddCustomItem(personId, categoryId, () => {})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const customDesktopRef = useRef<HTMLDivElement>(null)
+  const customMobileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      const target = e.target as Node
+      if (!customDesktopRef.current?.contains(target) && !customMobileRef.current?.contains(target)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    try {
+      await removeCustomItem(item.id)
+      onDeleted()
+      toast.success(t('customItem.deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const isPinned = getCustomItemPinned(item.tags ?? null)
+  const customDate = getCustomItemDate(item.tags ?? null)
+  const likesLabel = getCustomItemLikesLabel(item.tags ?? null)
+  const dislikesLabel = getCustomItemDislikesLabel(item.tags ?? null)
+  const isLikes = item.sentiment === 'likes'
+  const hasRatings = item.my_rating !== null || item.partner_rating !== null
+
+  const sentimentText = isLikes
+    ? (likesLabel || t('items.sentiments.likes'))
+    : (dislikesLabel || t('items.sentiments.dislikes'))
+
+  const sentimentCls = isLikes ? 'bg-loves-bg text-loves' : 'bg-avoid-bg text-avoid'
+
+  async function handleTogglePin() {
+    setMenuOpen(false)
+    try {
+      const supabase = createClient()
+      const currentTags = (item.tags ?? []) as string[]
+      const newTags = isPinned
+        ? currentTags.filter((tag) => tag !== 'pinned:true')
+        : [...currentTags, 'pinned:true']
+      const updated = await updateItem(supabase, item.id, { tags: newTags })
+      onUpdated(updated)
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  const customStatusBadge = (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${sentimentCls}`}>
+      {isLikes ? '❤️' : '😕'} {sentimentText}
+    </span>
+  )
+
+  const customMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
+    </div>
+  )
+
+  return (
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-bg-input text-lg">
+              {categoryIcon}
+            </span>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+                <span className="font-semibold text-text-primary leading-tight truncate">{item.title}</span>
+              </div>
+              {customDate && (
+                <span className="text-xs text-text-muted">📅 {customDate}</span>
+              )}
+            </div>
+          </div>
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={customDesktopRef}>
+            {customStatusBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {customMenuDropdown('top')}
+            </div>
           </div>
         </div>
-      )}
+
+        {item.description && (
+          <p className="mt-2 text-[13px] text-text-secondary leading-relaxed line-clamp-3">{item.description}</p>
+        )}
+        {hasRatings && (
+          <div className="mt-3 flex gap-4 border-t border-border-card pt-3">
+            {item.my_rating !== null && <RatingDisplay label={t('items.ratings.mine')} value={item.my_rating} />}
+            {item.partner_rating !== null && <RatingDisplay label={t('items.ratings.partner')} value={item.partner_rating} />}
+          </div>
+        )}
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('customItem.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">{customStatusBadge}</div>
+        {item.external_url && (
+          <>
+            <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+            <a
+              href={item.external_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap"
+            >
+              <ExternalLink size={13} />
+              {t('items.link')}
+            </a>
+          </>
+        )}
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={customMobileRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {customMenuDropdown('bottom')}
+        </div>
+      </div>
     </div>
   )
 }
@@ -2011,7 +2222,17 @@ interface EditCategoryModalProps {
 function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCategoryModalProps) {
   const t = useTranslations()
   const [name, setName] = useState(category.name)
-  const [icon, setIcon] = useState(category.icon ?? '📁')
+  const parsed = parseCategoryIconField(category.icon ?? null)
+  const [colorKey, setColorKey] = useState(() => {
+    const raw = category.icon ?? ''
+    const colonIdx = raw.indexOf(':')
+    if (colonIdx > 0 && colonIdx <= 8) {
+      const key = raw.slice(0, colonIdx)
+      if (CATEGORY_GRADIENTS.some((g) => g.key === key)) return key
+    }
+    return 'gray'
+  })
+  const [icon, setIcon] = useState(parsed.emoji === '📋' ? '📁' : parsed.emoji)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -2020,7 +2241,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
     setIsSaving(true)
     try {
       const supabase = createClient()
-      const updated = await updateCustomCategory(supabase, category.id, name.trim(), icon)
+      const updated = await updateCustomCategory(supabase, category.id, name.trim(), buildCategoryIconField(colorKey, icon))
       if (updated) onUpdated(updated)
       else toast.error(t('common.error'))
     } finally {
@@ -2061,6 +2282,28 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
         </div>
 
         <div className="flex flex-col gap-4">
+          {/* Цвет карточки */}
+          <div>
+            <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+              {t('categories.color')}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORY_GRADIENTS.map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  onClick={() => setColorKey(g.key)}
+                  className="relative h-8 w-8 rounded-full transition-transform hover:scale-110 active:scale-95"
+                  style={{ background: g.gradient }}
+                >
+                  {colorKey === g.key && (
+                    <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Иконка */}
           <div>
             <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
@@ -2150,6 +2393,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   const t = useTranslations()
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📁')
+  const [colorKey, setColorKey] = useState('gray')
   const [scope, setScope] = useState<'one' | 'all'>('one')
   const [isSaving, setIsSaving] = useState(false)
   const isLimited = !isPro && customCategoryCount >= FREE_CUSTOM_LIMIT
@@ -2157,27 +2401,25 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   async function handleSave() {
     if (!name.trim() || isSaving) return
     setIsSaving(true)
+    const iconField = buildCategoryIconField(colorKey, icon)
     try {
       const supabase = createClient()
 
       if (scope === 'all') {
-        // Создаём для всех людей пользователя
         const { data: people } = await supabase
           .from('people')
           .select('id')
           .eq('user_id', userId)
 
         if (people && people.length > 0) {
-          // Создаём для текущего человека первым — он нам нужен для onCreated
-          const current = await createCustomCategory(supabase, personId, name.trim(), icon)
-          // Остальные — в фоне
+          const current = await createCustomCategory(supabase, personId, name.trim(), iconField)
           const others = people.filter((p) => p.id !== personId)
-          await Promise.all(others.map((p) => createCustomCategory(supabase, p.id, name.trim(), icon)))
+          await Promise.all(others.map((p) => createCustomCategory(supabase, p.id, name.trim(), iconField)))
           if (current) onCreated(current)
           else toast.error(t('common.error'))
         }
       } else {
-        const cat = await createCustomCategory(supabase, personId, name.trim(), icon)
+        const cat = await createCustomCategory(supabase, personId, name.trim(), iconField)
         if (cat) onCreated(cat)
         else toast.error(t('common.error'))
       }
@@ -2215,6 +2457,28 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
         ) : (
           /* Форма */
           <div className="flex flex-col gap-4">
+            {/* Цвет карточки */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
+                {t('categories.color')}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {CATEGORY_GRADIENTS.map((g) => (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => setColorKey(g.key)}
+                    className="relative h-8 w-8 rounded-full transition-transform hover:scale-110 active:scale-95"
+                    style={{ background: g.gradient }}
+                  >
+                    {colorKey === g.key && (
+                      <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Выбор иконки */}
             <div>
               <p className="text-xs font-medium text-text-secondary mb-2 uppercase tracking-widest">
@@ -2293,14 +2557,14 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   const { isSaving, removeTravel } = useAddTravel(personId, categoryId, () => {})
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const travelDesktopRef = useRef<HTMLDivElement>(null)
+  const travelMobileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
+      const target = e.target as Node
+      if (!travelDesktopRef.current?.contains(target) && !travelMobileRef.current?.contains(target)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -2352,122 +2616,92 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   const isBooked = !isVisited && (item.tags ?? []).includes('trip_booked:true')
   const flagEmoji = travelCountry.code ? getFlagEmoji(travelCountry.code) : null
 
+  const travelStatusBadge = (
+    <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${isVisited ? 'bg-loves-bg text-loves' : isBooked ? 'bg-[#2A2A1A] text-[#F0A500]' : 'bg-wants-bg text-wants'}`}>
+      {isVisited ? `✅ ${t('travel.statusVisited')}` : isBooked ? `🎟️ ${t('travel.statusBooked')}` : `✈️ ${t('travel.statusWants')}`}
+    </span>
+  )
+
+  const travelMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
+    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden`}>
+      <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={handleTogglePin} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
+        <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
+        {isPinned ? t('common.unpin') : t('common.pin')}
+      </button>
+      <div className="mx-3 h-px bg-border-card" />
+      <button onClick={() => { setMenuOpen(false); setConfirmDelete(true) }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+        <Trash2 size={14} />{t('common.delete')}
+      </button>
+    </div>
+  )
+
   return (
-    <div className={`rounded-[14px] bg-bg-card border p-4 ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
-      {/* Верхняя строка */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-1 flex-col gap-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
-            {flagEmoji && <span className="text-xl">{flagEmoji}</span>}
-            <span className="font-semibold text-text-primary leading-tight">{item.title}</span>
-          </div>
-          {travelCity && travelCountry.name && travelCity !== item.title && (
-            <span className="text-xs text-text-secondary">{travelCity}</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Бейдж статуса */}
-          <span
-            className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium flex-shrink-0 ${
-              isVisited ? 'bg-loves-bg text-loves' : isBooked ? 'bg-[#2A2A1A] text-[#F0A500]' : 'bg-wants-bg text-wants'
-            }`}
-          >
-            {isVisited
-              ? `✅ ${t('travel.statusVisited')}`
-              : isBooked
-              ? `🎟️ ${t('travel.statusBooked')}`
-              : `✈️ ${t('travel.statusWants')}`}
-          </span>
-
-          {/* Меню из трёх точек */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
-            >
-              <MoreVertical size={15} />
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
-                <button
-                  onClick={() => { setMenuOpen(false); onEdit() }}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-                >
-                  <Pencil size={14} className="text-text-secondary" />
-                  {t('common.edit')}
-                </button>
-                <div className="mx-3 h-px bg-border-card" />
-                <button
-                  onClick={handleTogglePin}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
-                >
-                  <Star size={14} className={isPinned ? 'fill-primary text-primary' : 'text-text-secondary'} />
-                  {isPinned ? t('common.unpin') : t('common.pin')}
-                </button>
-                <div className="mx-3 h-px bg-border-card" />
-                <button
-                  onClick={() => { setMenuOpen(false); setConfirmDelete(true) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  {t('common.delete')}
-                </button>
-              </div>
+    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+      <div className="p-4 pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
+              {flagEmoji && <span className="text-xl flex-shrink-0">{flagEmoji}</span>}
+              <span className="font-semibold text-text-primary leading-tight truncate">{item.title}</span>
+            </div>
+            {travelCity && travelCountry.name && travelCity !== item.title && (
+              <span className="text-xs text-text-secondary truncate">{travelCity}</span>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Дата поездки */}
-      {!isVisited && travelDate && (
-        <p className="mt-2 text-xs text-text-secondary">
-          📅 {new Date(travelDate).toLocaleDateString()}
-        </p>
-      )}
-
-      {/* Бюджет */}
-      {hasPlanBudget && (
-        <p className="mt-1.5 text-xs text-text-secondary">
-          💰 {t('travel.planBudget')}: {planTotal.toLocaleString()}
-        </p>
-      )}
-      {hasActualBudget && (
-        <p className="mt-1.5 text-xs text-text-secondary">
-          💸 {t('travel.actualBudget')}: {actualTotal.toLocaleString()}
-        </p>
-      )}
-
-      {/* Комментарий */}
-      {item.description && (
-        <p className="mt-2 text-[13px] text-text-secondary leading-relaxed">
-          {item.description}
-        </p>
-      )}
-
-      {/* Подтверждение удаления */}
-      {confirmDelete && (
-        <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
-          <span className="text-sm text-red-500">{t('travel.deleteConfirm')}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isSaving}
-              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              {isSaving ? '...' : t('common.delete')}
-            </button>
+          {/* Десктоп: статус + меню */}
+          <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={travelDesktopRef}>
+            {travelStatusBadge}
+            <div className="relative">
+              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                <MoreVertical size={15} />
+              </button>
+              {travelMenuDropdown('top')}
+            </div>
           </div>
         </div>
-      )}
+
+        {!isVisited && travelDate && (
+          <p className="mt-2 text-xs text-text-secondary">📅 {new Date(travelDate).toLocaleDateString()}</p>
+        )}
+        {hasPlanBudget && (
+          <p className="mt-1.5 text-xs text-text-secondary">💰 {t('travel.planBudget')}: {planTotal.toLocaleString()}</p>
+        )}
+        {hasActualBudget && (
+          <p className="mt-1.5 text-xs text-text-secondary">💸 {t('travel.actualBudget')}: {actualTotal.toLocaleString()}</p>
+        )}
+        {item.description && (
+          <p className="mt-2 text-[13px] text-text-secondary leading-relaxed line-clamp-3">{item.description}</p>
+        )}
+
+        {confirmDelete && (
+          <div className="mt-3 flex items-center justify-between rounded-[10px] bg-red-500/10 px-3 py-2.5 border border-red-500/20">
+            <span className="text-sm text-red-500">{t('travel.deleteConfirm')}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover transition-colors">{t('common.cancel')}</button>
+              <button onClick={handleDelete} disabled={isSaving} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {isSaving ? '...' : t('common.delete')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Мобильная нижняя полоска */}
+      <div className="md:hidden flex items-center border-t border-border-card">
+        <div className="flex flex-1 items-center px-3 py-2.5">{travelStatusBadge}</div>
+        <div className="w-px h-7 flex-shrink-0 bg-border-card" />
+        <div className="relative flex items-center" ref={travelMobileRef}>
+          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+            <MoreVertical size={15} />
+          </button>
+          {travelMenuDropdown('bottom')}
+        </div>
+      </div>
     </div>
   )
 }

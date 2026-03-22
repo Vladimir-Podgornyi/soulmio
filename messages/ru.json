@@ -90,6 +90,7 @@
     "addCustom": "Добавить категорию",
     "custom": "Своя",
     "icon": "Иконка",
+    "color": "Цвет карточки",
     "name": "Название",
     "namePlaceholder": "например, Книги, Спорт...",
     "scopeOne": "Только для {name}",
@@ -263,6 +264,7 @@
     "actorNotesPlaceholder": "Любые заметки об актёре...",
     "buyTickets": "Купить билеты",
     "notGoing": "Не пойдем",
+    "actorSentiment": "Ваше отношение",
     "actorAdded": "Актёр добавлен",
     "actorUpdated": "Актёр обновлён",
     "actorDeleted": "Актёр удалён",
@@ -304,7 +306,9 @@
     "overviewEmpty": "В этой категории пока ничего нет",
     "overviewPersonTag": "{name}",
     "goToList": "Перейти к списку",
-    "remindersProHint": "Напоминания о подарках и ресторанах доступны в Pro"
+    "remindersProHint": "Напоминания о подарках и ресторанах доступны в Pro",
+    "customItemDone": "Готово",
+    "customItemHide": "Скрыть напоминание"
   },
   "settings": {
     "title": "Настройки",
@@ -327,7 +331,10 @@
     "languages": {
       "en": "English",
       "de": "Deutsch",
-      "ru": "Русский"
+      "ru": "Русский",
+      "fr": "Français",
+      "es": "Español",
+      "pt": "Português"
     },
     "account": "Аккаунт",
     "name": "Имя",
@@ -420,6 +427,30 @@
     "settingsBanner": "Вы на Free плане",
     "settingsBannerSub": "Перейдите на Pro, чтобы разблокировать все функции",
     "settingsProBanner": "Вы на Pro ✦",
-    "settingsProBannerSub": "Все функции доступны"
+    "settingsProBannerSub": "Все функции доступны",
+    "customItems": "Кастомные категории",
+    "customItemsFree": "Базово (название + статус + заметки)",
+    "customItemsPro": "Полный набор (даты, напоминания, оценки, ссылки)"
+  },
+  "customItem": {
+    "add": "Добавить запись",
+    "edit": "Редактировать запись",
+    "added": "Запись добавлена",
+    "updated": "Запись обновлена",
+    "deleted": "Запись удалена",
+    "deleteConfirm": "Удалить эту запись?",
+    "nameRequired": "Название обязательно",
+    "namePlaceholder": "например: Чтение, Гитара...",
+    "title": "Название",
+    "status": "Статус",
+    "comment": "Заметки",
+    "commentPlaceholder": "Любые заметки...",
+    "date": "Дата",
+    "reminderLabel": "Напомнить за",
+    "dateHint": "Вы получите напоминание перед этой датой",
+    "link": "Ссылка",
+    "linkPlaceholder": "https://...",
+    "pinned": "Закрепить вверху",
+    "proHint": "В Pro: даты, напоминания, оценки и ссылки"
   }
 }
