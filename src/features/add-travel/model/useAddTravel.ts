@@ -4,11 +4,17 @@ import { createClient } from '@/shared/api/supabase'
 import { createItem, updateItem, deleteItem } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
 
+export interface TravelBudgetCustomItem {
+  label: string
+  amount: number | null
+}
+
 export interface TravelBudget {
   hotel: number | null
   transport: number | null
   onsite: number | null
   other: number | null
+  customItems: TravelBudgetCustomItem[]
 }
 
 export const REMINDER_DAY_OPTIONS = [7, 14, 30, 60, 90] as const
@@ -64,18 +70,35 @@ export function getTravelBudget(tags: string[] | null): { plan: TravelBudget; ac
     const t = tags?.find((tag) => tag.startsWith(prefix))
     return t ? Number(t.slice(prefix.length)) : null
   }
+  function getCustomItems(prefix: string): TravelBudgetCustomItem[] {
+    if (!tags) return []
+    const items: TravelBudgetCustomItem[] = []
+    let i = 0
+    while (true) {
+      const nameTag = tags.find((t) => t.startsWith(`${prefix}_${i}_name:`))
+      if (!nameTag) break
+      const label = nameTag.slice(`${prefix}_${i}_name:`.length)
+      const valTag = tags.find((t) => t.startsWith(`${prefix}_${i}_val:`))
+      const amount = valTag ? Number(valTag.slice(`${prefix}_${i}_val:`.length)) : null
+      items.push({ label, amount })
+      i++
+    }
+    return items
+  }
   return {
     plan: {
       hotel: num('plan_hotel:'),
       transport: num('plan_transport:'),
       onsite: num('plan_onsite:'),
       other: num('plan_other:'),
+      customItems: getCustomItems('plan_extra'),
     },
     actual: {
       hotel: num('actual_hotel:'),
       transport: num('actual_transport:'),
       onsite: num('actual_onsite:'),
       other: num('actual_other:'),
+      customItems: getCustomItems('actual_extra'),
     },
   }
 }
@@ -96,6 +119,12 @@ function buildTravelTags(values: TravelFormValues): string[] {
     if (b.transport !== null) tags.push(`plan_transport:${b.transport}`)
     if (b.onsite !== null) tags.push(`plan_onsite:${b.onsite}`)
     if (b.other !== null) tags.push(`plan_other:${b.other}`)
+    b.customItems.forEach((item, i) => {
+      if (item.label.trim()) {
+        tags.push(`plan_extra_${i}_name:${item.label.trim()}`)
+        if (item.amount !== null) tags.push(`plan_extra_${i}_val:${item.amount}`)
+      }
+    })
   }
   if (values.hasActualBudget) {
     const b = values.actualBudget
@@ -103,6 +132,12 @@ function buildTravelTags(values: TravelFormValues): string[] {
     if (b.transport !== null) tags.push(`actual_transport:${b.transport}`)
     if (b.onsite !== null) tags.push(`actual_onsite:${b.onsite}`)
     if (b.other !== null) tags.push(`actual_other:${b.other}`)
+    b.customItems.forEach((item, i) => {
+      if (item.label.trim()) {
+        tags.push(`actual_extra_${i}_name:${item.label.trim()}`)
+        if (item.amount !== null) tags.push(`actual_extra_${i}_val:${item.amount}`)
+      }
+    })
   }
   return tags
 }

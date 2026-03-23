@@ -28,6 +28,7 @@
     "yourName": "Your name",
     "namePlaceholder": "Anna Müller",
     "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
     "login": {
@@ -48,7 +49,16 @@
     "home": "Home",
     "people": "People",
     "discover": "Discover",
-    "settings": "Settings"
+    "settings": "Settings",
+    "search": "Search"
+  },
+  "search": {
+    "placeholder": "Search people, restaurants, gifts...",
+    "hint": "Start typing to search",
+    "noResults": "Nothing found",
+    "sectionPeople": "People",
+    "sectionCategories": "Categories",
+    "sectionItems": "Items"
   },
   "people": {
     "title": "People",
@@ -368,7 +378,24 @@
     "passwordSaved": "Password updated",
     "subscription": "Subscription",
     "free": "Free",
-    "pro": "Pro"
+    "pro": "Pro",
+    "support": "Support",
+    "feedback": "Feedback",
+    "feedbackSub": "Send us your thoughts or report an issue",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountSub": "Permanently delete your account and all data",
+    "deleteAccountWarning": "This action cannot be undone. All your people, preferences, and data will be permanently deleted.",
+    "deleteAccountConfirmHint": "Type DELETE to confirm",
+    "deleteAccountConfirmPlaceholder": "DELETE",
+    "deleteAccountConfirmButton": "Delete my account permanently"
+  },
+  "footer": {
+    "feedback": "Feedback",
+    "privacy": "Privacy Policy",
+    "impressum": "Impressum",
+    "terms": "Terms of Service",
+    "copyright": "© 2026 Soulmio"
   },
   "travel": {
     "add": "Add trip",
@@ -406,6 +433,8 @@
     "budgetTransport": "Transport",
     "budgetOnsite": "On-site expenses",
     "budgetOther": "Other",
+    "budgetCustomLabel": "Custom item name",
+    "budgetAddCustom": "Add expense",
     "budgetTotal": "Total",
     "reminder": "Upcoming trip",
     "reminderBooked": "All booked!",

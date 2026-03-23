@@ -28,6 +28,7 @@
     "yourName": "Dein Name",
     "namePlaceholder": "Anna Müller",
     "continueWithGoogle": "Mit Google fortfahren",
+    "continueWithApple": "Mit Apple fortfahren",
     "alreadyHaveAccount": "Bereits ein Konto?",
     "dontHaveAccount": "Noch kein Konto?",
     "login": {
@@ -48,7 +49,16 @@
     "home": "Startseite",
     "people": "Personen",
     "discover": "Entdecken",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "search": "Suche"
+  },
+  "search": {
+    "placeholder": "Personen, Restaurants, Geschenke suchen...",
+    "hint": "Tippe um zu suchen",
+    "noResults": "Nichts gefunden",
+    "sectionPeople": "Personen",
+    "sectionCategories": "Kategorien",
+    "sectionItems": "Einträge"
   },
   "people": {
     "title": "Personen",
@@ -369,7 +379,24 @@
     "passwordSaved": "Passwort aktualisiert",
     "subscription": "Abonnement",
     "free": "Kostenlos",
-    "pro": "Pro"
+    "pro": "Pro",
+    "support": "Support",
+    "feedback": "Feedback",
+    "feedbackSub": "Schreib uns — wir freuen uns über dein Feedback",
+    "dangerZone": "Gefahrenzone",
+    "deleteAccount": "Konto löschen",
+    "deleteAccountSub": "Konto und alle Daten dauerhaft löschen",
+    "deleteAccountWarning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle deine Personen, Vorlieben und Daten werden dauerhaft gelöscht.",
+    "deleteAccountConfirmHint": "Gib DELETE ein, um zu bestätigen",
+    "deleteAccountConfirmPlaceholder": "DELETE",
+    "deleteAccountConfirmButton": "Mein Konto dauerhaft löschen"
+  },
+  "footer": {
+    "feedback": "Feedback",
+    "privacy": "Datenschutzerklärung",
+    "impressum": "Impressum",
+    "terms": "Nutzungsbedingungen",
+    "copyright": "© 2026 Soulmio"
   },
   "travel": {
     "add": "Reise hinzufügen",
@@ -407,6 +434,8 @@
     "budgetTransport": "Transport",
     "budgetOnsite": "Ausgaben vor Ort",
     "budgetOther": "Sonstiges",
+    "budgetCustomLabel": "Bezeichnung",
+    "budgetAddCustom": "Ausgabe hinzufügen",
     "budgetTotal": "Gesamt",
     "reminder": "Bevorstehende Reise",
     "reminderBooked": "Alles gebucht!",

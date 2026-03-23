@@ -18,6 +18,7 @@ import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActo
 import { AddTravelForm, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget } from '@/features/add-travel'
 import { getFlagEmoji } from '@/features/add-travel'
 import { AddCustomItemForm, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
+import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 
 interface OverviewPageProps {
   category: string
@@ -34,37 +35,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   gifts: '🎁',
   movies: '🎬',
   travel: '✈️',
-}
-
-const CATEGORY_GRADIENTS = [
-  { key: 'gray',    gradient: 'linear-gradient(145deg, #2A2826, #3A3630)' },
-  { key: 'coral',   gradient: 'linear-gradient(145deg, #7A3020, #B04228)' },
-  { key: 'rose',    gradient: 'linear-gradient(145deg, #5C2240, #904060)' },
-  { key: 'ocean',   gradient: 'linear-gradient(145deg, #182E48, #285078)' },
-  { key: 'sage',    gradient: 'linear-gradient(145deg, #22382A, #345A40)' },
-  { key: 'purple',  gradient: 'linear-gradient(145deg, #2A2230, #483060)' },
-  { key: 'amber',   gradient: 'linear-gradient(145deg, #3A2A10, #5A4010)' },
-  { key: 'teal',    gradient: 'linear-gradient(145deg, #1A3038, #205048)' },
-  { key: 'crimson', gradient: 'linear-gradient(145deg, #5A1020, #8A2030)' },
-  { key: 'indigo',  gradient: 'linear-gradient(145deg, #1A1A48, #283080)' },
-  { key: 'olive',   gradient: 'linear-gradient(145deg, #2A3010, #405018)' },
-  { key: 'brown',   gradient: 'linear-gradient(145deg, #3A2010, #5A3018)' },
-  { key: 'pink',    gradient: 'linear-gradient(145deg, #4A1A3A, #703060)' },
-  { key: 'mint',    gradient: 'linear-gradient(145deg, #183028, #285840)' },
-  { key: 'slate',   gradient: 'linear-gradient(145deg, #1A2030, #283848)' },
-  { key: 'gold',    gradient: 'linear-gradient(145deg, #3A3010, #605010)' },
-]
-
-function parseCategoryIconField(raw: string | null): { gradient: string; emoji: string } {
-  const defaultGradient = CATEGORY_GRADIENTS[0].gradient
-  if (!raw) return { gradient: defaultGradient, emoji: '📋' }
-  const colonIdx = raw.indexOf(':')
-  if (colonIdx > 0 && colonIdx <= 8) {
-    const key = raw.slice(0, colonIdx)
-    const found = CATEGORY_GRADIENTS.find((g) => g.key === key)
-    if (found) return { gradient: found.gradient, emoji: raw.slice(colonIdx + 1) }
-  }
-  return { gradient: defaultGradient, emoji: raw }
 }
 
 type ValidCategory = 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'
@@ -464,8 +434,8 @@ function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLi
     }
     if (isTravel) {
       if (item.sentiment === 'visited') return { text: `✅ ${t('travel.statusVisited')}`, cls: 'bg-loves-bg text-loves' }
-      if ((item.tags ?? []).includes('trip_booked:true')) return { text: `🎟️ ${t('travel.statusBooked')}`, cls: 'bg-[#2A2A1A] text-[#F0A500]' }
-      return { text: `✈️ ${t('travel.statusWants')}`, cls: 'bg-wants-bg text-wants' }
+      if ((item.tags ?? []).includes('trip_booked:true')) return { text: `🎟️ ${t('travel.statusBooked')}`, cls: 'bg-wants-bg text-wants' }
+      return { text: `✈️ ${t('travel.statusWants')}`, cls: 'bg-[var(--travel-wants-bg)] text-[var(--travel-wants-text)]' }
     }
     const map: Record<string, { text: string; cls: string }> = {
       likes: {
@@ -539,7 +509,7 @@ function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLi
                   )}
                   {travelBudget && (() => {
                     const b = item.sentiment === 'visited' ? travelBudget.actual : travelBudget.plan
-                    const total = [b.hotel, b.transport, b.onsite, b.other]
+                    const total = [b.hotel, b.transport, b.onsite, b.other, ...b.customItems.map(i => i.amount)]
                       .filter((v): v is number => v !== null)
                       .reduce((a, c) => a + c, 0)
                     return total > 0 ? (

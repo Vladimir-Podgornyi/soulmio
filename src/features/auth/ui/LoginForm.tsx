@@ -3,25 +3,37 @@
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { GoogleIcon } from '@/shared/ui/GoogleIcon'
+import { AppleIcon } from '@/shared/ui/AppleIcon'
 import { useLogin } from '../model/useLogin'
 
 export function LoginForm() {
   const t = useTranslations()
-  const { form, isLoading, onSubmit, signInWithGoogle } = useLogin()
+  const { form, isLoading, onSubmit, signInWithGoogle, signInWithApple } = useLogin()
   const { register, handleSubmit, formState: { errors } } = form
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Google OAuth (вход через Google) */}
-      <button
-        type="button"
-        onClick={signInWithGoogle}
-        disabled={isLoading}
-        className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-bg-card text-sm font-medium text-text-primary transition-colors hover:bg-bg-hover disabled:opacity-50"
-      >
-        <GoogleIcon />
-        {t('auth.continueWithGoogle')}
-      </button>
+      {/* OAuth кнопки */}
+      <div className="flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={signInWithGoogle}
+          disabled={isLoading}
+          className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-bg-card text-sm font-medium text-text-primary transition-colors hover:bg-bg-hover disabled:opacity-50"
+        >
+          <GoogleIcon />
+          {t('auth.continueWithGoogle')}
+        </button>
+        <button
+          type="button"
+          onClick={signInWithApple}
+          disabled={isLoading}
+          className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-bg-card text-sm font-medium text-text-primary transition-colors hover:bg-bg-hover disabled:opacity-50"
+        >
+          <AppleIcon />
+          {t('auth.continueWithApple')}
+        </button>
+      </div>
 
       {/* Разделитель */}
       <div className="flex items-center gap-3">

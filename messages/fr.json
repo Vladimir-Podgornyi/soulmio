@@ -28,6 +28,7 @@
     "yourName": "Votre nom",
     "namePlaceholder": "Anna Müller",
     "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
     "dontHaveAccount": "Vous n'avez pas de compte ?",
     "login": {
@@ -48,7 +49,16 @@
     "home": "Accueil",
     "people": "Personnes",
     "discover": "Découvrir",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "search": "Recherche"
+  },
+  "search": {
+    "placeholder": "Personnes, restaurants, cadeaux...",
+    "hint": "Commencez à taper pour rechercher",
+    "noResults": "Rien trouvé",
+    "sectionPeople": "Personnes",
+    "sectionCategories": "Catégories",
+    "sectionItems": "Éléments"
   },
   "people": {
     "title": "Personnes",
@@ -368,7 +378,24 @@
     "passwordSaved": "Mot de passe mis à jour",
     "subscription": "Abonnement",
     "free": "Gratuit",
-    "pro": "Pro"
+    "pro": "Pro",
+    "support": "Support",
+    "feedback": "Nous contacter",
+    "feedbackSub": "Envoyez-nous vos retours ou signalez un problème",
+    "dangerZone": "Zone dangereuse",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountSub": "Supprimer définitivement votre compte et toutes vos données",
+    "deleteAccountWarning": "Cette action est irréversible. Toutes vos personnes, préférences et données seront définitivement supprimées.",
+    "deleteAccountConfirmHint": "Saisissez DELETE pour confirmer",
+    "deleteAccountConfirmPlaceholder": "DELETE",
+    "deleteAccountConfirmButton": "Supprimer définitivement mon compte"
+  },
+  "footer": {
+    "feedback": "Nous contacter",
+    "privacy": "Politique de confidentialité",
+    "impressum": "Impressum",
+    "terms": "Conditions d'utilisation",
+    "copyright": "© 2026 Soulmio"
   },
   "travel": {
     "add": "Ajouter un voyage",
@@ -406,6 +433,8 @@
     "budgetTransport": "Transport",
     "budgetOnsite": "Dépenses sur place",
     "budgetOther": "Autre",
+    "budgetCustomLabel": "Nom de la ligne",
+    "budgetAddCustom": "Ajouter une dépense",
     "budgetTotal": "Total",
     "reminder": "Voyage à venir",
     "reminderBooked": "Tout est réservé !",

@@ -193,7 +193,7 @@ export function AddRestaurantForm({
             value={visitDate}
             onChange={(e) => setVisitDate(e.target.value)}
             min={new Date().toISOString().slice(0, 10)}
-            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
           />
           {visitDate && (
             <p className="text-[11px] text-text-muted">{t('restaurants.visitDateHint')}</p>

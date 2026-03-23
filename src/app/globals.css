@@ -8,51 +8,51 @@
 /* Light theme (default) */
 :root {
   color-scheme: light;
-  --bg-primary:    #F8F5F0;
-  --bg-secondary:  #FFFFFF;
-  --bg-card:       #FFFFFF;
-  --bg-input:      #EEEBE6;
-  --bg-input-focus:#E5E0DA;
-  --bg-hover:      #EEEBE6;
-  --text-primary:  #1A1A1A;
-  --text-secondary:#9C9590;
-  --text-muted:    #C0B8B0;
-  --border:        #E2DDD8;
-  --border-card:   #E8E3DD;
+  --bg-primary:    #FAF7F4;
+  --bg-secondary:  #F5F0EB;
+  --bg-card:       #EDE7E0;
+  --bg-input:      #E5DDD4;
+  --bg-input-focus:#D8CFC5;
+  --bg-hover:      #E5DDD4;
+  --text-primary:  #2C1F14;
+  --text-secondary:#7A6B5E;
+  --text-muted:    #B0A090;
+  --border:        #DDD5CC;
+  --border-card:   #E8E0D8;
   --shadow-card:   0 1px 4px rgba(0,0,0,0.06);
-  --primary-bg:    #FEF0EC;
-  --accent-bg:     #EBF4F7;
-  --loves-bg:      #E8F5EE;
-  --loves-text:    #3A9060;
-  --avoid-bg:      #FEE8E8;
-  --avoid-text:    #C04040;
-  --wants-bg:      #FEF3D8;
-  --wants-text:    #B07800;
+  --primary-bg:    #FDEEE9;
+  --accent-bg:     #EAF4F7;
+  --loves-bg:      #E6F5ED;
+  --loves-text:    #2E7A4A;
+  --avoid-bg:      #FEE9E9;
+  --avoid-text:    #B83838;
+  --wants-bg:      #FEF4E0;
+  --wants-text:    #9A6A00;
 }
 
 /* Dark theme */
 .dark {
   color-scheme: dark;
-  --bg-primary:    #0E0D0C;
-  --bg-secondary:  #141312;
-  --bg-card:       #1A1917;
-  --bg-input:      #2A2826;
-  --bg-input-focus:#313028;
-  --bg-hover:      #242220;
-  --text-primary:  #F0EDE8;
-  --text-secondary:#888888;
-  --text-muted:    #555555;
-  --border:        #2A2826;
-  --border-card:   #242220;
+  --bg-primary:    #100F0E;
+  --bg-secondary:  #171614;
+  --bg-card:       #1E1C1A;
+  --bg-input:      #2C2A27;
+  --bg-input-focus:#343230;
+  --bg-hover:      #262422;
+  --text-primary:  #EDE8E2;
+  --text-secondary:#8A8078;
+  --text-muted:    #504840;
+  --border:        #282522;
+  --border-card:   #222020;
   --shadow-card:   0 1px 4px rgba(0,0,0,0.3);
-  --primary-bg:    #2A1E1A;
-  --accent-bg:     #1E3A48;
-  --loves-bg:      #2A3A28;
+  --primary-bg:    #2E1E19;
+  --accent-bg:     #182E3A;
+  --loves-bg:      #1E3028;
   --loves-text:    #5CBD8A;
-  --avoid-bg:      #3A2020;
-  --avoid-text:    #E05555;
-  --wants-bg:      #2A2A1A;
-  --wants-text:    #F0A500;
+  --avoid-bg:      #3A1E1E;
+  --avoid-text:    #E06868;
+  --wants-bg:      #2E2A18;
+  --wants-text:    #F0A830;
 }
 
 /* Primary & accent — same in both themes */
@@ -62,24 +62,46 @@
   --accent-teal:  #4A90A4;
 }
 
+/* Travel "wants" sentiment button */
+:root {
+  --travel-wants-bg:   #E0D8F0;
+  --travel-wants-text: #7040B0;
+}
+.dark {
+  --travel-wants-bg:   #2A2030;
+  --travel-wants-text: #9B70D0;
+}
+
+/* Stat card text — dark text on pastel, white on dark gradients */
+:root {
+  --card-label-color: rgba(0,0,0,0.5);
+  --card-count-color: #2C1F14;
+  --card-sub-color:   rgba(0,0,0,0.38);
+}
+.dark {
+  --card-label-color: rgba(255,255,255,0.6);
+  --card-count-color: #ffffff;
+  --card-sub-color:   rgba(255,255,255,0.45);
+}
+
 /* ─── Shadcn base variables ──────────────────────────────────────────────── */
 :root {
-  --background: #F8F5F0;
-  --foreground: #1A1A1A;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
+  --background: #FAF7F4;
+  --foreground: #2C1F14;
+  --card: #EDE7E0;
+  --card-foreground: #2C1F14;
+  --popover: #F5F0EB;
+  --popover-foreground: #2C1F14;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #EEEBE6;
-  --secondary-foreground: #1A1A1A;
-  --muted: #EEEBE6;
-  --muted-foreground: #9C9590;
-  --accent: #EEEBE6;
-  --accent-foreground: #1A1A1A;
+  --secondary: #E5DDD4;
+  --secondary-foreground: #2C1F14;
+  --muted: #E5DDD4;
+  --muted-foreground: #7A6B5E;
+  --accent: #E5DDD4;
+  --accent-foreground: #2C1F14;
   --destructive: oklch(0.577 0.245 27.325);
-  --input: #EEEBE6;
+  --input: #E5DDD4;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -87,46 +109,46 @@
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A1A;
+  --sidebar: #F5F0EB;
+  --sidebar-foreground: #2C1F14;
   --sidebar-primary: #E8735A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #EEEBE6;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #E2DDD8;
+  --sidebar-accent: #E5DDD4;
+  --sidebar-accent-foreground: #2C1F14;
+  --sidebar-border: #DDD5CC;
   --sidebar-ring: #E8735A;
 }
 
 .dark {
-  --background: #0E0D0C;
-  --foreground: #F0EDE8;
-  --card: #1A1917;
-  --card-foreground: #F0EDE8;
-  --popover: #1A1917;
-  --popover-foreground: #F0EDE8;
+  --background: #100F0E;
+  --foreground: #EDE8E2;
+  --card: #1E1C1A;
+  --card-foreground: #EDE8E2;
+  --popover: #1E1C1A;
+  --popover-foreground: #EDE8E2;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #2A2826;
-  --secondary-foreground: #F0EDE8;
-  --muted: #2A2826;
-  --muted-foreground: #888888;
-  --accent: #2A2826;
-  --accent-foreground: #F0EDE8;
+  --secondary: #2C2A27;
+  --secondary-foreground: #EDE8E2;
+  --muted: #2C2A27;
+  --muted-foreground: #8A8078;
+  --accent: #2C2A27;
+  --accent-foreground: #EDE8E2;
   --destructive: oklch(0.704 0.191 22.216);
-  --input: #2A2826;
+  --input: #2C2A27;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: #141312;
-  --sidebar-foreground: #F0EDE8;
+  --sidebar: #171614;
+  --sidebar-foreground: #EDE8E2;
   --sidebar-primary: #E8735A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #2A2826;
-  --sidebar-accent-foreground: #F0EDE8;
-  --sidebar-border: #2A2826;
+  --sidebar-accent: #2C2A27;
+  --sidebar-accent-foreground: #EDE8E2;
+  --sidebar-border: #282522;
   --sidebar-ring: #E8735A;
 }
 
@@ -239,13 +261,61 @@
   display: none;           /* Chrome / Safari */
 }
 
-/* ─── Gradient stat cards ───────────────────────────────────────────────── */
-.card-coral { background: linear-gradient(145deg, #FADADB, #F5B0A8); }
-.card-rose  { background: linear-gradient(145deg, #F5D6E8, #EAA8C8); }
-.card-ocean { background: linear-gradient(145deg, #D0E8F5, #A0C8E8); }
-.card-sage  { background: linear-gradient(145deg, #D0EDD8, #A0D0B0); }
+/* ─── Category gradient CSS variables ───────────────────────────────────── */
+/* Light (pastel) */
+:root {
+  /* 5 default stat card categories */
+  --gradient-restaurants: linear-gradient(145deg, #D0EDD8, #B4DFC0);
+  --gradient-gifts:       linear-gradient(145deg, #F5D6E8, #EEB8D4);
+  --gradient-movies:      linear-gradient(145deg, #D4E8F8, #B8D5F2);
+  --gradient-food:        linear-gradient(145deg, #FCDDD6, #F8C4B8);
+  --gradient-travel:      linear-gradient(145deg, #E0D8F0, #CFC4E8);
+  /* 16 custom category gradients */
+  --gradient-gray:        linear-gradient(145deg, #E8E0D8, #D5CCC2);
+  --gradient-coral:       linear-gradient(145deg, #FCDDD6, #F8C4B8);
+  --gradient-rose:        linear-gradient(145deg, #F5D6E8, #EEB8D4);
+  --gradient-ocean:       linear-gradient(145deg, #D4E8F8, #B8D5F2);
+  --gradient-sage:        linear-gradient(145deg, #D0EDD8, #B4DFC0);
+  --gradient-purple:      linear-gradient(145deg, #E0D8F0, #CFC4E8);
+  --gradient-amber:       linear-gradient(145deg, #FEF4E0, #F5E0B0);
+  --gradient-teal:        linear-gradient(145deg, #D0EDF0, #B4D8DC);
+  --gradient-crimson:     linear-gradient(145deg, #FDD8D8, #F8B8B8);
+  --gradient-indigo:      linear-gradient(145deg, #D8DCF5, #C0C5EC);
+  --gradient-olive:       linear-gradient(145deg, #E0EDD0, #C8DEB4);
+  --gradient-brown:       linear-gradient(145deg, #F0E5D8, #E0CDB8);
+  --gradient-pink:        linear-gradient(145deg, #FAD8F0, #F2B8E0);
+  --gradient-mint:        linear-gradient(145deg, #D0F0E4, #B4E0CC);
+  --gradient-slate:       linear-gradient(145deg, #D8E0EC, #C0CCDC);
+  --gradient-gold:        linear-gradient(145deg, #FEF0C0, #F5DCA0);
+}
 
-.dark .card-coral { background: linear-gradient(145deg, #7A3020, #B04228); }
-.dark .card-rose  { background: linear-gradient(145deg, #5C2240, #904060); }
-.dark .card-ocean { background: linear-gradient(145deg, #182E48, #285078); }
-.dark .card-sage  { background: linear-gradient(145deg, #22382A, #345A40); }
+/* Dark — rich saturated gradients */
+.dark {
+  --gradient-restaurants: linear-gradient(145deg, #1A3022, #285038);
+  --gradient-gifts:       linear-gradient(145deg, #501C38, #803050);
+  --gradient-movies:      linear-gradient(145deg, #142638, #204060);
+  --gradient-food:        linear-gradient(145deg, #6A2818, #9E3A22);
+  --gradient-travel:      linear-gradient(145deg, #261E3A, #3C2C58);
+  --gradient-gray:        linear-gradient(145deg, #282522, #383430);
+  --gradient-coral:       linear-gradient(145deg, #6A2818, #9E3A22);
+  --gradient-rose:        linear-gradient(145deg, #501C38, #803050);
+  --gradient-ocean:       linear-gradient(145deg, #142638, #204060);
+  --gradient-sage:        linear-gradient(145deg, #1A3022, #285038);
+  --gradient-purple:      linear-gradient(145deg, #261E3A, #3C2C58);
+  --gradient-amber:       linear-gradient(145deg, #38280E, #58400E);
+  --gradient-teal:        linear-gradient(145deg, #183038, #1E4C48);
+  --gradient-crimson:     linear-gradient(145deg, #58101E, #88202E);
+  --gradient-indigo:      linear-gradient(145deg, #181848, #262E80);
+  --gradient-olive:       linear-gradient(145deg, #283010, #3E5016);
+  --gradient-brown:       linear-gradient(145deg, #381E10, #582E16);
+  --gradient-pink:        linear-gradient(145deg, #481838, #6E2E5C);
+  --gradient-mint:        linear-gradient(145deg, #163026, #245638);
+  --gradient-slate:       linear-gradient(145deg, #181E30, #263646);
+  --gradient-gold:        linear-gradient(145deg, #38300E, #5E4E0E);
+}
+
+/* ─── Legacy .card-* classes (kept for compatibility) ────────────────────── */
+.card-coral { background: var(--gradient-coral); }
+.card-rose  { background: var(--gradient-rose);  }
+.card-ocean { background: var(--gradient-ocean); }
+.card-sage  { background: var(--gradient-sage);  }
