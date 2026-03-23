@@ -28,6 +28,7 @@
     "yourName": "Ваше имя",
     "namePlaceholder": "Анна Иванова",
     "continueWithGoogle": "Продолжить через Google",
+    "continueWithApple": "Продолжить через Apple",
     "alreadyHaveAccount": "Уже есть аккаунт?",
     "dontHaveAccount": "Нет аккаунта?",
     "login": {
@@ -48,7 +49,16 @@
     "home": "Главная",
     "people": "Люди",
     "discover": "Открыть",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "search": "Поиск"
+  },
+  "search": {
+    "placeholder": "Люди, рестораны, подарки...",
+    "hint": "Начни вводить для поиска",
+    "noResults": "Ничего не найдено",
+    "sectionPeople": "Люди",
+    "sectionCategories": "Категории",
+    "sectionItems": "Записи"
   },
   "people": {
     "title": "Люди",
@@ -369,7 +379,24 @@
     "passwordSaved": "Пароль обновлён",
     "subscription": "Подписка",
     "free": "Бесплатно",
-    "pro": "Pro"
+    "pro": "Pro",
+    "support": "Поддержка",
+    "feedback": "Обратная связь",
+    "feedbackSub": "Напишите нам — мы рады вашим отзывам",
+    "dangerZone": "Опасная зона",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteAccountSub": "Навсегда удалить аккаунт и все данные",
+    "deleteAccountWarning": "Это действие нельзя отменить. Все ваши люди, предпочтения и данные будут удалены без возможности восстановления.",
+    "deleteAccountConfirmHint": "Введите DELETE для подтверждения",
+    "deleteAccountConfirmPlaceholder": "DELETE",
+    "deleteAccountConfirmButton": "Удалить мой аккаунт навсегда"
+  },
+  "footer": {
+    "feedback": "Обратная связь",
+    "privacy": "Политика конфиденциальности",
+    "impressum": "Impressum",
+    "terms": "Условия использования",
+    "copyright": "© 2026 Soulmio"
   },
   "travel": {
     "add": "Добавить поездку",
@@ -407,6 +434,8 @@
     "budgetTransport": "Транспорт",
     "budgetOnsite": "Расходы на месте",
     "budgetOther": "Прочее",
+    "budgetCustomLabel": "Название статьи",
+    "budgetAddCustom": "Добавить расходы",
     "budgetTotal": "Итого",
     "reminder": "Скоро поездка",
     "reminderBooked": "Всё забронировано",

@@ -28,6 +28,7 @@
     "yourName": "Seu nome",
     "namePlaceholder": "Anna Müller",
     "continueWithGoogle": "Continuar com Google",
+    "continueWithApple": "Continuar com Apple",
     "alreadyHaveAccount": "Já tem uma conta?",
     "dontHaveAccount": "Não tem uma conta?",
     "login": {
@@ -48,7 +49,16 @@
     "home": "Início",
     "people": "Pessoas",
     "discover": "Descobrir",
-    "settings": "Configurações"
+    "settings": "Configurações",
+    "search": "Pesquisar"
+  },
+  "search": {
+    "placeholder": "Pessoas, restaurantes, presentes...",
+    "hint": "Comece a digitar para pesquisar",
+    "noResults": "Nada encontrado",
+    "sectionPeople": "Pessoas",
+    "sectionCategories": "Categorias",
+    "sectionItems": "Itens"
   },
   "people": {
     "title": "Pessoas",
@@ -368,7 +378,24 @@
     "passwordSaved": "Senha atualizada",
     "subscription": "Assinatura",
     "free": "Gratuito",
-    "pro": "Pro"
+    "pro": "Pro",
+    "support": "Suporte",
+    "feedback": "Fale conosco",
+    "feedbackSub": "Envie seus comentários ou reporte um problema",
+    "dangerZone": "Zona de perigo",
+    "deleteAccount": "Excluir conta",
+    "deleteAccountSub": "Excluir permanentemente sua conta e todos os dados",
+    "deleteAccountWarning": "Esta ação não pode ser desfeita. Todas as suas pessoas, preferências e dados serão excluídos permanentemente.",
+    "deleteAccountConfirmHint": "Digite DELETE para confirmar",
+    "deleteAccountConfirmPlaceholder": "DELETE",
+    "deleteAccountConfirmButton": "Excluir minha conta permanentemente"
+  },
+  "footer": {
+    "feedback": "Fale conosco",
+    "privacy": "Política de privacidade",
+    "impressum": "Impressum",
+    "terms": "Termos de uso",
+    "copyright": "© 2026 Soulmio"
   },
   "travel": {
     "add": "Adicionar viagem",
@@ -406,6 +433,8 @@
     "budgetTransport": "Transporte",
     "budgetOnsite": "Despesas no local",
     "budgetOther": "Outro",
+    "budgetCustomLabel": "Nome do item",
+    "budgetAddCustom": "Adicionar despesa",
     "budgetTotal": "Total",
     "reminder": "Viagem próxima",
     "reminderBooked": "Tudo reservado!",

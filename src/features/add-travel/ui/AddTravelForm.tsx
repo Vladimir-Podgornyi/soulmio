@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
-import { MapPin, Bell, Plus, Minus, X } from 'lucide-react'
+import { MapPin, Bell, Plus, Minus, X, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Item } from '@/entities/item/model/types'
 import {
@@ -35,25 +35,37 @@ interface BudgetSectionProps {
 
 function BudgetSection({ title, budget, onChange }: BudgetSectionProps) {
   const t = useTranslations()
-  const fields: Array<{ key: keyof TravelBudget; label: string }> = [
+  const fixedFields: Array<{ key: 'hotel' | 'transport' | 'onsite' | 'other'; label: string }> = [
     { key: 'hotel', label: t('travel.budgetHotel') },
     { key: 'transport', label: t('travel.budgetTransport') },
     { key: 'onsite', label: t('travel.budgetOnsite') },
     { key: 'other', label: t('travel.budgetOther') },
   ]
-  const total = [budget.hotel, budget.transport, budget.onsite, budget.other]
-    .filter((v): v is number => v !== null)
-    .reduce((s, v) => s + v, 0)
-  const hasTotal = [budget.hotel, budget.transport, budget.onsite, budget.other].some(
-    (v) => v !== null
-  )
+  const fixedValues = [budget.hotel, budget.transport, budget.onsite, budget.other]
+  const customValues = budget.customItems.map((i) => i.amount)
+  const allValues = [...fixedValues, ...customValues]
+  const total = allValues.filter((v): v is number => v !== null).reduce((s, v) => s + v, 0)
+  const hasTotal = allValues.some((v) => v !== null)
+
+  function addCustomItem() {
+    onChange({ ...budget, customItems: [...budget.customItems, { label: '', amount: null }] })
+  }
+
+  function updateCustomItem(index: number, patch: Partial<{ label: string; amount: number | null }>) {
+    const updated = budget.customItems.map((item, i) => (i === index ? { ...item, ...patch } : item))
+    onChange({ ...budget, customItems: updated })
+  }
+
+  function removeCustomItem(index: number) {
+    onChange({ ...budget, customItems: budget.customItems.filter((_, i) => i !== index) })
+  }
 
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-bg-input px-4 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
         {title}
       </p>
-      {fields.map(({ key, label }) => (
+      {fixedFields.map(({ key, label }) => (
         <div key={key} className="flex items-center justify-between gap-3">
           <span className="text-sm text-text-secondary flex-1">{label}</span>
           <input
@@ -69,6 +81,47 @@ function BudgetSection({ title, budget, onChange }: BudgetSectionProps) {
           />
         </div>
       ))}
+
+      {budget.customItems.map((item, index) => (
+        <div key={index} className="flex items-center justify-between gap-3">
+          <input
+            type="text"
+            value={item.label}
+            onChange={(e) => updateCustomItem(index, { label: e.target.value })}
+            placeholder={t('travel.budgetCustomLabel')}
+            className="flex-1 min-w-0 bg-transparent text-sm text-text-secondary placeholder:text-text-muted outline-none"
+          />
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <input
+              type="number"
+              min="0"
+              value={item.amount ?? ''}
+              onChange={(e) =>
+                updateCustomItem(index, { amount: e.target.value === '' ? null : Number(e.target.value) })
+              }
+              placeholder="0"
+              className="w-28 h-9 rounded-xl bg-bg-secondary px-3 text-sm text-text-primary text-right placeholder:text-text-muted outline-none transition-colors focus:ring-1 focus:ring-primary/40"
+            />
+            <button
+              type="button"
+              onClick={() => removeCustomItem(index)}
+              className="text-text-muted hover:text-avoid transition-colors p-1"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addCustomItem}
+        className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors self-start"
+      >
+        <Plus size={13} />
+        {t('travel.budgetAddCustom')}
+      </button>
+
       {hasTotal && (
         <div className="flex items-center justify-between border-t border-border pt-2 mt-1">
           <span className="text-sm font-semibold text-text-primary">{t('travel.budgetTotal')}</span>
@@ -112,12 +165,14 @@ export function AddTravelForm({
     existingBudget.plan.hotel !== null ||
     existingBudget.plan.transport !== null ||
     existingBudget.plan.onsite !== null ||
-    existingBudget.plan.other !== null
+    existingBudget.plan.other !== null ||
+    existingBudget.plan.customItems.length > 0
   const hasActualInit =
     existingBudget.actual.hotel !== null ||
     existingBudget.actual.transport !== null ||
     existingBudget.actual.onsite !== null ||
-    existingBudget.actual.other !== null
+    existingBudget.actual.other !== null ||
+    existingBudget.actual.customItems.length > 0
 
   const [hasPlanBudget, setHasPlanBudget] = useState(hasPlanInit)
   const [planBudget, setPlanBudget] = useState<TravelBudget>(existingBudget.plan)
@@ -273,16 +328,25 @@ export function AddTravelForm({
             type="button"
             onClick={() => setSentiment('wants')}
             className={`h-9 flex-1 rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
-              sentiment === 'wants'
-                ? 'bg-wants-bg text-wants'
-                : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
+              sentiment !== 'wants' ? 'bg-bg-input text-text-secondary hover:bg-bg-hover' : ''
             }`}
+            style={sentiment === 'wants'
+              ? { backgroundColor: 'var(--travel-wants-bg)', color: 'var(--travel-wants-text)' }
+              : undefined
+            }
           >
             ✈️ {t('travel.statusWants')}
           </button>
           <button
             type="button"
-            onClick={() => setSentiment('visited')}
+            onClick={() => {
+              setSentiment('visited')
+              // Переносим плановый бюджет в фактический если фактического ещё нет
+              if (hasPlanBudget && !hasActualBudget) {
+                setActualBudget({ ...planBudget })
+                setHasActualBudget(true)
+              }
+            }}
             className={`h-9 flex-1 rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
               sentiment === 'visited'
                 ? 'bg-loves-bg text-loves'
@@ -311,7 +375,7 @@ export function AddTravelForm({
                 type="date"
                 value={tripDate}
                 onChange={(e) => setTripDate(e.target.value)}
-                className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+                className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
               />
               {tripDate && (
                 <div className="flex flex-col gap-2">

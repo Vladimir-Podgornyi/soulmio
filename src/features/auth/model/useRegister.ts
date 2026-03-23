@@ -52,5 +52,16 @@ export function useRegister() {
     if (error) toast.error(error.message)
   }
 
-  return { form, isLoading, state, onSubmit, signInWithGoogle }
+  async function signInWithApple() {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      },
+    })
+    if (error) toast.error(error.message)
+  }
+
+  return { form, isLoading, state, onSubmit, signInWithGoogle, signInWithApple }
 }

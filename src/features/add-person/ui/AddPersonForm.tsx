@@ -373,7 +373,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
           {...register('relation_since')}
           type="date"
           max={new Date().toISOString().slice(0, 10)}
-          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
         />
         {relationSinceValue && (() => {
           const stats = getRelationStats(relationSinceValue)
@@ -399,7 +399,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
           {...register('birth_date')}
           type="date"
           max={new Date().toISOString().slice(0, 10)}
-          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+          className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
         />
         {birthDateValue && (
           <div className="flex items-center gap-2">
@@ -481,7 +481,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
                 type="date"
                 value={newDateValue}
                 onChange={(e) => setNewDateValue(e.target.value)}
-                className="h-9 rounded-lg bg-bg-secondary px-3 text-sm text-text-primary outline-none [color-scheme:dark]"
+                className="h-9 rounded-lg bg-bg-secondary px-3 text-sm text-text-primary outline-none dark:[color-scheme:dark]"
               />
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-text-muted">{t('people.birthNotifyLabel')}</span>

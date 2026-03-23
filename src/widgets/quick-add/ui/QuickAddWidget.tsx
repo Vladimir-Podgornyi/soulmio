@@ -1,24 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, X, ChevronLeft, Loader2 } from 'lucide-react'
 import type { Person } from '@/entities/person/model/types'
 import type { Category } from '@/entities/category/model/types'
-import { getCategories } from '@/entities/category/api'
-import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
+import { ensureDefaultCategories, createCustomCategory } from '@/entities/category/api'
+import { parseCategoryIconField, CATEGORY_GRADIENTS, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { createClient } from '@/shared/api/supabase'
 import { AddPersonForm } from '@/features/add-person'
+import { EmojiPicker } from '@/shared/ui/EmojiPicker'
 
 interface QuickAddWidgetProps {
   people: Person[]
   isPro: boolean
 }
 
-type Step = 'person' | 'category'
+type Step = 'person' | 'category' | 'custom-category'
 
 const DEFAULT_NAMES = ['food', 'restaurants', 'gifts', 'movies', 'travel'] as const
+
+const FREE_CUSTOM_LIMIT = 1
 
 export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
   const t = useTranslations()
@@ -31,6 +34,39 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [isAddingPerson, setIsAddingPerson] = useState(false)
   const [localPeople, setLocalPeople] = useState<Person[]>(people)
+
+  // Стейт для создания кастомной категории
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatEmoji, setNewCatEmoji] = useState('📁')
+  const [newCatColor, setNewCatColor] = useState('gray')
+  const [newCatLikesLabel, setNewCatLikesLabel] = useState('')
+  const [newCatDislikesLabel, setNewCatDislikesLabel] = useState('')
+  const [isSavingCat, setIsSavingCat] = useState(false)
+
+  // FAB останавливается в 8px от footer, не падает ниже дефолтной позиции
+  const [fabBottom, setFabBottom] = useState(96)
+  useEffect(() => {
+    const footer = document.getElementById('site-footer')
+    if (!footer) return
+
+    function update() {
+      const isMobile = window.innerWidth < 768
+      const defaultBottom = isMobile ? 96 : 24
+      const footerRect = footer.getBoundingClientRect()
+      const vh = window.innerHeight
+      // Нижний край FAB должен быть в 8px выше верхнего края footer
+      const needed = footerRect.top < vh ? vh - footerRect.top + 8 : 0
+      setFabBottom(Math.max(defaultBottom, needed))
+    }
+
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update, { passive: true })
+    update()
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   function open() {
     setStep('person')
@@ -49,11 +85,12 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
     setIsLoadingCategories(true)
     try {
       const supabase = createClient()
-      const cats = await getCategories(supabase, person.id)
+      // ensureDefaultCategories создаёт дефолтные группы если их ещё нет и возвращает все
+      const cats = await ensureDefaultCategories(supabase, person.id, isPro)
       setCategories(cats)
       setStep('category')
     } catch {
-      // fallback — показываем пустой список
+      setStep('category')
     } finally {
       setIsLoadingCategories(false)
     }
@@ -71,6 +108,31 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
     void handlePersonSelect(person)
   }
 
+  function openCustomCategoryForm() {
+    setNewCatName('')
+    setNewCatEmoji('📁')
+    setNewCatColor('gray')
+    setNewCatLikesLabel('')
+    setNewCatDislikesLabel('')
+    setStep('custom-category')
+  }
+
+  async function handleSaveCustomCategory() {
+    if (!newCatName.trim() || !selectedPerson || isSavingCat) return
+    setIsSavingCat(true)
+    try {
+      const supabase = createClient()
+      const iconField = buildCategoryIconField(newCatColor, newCatEmoji, newCatLikesLabel, newCatDislikesLabel)
+      const cat = await createCustomCategory(supabase, selectedPerson.id, newCatName.trim(), iconField)
+      if (cat) {
+        setCategories((prev) => [...prev, cat])
+        setStep('category')
+      }
+    } finally {
+      setIsSavingCat(false)
+    }
+  }
+
   function getCategoryLabel(cat: Category): string {
     if (!cat.is_custom && (DEFAULT_NAMES as readonly string[]).includes(cat.name)) {
       return t(`categories.${cat.name}` as Parameters<typeof t>[0])
@@ -78,28 +140,30 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
     return cat.name
   }
 
+  const customCatCount = categories.filter((c) => c.is_custom).length
+  const canAddCustom = isPro || customCatCount < FREE_CUSTOM_LIMIT
   const canAddMorePeople = isPro || localPeople.length === 0
 
   return (
     <>
-      {/* FAB — кнопка быстрого добавления */}
+      {/* FAB — останавливается в 8px от footer при скролле */}
       <button
         type="button"
         onClick={open}
         aria-label={t('dashboard.quickAdd')}
-        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary-dark active:scale-95 transition-all"
+        style={{ bottom: fabBottom, transition: 'bottom 0.08s ease-out' }}
+        className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary-dark active:scale-95"
       >
         <Plus size={26} strokeWidth={2.5} className="text-white" />
       </button>
 
-      {/* Оверлей */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
 
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe">
+          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe max-h-[85vh] flex flex-col">
             {/* Хэдер */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
               {step === 'category' && !isAddingPerson ? (
                 <button
                   type="button"
@@ -108,6 +172,15 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                 >
                   <ChevronLeft size={16} />
                   {selectedPerson?.name}
+                </button>
+              ) : step === 'custom-category' ? (
+                <button
+                  type="button"
+                  onClick={() => setStep('category')}
+                  className="flex items-center gap-1 text-sm text-text-secondary"
+                >
+                  <ChevronLeft size={16} />
+                  {t('dashboard.selectCategory')}
                 </button>
               ) : isAddingPerson ? (
                 <button
@@ -127,6 +200,8 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                   ? t('people.addPerson')
                   : step === 'person'
                   ? t('dashboard.selectPerson')
+                  : step === 'custom-category'
+                  ? t('categories.addCustom')
                   : t('dashboard.selectCategory')}
               </h2>
 
@@ -139,9 +214,9 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
               </button>
             </div>
 
-            {/* Шаг 1: выбор человека */}
+            {/* ── Шаг 1: выбор человека ── */}
             {step === 'person' && !isAddingPerson && (
-              <div className="flex flex-col gap-2 px-6 pb-6">
+              <div className="flex flex-col gap-2 px-6 pb-6 overflow-y-auto">
                 {localPeople.map((person) => (
                   <button
                     key={person.id}
@@ -202,37 +277,162 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
               </div>
             )}
 
-            {/* Шаг 2: выбор категории */}
+            {/* ── Шаг 2: выбор категории ── */}
             {step === 'category' && (
-              <div className="grid grid-cols-3 gap-3 px-6 pb-6">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => handleCategorySelect(cat)}
-                    className="flex flex-col items-center gap-2 rounded-[16px] bg-bg-card border border-border-card p-4 transition-all active:scale-95 hover:border-primary/40 hover:bg-bg-hover"
-                  >
-                    <span className="text-3xl leading-none">
-                      {cat.is_custom
-                        ? parseCategoryIconField(cat.icon ?? null).emoji
-                        : (cat.icon ?? '📁')}
-                    </span>
-                    <span className="text-xs font-medium text-text-secondary text-center leading-tight">
-                      {getCategoryLabel(cat)}
-                    </span>
-                  </button>
-                ))}
-                {categories.length === 0 && (
-                  <p className="col-span-3 text-center text-sm text-text-muted py-4">
-                    {t('common.empty')}
-                  </p>
-                )}
+              <div className="overflow-y-auto px-6 pb-6">
+                <div className="grid grid-cols-3 gap-3">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => handleCategorySelect(cat)}
+                      className="flex flex-col items-center gap-2 rounded-[16px] bg-bg-card border border-border-card p-4 transition-all active:scale-95 hover:border-primary/40 hover:bg-bg-hover"
+                    >
+                      <span className="text-3xl leading-none">
+                        {cat.is_custom
+                          ? parseCategoryIconField(cat.icon ?? null).emoji
+                          : (cat.icon ?? '📁')}
+                      </span>
+                      <span className="text-xs font-medium text-text-secondary text-center leading-tight">
+                        {getCategoryLabel(cat)}
+                      </span>
+                    </button>
+                  ))}
+
+                  {/* Кнопка создания кастомной группы */}
+                  {canAddCustom ? (
+                    <button
+                      type="button"
+                      onClick={openCustomCategoryForm}
+                      className="flex flex-col items-center gap-2 rounded-[16px] border border-dashed border-border p-4 transition-all hover:border-primary/40 hover:bg-bg-hover active:scale-95"
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input">
+                        <Plus size={16} className="text-text-muted" />
+                      </div>
+                      <span className="text-xs font-medium text-text-muted text-center leading-tight">
+                        {t('categories.addCustom')}
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { close(); router.push('/pro') }}
+                      className="flex flex-col items-center gap-2 rounded-[16px] border border-dashed border-border p-4 transition-all hover:border-primary/40 active:scale-95"
+                    >
+                      <span className="text-2xl leading-none">🔒</span>
+                      <span className="text-xs font-medium text-text-muted text-center leading-tight">Pro</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Шаг: создание нового человека */}
+            {/* ── Шаг 3: создание кастомной категории ── */}
+            {step === 'custom-category' && (
+              <div className="overflow-y-auto px-6 pb-6 flex flex-col gap-4">
+                {/* Выбор цвета */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
+                    {t('categories.color')}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_GRADIENTS.map((g) => (
+                      <button
+                        key={g.key}
+                        type="button"
+                        onClick={() => setNewCatColor(g.key)}
+                        className="relative h-8 w-8 rounded-full transition-transform hover:scale-110 active:scale-95 flex-shrink-0"
+                        style={{ background: g.gradient }}
+                        suppressHydrationWarning
+                      >
+                        {newCatColor === g.key && (
+                          <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Выбор эмодзи */}
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-[12px] text-2xl flex-shrink-0"
+                      style={{ background: CATEGORY_GRADIENTS.find((g) => g.key === newCatColor)?.gradient }}
+                      suppressHydrationWarning
+                    >
+                      {newCatEmoji}
+                    </div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
+                      {t('categories.icon')}
+                    </p>
+                  </div>
+                  <EmojiPicker value={newCatEmoji} onChange={setNewCatEmoji} />
+                </div>
+
+                {/* Название */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
+                    {t('categories.name')}
+                  </p>
+                  <input
+                    type="text"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && void handleSaveCustomCategory()}
+                    placeholder={t('categories.namePlaceholder')}
+                    maxLength={30}
+                    autoFocus
+                    className="w-full rounded-[12px] bg-bg-input px-4 py-3 text-sm text-text-primary placeholder:text-text-muted outline-none focus:ring-1 focus:ring-primary/40"
+                  />
+                </div>
+
+                {/* Статусы */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
+                    {t('categories.customStatuses')}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                      <span className="text-sm flex-shrink-0">❤️</span>
+                      <input
+                        type="text"
+                        value={newCatLikesLabel}
+                        onChange={(e) => setNewCatLikesLabel(e.target.value)}
+                        placeholder={t('categories.likesLabelPlaceholder')}
+                        maxLength={20}
+                        className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 rounded-[12px] bg-bg-input px-3 py-2.5">
+                      <span className="text-sm flex-shrink-0">😕</span>
+                      <input
+                        type="text"
+                        value={newCatDislikesLabel}
+                        onChange={(e) => setNewCatDislikesLabel(e.target.value)}
+                        placeholder={t('categories.dislikesLabelPlaceholder')}
+                        maxLength={20}
+                        className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Сохранить */}
+                <button
+                  type="button"
+                  onClick={() => void handleSaveCustomCategory()}
+                  disabled={!newCatName.trim() || isSavingCat}
+                  className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+                >
+                  {isSavingCat ? <Loader2 size={16} className="animate-spin mx-auto" /> : t('common.save')}
+                </button>
+              </div>
+            )}
+
+            {/* ── Шаг: создание нового человека ── */}
             {step === 'person' && isAddingPerson && (
-              <div className="px-6 pb-6">
+              <div className="overflow-y-auto px-6 pb-6">
                 <AddPersonForm
                   isPro={isPro}
                   onSuccess={handlePersonCreated}

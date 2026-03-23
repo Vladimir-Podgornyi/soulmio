@@ -1,24 +1,24 @@
-/** Градиенты для кастомных категорий */
+/** Градиенты для кастомных категорий — используют CSS переменные для поддержки тем */
 export const CATEGORY_GRADIENTS = [
-  { key: 'gray',    gradient: 'linear-gradient(145deg, #2A2826, #3A3630)' },
-  { key: 'coral',   gradient: 'linear-gradient(145deg, #7A3020, #B04228)' },
-  { key: 'rose',    gradient: 'linear-gradient(145deg, #5C2240, #904060)' },
-  { key: 'ocean',   gradient: 'linear-gradient(145deg, #182E48, #285078)' },
-  { key: 'sage',    gradient: 'linear-gradient(145deg, #22382A, #345A40)' },
-  { key: 'purple',  gradient: 'linear-gradient(145deg, #2A2230, #483060)' },
-  { key: 'amber',   gradient: 'linear-gradient(145deg, #3A2A10, #5A4010)' },
-  { key: 'teal',    gradient: 'linear-gradient(145deg, #1A3038, #205048)' },
-  { key: 'crimson', gradient: 'linear-gradient(145deg, #5A1020, #8A2030)' },
-  { key: 'indigo',  gradient: 'linear-gradient(145deg, #1A1A48, #283080)' },
-  { key: 'olive',   gradient: 'linear-gradient(145deg, #2A3010, #405018)' },
-  { key: 'brown',   gradient: 'linear-gradient(145deg, #3A2010, #5A3018)' },
-  { key: 'pink',    gradient: 'linear-gradient(145deg, #4A1A3A, #703060)' },
-  { key: 'mint',    gradient: 'linear-gradient(145deg, #183028, #285840)' },
-  { key: 'slate',   gradient: 'linear-gradient(145deg, #1A2030, #283848)' },
-  { key: 'gold',    gradient: 'linear-gradient(145deg, #3A3010, #605010)' },
+  { key: 'gray',    gradient: 'var(--gradient-gray)'    },
+  { key: 'coral',   gradient: 'var(--gradient-coral)'   },
+  { key: 'rose',    gradient: 'var(--gradient-rose)'    },
+  { key: 'ocean',   gradient: 'var(--gradient-ocean)'   },
+  { key: 'sage',    gradient: 'var(--gradient-sage)'    },
+  { key: 'purple',  gradient: 'var(--gradient-purple)'  },
+  { key: 'amber',   gradient: 'var(--gradient-amber)'   },
+  { key: 'teal',    gradient: 'var(--gradient-teal)'    },
+  { key: 'crimson', gradient: 'var(--gradient-crimson)' },
+  { key: 'indigo',  gradient: 'var(--gradient-indigo)'  },
+  { key: 'olive',   gradient: 'var(--gradient-olive)'   },
+  { key: 'brown',   gradient: 'var(--gradient-brown)'   },
+  { key: 'pink',    gradient: 'var(--gradient-pink)'    },
+  { key: 'mint',    gradient: 'var(--gradient-mint)'    },
+  { key: 'slate',   gradient: 'var(--gradient-slate)'   },
+  { key: 'gold',    gradient: 'var(--gradient-gold)'    },
 ]
 
-export const DEFAULT_CATEGORY_GRADIENT = CATEGORY_GRADIENTS[0].gradient
+export const DEFAULT_CATEGORY_GRADIENT = 'var(--gradient-gray)'
 
 export interface ParsedCategoryIcon {
   gradient: string

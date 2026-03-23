@@ -41,31 +41,31 @@ const STAT_CARDS: StatCard[] = [
     categoryName: 'restaurants',
     icon: '🍴',
     labelKey: 'categories.restaurants',
-    gradient: 'linear-gradient(145deg, #22382A, #345A40)',
+    gradient: 'var(--gradient-restaurants)',
   },
   {
     categoryName: 'gifts',
     icon: '🎁',
     labelKey: 'categories.gifts',
-    gradient: 'linear-gradient(145deg, #5C2240, #904060)',
+    gradient: 'var(--gradient-gifts)',
   },
   {
     categoryName: 'movies',
     icon: '🎬',
     labelKey: 'categories.movies',
-    gradient: 'linear-gradient(145deg, #182E48, #285078)',
+    gradient: 'var(--gradient-movies)',
   },
   {
     categoryName: 'food',
     icon: '🍽️',
     labelKey: 'categories.food',
-    gradient: 'linear-gradient(145deg, #7A3020, #B04228)',
+    gradient: 'var(--gradient-food)',
   },
   {
     categoryName: 'travel',
     icon: '✈️',
     labelKey: 'categories.travel',
-    gradient: 'linear-gradient(145deg, #2A2230, #483060)',
+    gradient: 'var(--gradient-travel)',
   },
 ]
 
@@ -198,13 +198,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               key={person.id}
               type="button"
               onClick={() => setSelectedMilestone({ person, milestone, stats: getRelationStats(person.relation_since!) })}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#241A30] border border-[#7C4A9C]/30 px-4 py-3.5 mb-2 hover:border-[#7C4A9C]/60 transition-colors text-left"
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#EEE8F5] dark:bg-[#241A30] border border-[#D5CCEC] dark:border-[#7C4A9C]/30 px-4 py-3.5 mb-2 hover:border-[#C0B0D8] dark:hover:border-[#7C4A9C]/60 transition-colors text-left"
             >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#7C4A9C]/20">
-                <Sparkles size={18} className="text-[#C080E0]" />
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#D5CCEC] dark:bg-[#7C4A9C]/20">
+                <Sparkles size={18} className="text-[#6A5090] dark:text-[#C080E0]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#C080E0] mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6A5090] dark:text-[#C080E0] mb-0.5">
                   {t('milestones.notification')}
                 </p>
                 <p className="text-sm font-medium text-text-primary">
@@ -225,13 +225,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               key={b.personId}
               type="button"
               onClick={() => setSelectedBirthday(b)}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A1020] border border-[#C04080]/30 px-4 py-3.5 mb-2 hover:border-[#C04080]/60 transition-colors text-left"
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#FDEEE9] dark:bg-[#2A1020] border border-[#F8C4B8] dark:border-[#C04080]/30 px-4 py-3.5 mb-2 hover:border-[#D0B5B4] dark:hover:border-[#C04080]/60 transition-colors text-left"
             >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#C04080]/20 text-xl">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#F8C4B8] dark:bg-[#C04080]/20 text-xl">
                 🎂
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#E070B0] mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#A0406A] dark:text-[#E070B0] mb-0.5">
                   {t('dashboard.birthdayReminder')}
                 </p>
                 <p className="text-sm font-medium text-text-primary">{b.personName}</p>
@@ -254,13 +254,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               key={d.id}
               type="button"
               onClick={() => setSelectedPersonDate(d)}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#0E1E3A] border border-[#2060B0]/30 px-4 py-3.5 mb-2 hover:border-[#2060B0]/60 transition-colors text-left"
+              className="w-full flex items-center gap-3 rounded-[16px] bg-[#EAF4F7] dark:bg-[#0E1E3A] border border-[#B8D5F2] dark:border-[#2060B0]/30 px-4 py-3.5 mb-2 hover:border-[#A0BFCF] dark:hover:border-[#2060B0]/60 transition-colors text-left"
             >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#2060B0]/20 text-xl">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B8D5F2] dark:bg-[#2060B0]/20 text-xl">
                 📅
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6090D0] mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#3A6080] dark:text-[#6090D0] mb-0.5">
                   {t('dashboard.importantDateReminder')}
                 </p>
                 <p className="text-sm font-medium text-text-primary">{d.title}</p>
@@ -286,9 +286,9 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   key={gift.itemId}
                   type="button"
                   onClick={() => setSelectedGift(gift)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A1A10] border border-primary/20 px-4 py-3.5 mb-2 hover:border-primary/40 transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#FDEEE9] dark:bg-[#2A1A10] border border-[#F8C4B8] dark:border-primary/20 px-4 py-3.5 mb-2 hover:border-primary/40 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/20" suppressHydrationWarning>
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20" suppressHydrationWarning>
                     <Gift size={18} className="text-primary" suppressHydrationWarning />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -314,13 +314,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   key={restaurant.itemId}
                   type="button"
                   onClick={() => setSelectedRestaurant(restaurant)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#1A2818] border border-[#345A40]/40 px-4 py-3.5 mb-2 hover:border-[#345A40]/70 transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#E8F3EE] dark:bg-[#1A2818] border border-[#B4DFC0] dark:border-[#345A40]/40 px-4 py-3.5 mb-2 hover:border-[#A5C5B5] dark:hover:border-[#345A40]/70 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#345A40]/30" suppressHydrationWarning>
-                    <UtensilsCrossed size={18} className="text-[#5CBD8A]" suppressHydrationWarning />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B4DFC0] dark:bg-[#345A40]/30" suppressHydrationWarning>
+                    <UtensilsCrossed size={18} className="text-[#4A7A62] dark:text-[#5CBD8A]" suppressHydrationWarning />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#5CBD8A] mb-0.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#4A7A62] dark:text-[#5CBD8A] mb-0.5">
                       {t('restaurants.reminder')}
                     </p>
                     <p className="text-sm font-medium text-text-primary truncate">{restaurant.title}</p>
@@ -342,13 +342,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   key={movie.itemId}
                   type="button"
                   onClick={() => setSelectedMovie(movie)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#182E48] border border-[#285078]/40 px-4 py-3.5 mb-2 hover:border-[#285078]/70 transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#EAF4F7] dark:bg-[#182E48] border border-[#B8D5F2] dark:border-[#285078]/40 px-4 py-3.5 mb-2 hover:border-[#A0BFCF] dark:hover:border-[#285078]/70 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#285078]/30 text-lg">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B8D5F2] dark:bg-[#285078]/30 text-lg">
                     🎬
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#4A90A4] mb-0.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#3A6080] dark:text-[#4A90A4] mb-0.5">
                       {t('movies.releaseReminder')}
                     </p>
                     <p className="text-sm font-medium text-text-primary truncate">{movie.title}</p>
@@ -370,13 +370,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   key={trip.itemId}
                   type="button"
                   onClick={() => setSelectedTrip(trip)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#2A2030] border border-[#483060]/40 px-4 py-3.5 mb-2 hover:border-[#483060]/70 transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#EEE8F5] dark:bg-[#2A2030] border border-[#D5CCEC] dark:border-[#483060]/40 px-4 py-3.5 mb-2 hover:border-[#C0B0D8] dark:hover:border-[#483060]/70 transition-colors text-left"
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#483060]/30 text-xl">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#D5CCEC] dark:bg-[#483060]/30 text-xl">
                     {trip.flagEmoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9B70D0] mb-0.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#6A5090] dark:text-[#9B70D0] mb-0.5">
                       {t('travel.reminder')}
                     </p>
                     <p className="text-sm font-medium text-text-primary truncate">{trip.title}</p>
@@ -469,7 +469,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   </span>
                   <p
                     className="text-[11px] font-semibold uppercase tracking-[0.08em]"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                    style={{ color: 'var(--card-label-color)' }}
                     suppressHydrationWarning
                   >
                     {t(card.labelKey as Parameters<typeof t>[0])}
@@ -477,14 +477,14 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   <div>
                     <p
                       className="text-[30px] font-bold leading-none tracking-[-1px]"
-                      style={{ color: '#fff' }}
+                      style={{ color: 'var(--card-count-color)' }}
                       suppressHydrationWarning
                     >
                       {count}
                     </p>
                     <p
                       className="text-[11px] mt-1"
-                      style={{ color: 'rgba(255,255,255,0.45)' }}
+                      style={{ color: 'var(--card-sub-color)' }}
                       suppressHydrationWarning
                     >
                       {t('dashboard.itemCount', { count })}
@@ -509,7 +509,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                 </span>
                 <p
                   className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate pr-6"
-                  style={{ color: 'rgba(255,255,255,0.6)' }}
+                  style={{ color: 'var(--card-label-color)' }}
                   suppressHydrationWarning
                 >
                   {s.categoryName}
@@ -517,14 +517,14 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                 <div>
                   <p
                     className="text-[30px] font-bold leading-none tracking-[-1px]"
-                    style={{ color: '#fff' }}
+                    style={{ color: 'var(--card-count-color)' }}
                     suppressHydrationWarning
                   >
                     {s.count}
                   </p>
                   <p
                     className="text-[11px] mt-1"
-                    style={{ color: 'rgba(255,255,255,0.45)' }}
+                    style={{ color: 'var(--card-sub-color)' }}
                     suppressHydrationWarning
                   >
                     {t('dashboard.itemCount', { count: s.count })}
@@ -1253,10 +1253,11 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
         {/* Градиентная шапка */}
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(145deg, #3A1A50, #6C2A90)' }}
+          style={{ background: 'var(--gradient-purple)' }}
+          suppressHydrationWarning
         >
-          <Sparkles size={28} className="text-[#E0A0FF]" />
-          <p className="text-base font-bold text-white text-center px-6">
+          <Sparkles size={28} className="text-[#6A5090] dark:text-[#E0A0FF]" />
+          <p className="text-base font-bold text-text-primary dark:text-white text-center px-6">
             {t(milestone.labelKey as Parameters<typeof t>[0], milestone.labelParams)}
           </p>
         </div>
@@ -1266,7 +1267,7 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-text-primary dark:text-white hover:bg-black/15 dark:hover:bg-white/20"
           >
             <X size={16} />
           </button>
@@ -1302,9 +1303,9 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
             ].map(({ value, key }) => (
               <div
                 key={key}
-                className="rounded-[12px] bg-[#241A30] border border-[#7C4A9C]/20 px-4 py-3 text-center"
+                className="rounded-[12px] bg-[#EEE8F5] dark:bg-[#241A30] border border-[#D5CCEC] dark:border-[#7C4A9C]/20 px-4 py-3 text-center"
               >
-                <p className="text-xl font-bold text-[#C080E0] tracking-tight">{value}</p>
+                <p className="text-xl font-bold text-[#6A5090] dark:text-[#C080E0] tracking-tight">{value}</p>
                 <p className="text-[11px] text-text-secondary mt-0.5">
                   {t(key as Parameters<typeof t>[0])}
                 </p>
@@ -1347,17 +1348,18 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
       <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(145deg, #3A0A28, #901050)' }}
+          style={{ background: 'var(--gradient-coral)' }}
+          suppressHydrationWarning
         >
           <span className="text-3xl">🎂</span>
-          <p className="text-sm font-semibold text-[#FFB0D8]">{t('dashboard.birthdayReminder')}</p>
+          <p className="text-sm font-semibold text-[#7A3A40] dark:text-[#FFB0D8]">{t('dashboard.birthdayReminder')}</p>
         </div>
 
         <div className="px-6 pt-5 pb-6">
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-text-primary dark:text-white hover:bg-black/15 dark:hover:bg-white/20"
           >
             <X size={16} />
           </button>
@@ -1381,12 +1383,12 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="rounded-[12px] bg-[#2A0A18] border border-[#C04080]/20 px-4 py-3 text-center">
-              <p className="text-xl font-bold text-[#E070B0] tracking-tight">{birthday.age}</p>
+            <div className="rounded-[12px] bg-[#FDEEE9] dark:bg-[#2A0A18] border border-[#F8C4B8] dark:border-[#C04080]/20 px-4 py-3 text-center">
+              <p className="text-xl font-bold text-[#A0406A] dark:text-[#E070B0] tracking-tight">{birthday.age}</p>
               <p className="text-[11px] text-text-secondary mt-0.5">{t('milestones.statYears')}</p>
             </div>
-            <div className="rounded-[12px] bg-[#2A0A18] border border-[#C04080]/20 px-4 py-3 text-center">
-              <p className="text-xl font-bold text-[#E070B0] tracking-tight">{birthday.daysLeft}</p>
+            <div className="rounded-[12px] bg-[#FDEEE9] dark:bg-[#2A0A18] border border-[#F8C4B8] dark:border-[#C04080]/20 px-4 py-3 text-center">
+              <p className="text-xl font-bold text-[#A0406A] dark:text-[#E070B0] tracking-tight">{birthday.daysLeft}</p>
               <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
             </div>
           </div>
@@ -1434,17 +1436,18 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
       <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(145deg, #0A1A38, #204090)' }}
+          style={{ background: 'var(--gradient-ocean)' }}
+          suppressHydrationWarning
         >
           <span className="text-3xl">📅</span>
-          <p className="text-sm font-semibold text-[#90B8FF]">{t('dashboard.importantDateReminder')}</p>
+          <p className="text-sm font-semibold text-[#3A6080] dark:text-[#90B8FF]">{t('dashboard.importantDateReminder')}</p>
         </div>
 
         <div className="px-6 pt-5 pb-6">
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-text-primary dark:text-white hover:bg-black/15 dark:hover:bg-white/20"
           >
             <X size={16} />
           </button>
@@ -1458,27 +1461,27 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
             {personDate.yearsSince != null ? (
               <>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
-                    <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.yearsSince}</p>
+                  <div className="rounded-[12px] bg-[#EAF4F7] dark:bg-[#0A1830] border border-[#B8D5F2] dark:border-[#2060B0]/20 px-4 py-3 text-center">
+                    <p className="text-xl font-bold text-[#3A6080] dark:text-[#6090D0] tracking-tight">{personDate.yearsSince}</p>
                     <p className="text-[11px] text-text-secondary mt-0.5">{t('milestones.statYears')}</p>
                   </div>
-                  <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
-                    <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
+                  <div className="rounded-[12px] bg-[#EAF4F7] dark:bg-[#0A1830] border border-[#B8D5F2] dark:border-[#2060B0]/20 px-4 py-3 text-center">
+                    <p className="text-xl font-bold text-[#3A6080] dark:text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
                     <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
                   </div>
                 </div>
-                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
-                  <p className="text-sm font-medium text-[#6090D0]">{dateFormatted}</p>
+                <div className="rounded-[12px] bg-[#EAF4F7] dark:bg-[#0A1830] border border-[#B8D5F2] dark:border-[#2060B0]/20 px-4 py-3 text-center">
+                  <p className="text-sm font-medium text-[#3A6080] dark:text-[#6090D0]">{dateFormatted}</p>
                 </div>
               </>
             ) : (
               <>
-                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 text-center">
-                  <p className="text-xl font-bold text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
+                <div className="rounded-[12px] bg-[#EAF4F7] dark:bg-[#0A1830] border border-[#B8D5F2] dark:border-[#2060B0]/20 px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-[#3A6080] dark:text-[#6090D0] tracking-tight">{personDate.daysLeft}</p>
                   <p className="text-[11px] text-text-secondary mt-0.5">{t('dashboard.daysLeft')}</p>
                 </div>
-                <div className="rounded-[12px] bg-[#0A1830] border border-[#2060B0]/20 px-4 py-3 flex items-center justify-center">
-                  <p className="text-sm font-medium text-[#6090D0]">{dateFormatted}</p>
+                <div className="rounded-[12px] bg-[#EAF4F7] dark:bg-[#0A1830] border border-[#B8D5F2] dark:border-[#2060B0]/20 px-4 py-3 flex items-center justify-center">
+                  <p className="text-sm font-medium text-[#3A6080] dark:text-[#6090D0]">{dateFormatted}</p>
                 </div>
               </>
             )}

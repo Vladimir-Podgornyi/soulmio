@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap } from 'lucide-react'
+import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap, Mail } from 'lucide-react'
 import type { Profile } from '@/entities/user/model/types'
 import { useCurrency, CURRENCIES, CURRENCY_SYMBOLS } from '@/shared/lib/currency'
 import { useUpdateName } from '@/features/settings/model/useUpdateName'
 import { useUpdateEmail } from '@/features/settings/model/useUpdateEmail'
 import { useUpdatePassword } from '@/features/settings/model/useUpdatePassword'
 import { useSignOut } from '@/features/settings/model/useSignOut'
+import { useDeleteAccount } from '@/features/settings/model/useDeleteAccount'
 
 interface SettingsPageProps {
   profile: Profile
@@ -45,6 +46,11 @@ export function SettingsPage({ profile }: SettingsPageProps) {
   const { updateEmail, loading: emailLoading } = useUpdateEmail()
   const { updatePassword, loading: passwordLoading } = useUpdatePassword()
   const { signOut, loading: signOutLoading } = useSignOut()
+  const { deleteAccount, loading: deleteLoading } = useDeleteAccount()
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const deleteInputRef = useRef<HTMLInputElement>(null)
 
   function changeLocale(locale: LocaleKey) {
     document.cookie = `locale=${locale}; path=/; max-age=31536000`
@@ -76,6 +82,11 @@ export function SettingsPage({ profile }: SettingsPageProps) {
     setPasswordValue('')
     setConfirmPasswordValue('')
     setEditing(null)
+  }
+
+  async function handleDeleteAccount() {
+    const { error } = await deleteAccount()
+    if (error) toast.error(t('common.error'))
   }
 
   return (
@@ -240,16 +251,37 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         </AccountRow>
       </div>
 
+      {/* ── Обратная связь ── */}
+      <SectionLabel>{t('settings.support')}</SectionLabel>
+      <div className="mb-5 rounded-[14px] bg-bg-card border border-border-card overflow-hidden">
+        <a
+          href="mailto:soulmio.support@gmail.com"
+          className="flex items-center justify-between px-4 py-3.5 min-h-[56px] hover:bg-bg-hover transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary/10">
+              <Mail size={16} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-text-primary">{t('settings.feedback')}</p>
+              <p className="text-xs text-text-secondary">{t('settings.feedbackSub')}</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-text-muted flex-shrink-0" />
+        </a>
+      </div>
+
       {/* ── Pro plan ── */}
       {isPro ? (
         <div
           className="mb-5 flex items-center gap-3 rounded-[14px] px-4 py-4 min-h-[60px]"
-          style={{ background: 'linear-gradient(135deg, #22382A, #345A40)' }}
+          style={{ background: 'var(--gradient-sage)' }}
+          suppressHydrationWarning
         >
-          <Zap size={20} className="text-[#5CBD8A] flex-shrink-0" fill="#5CBD8A" />
+          <Zap size={20} className="text-[#2E7A4A] dark:text-[#5CBD8A] flex-shrink-0" fill="currentColor" />
           <div>
-            <p className="text-sm font-semibold text-white">{t('pro.settingsProBanner')}</p>
-            <p className="text-xs text-white/60">{t('pro.settingsProBannerSub')}</p>
+            <p className="text-sm font-semibold text-text-primary dark:text-white">{t('pro.settingsProBanner')}</p>
+            <p className="text-xs text-text-secondary dark:text-white/60">{t('pro.settingsProBannerSub')}</p>
           </div>
         </div>
       ) : (
@@ -278,6 +310,59 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         <LogOut size={16} />
         {t('auth.signOut')}
       </button>
+
+      {/* ── Опасная зона ── */}
+      <div className="mt-8">
+        <SectionLabel>{t('settings.dangerZone')}</SectionLabel>
+        <div className="rounded-[14px] border border-red-500/20 bg-bg-card overflow-hidden">
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => {
+                setShowDeleteConfirm(true)
+                setTimeout(() => deleteInputRef.current?.focus(), 50)
+              }}
+              className="flex w-full items-center justify-between px-4 py-3.5 min-h-[56px] hover:bg-red-500/5 transition-colors"
+            >
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-sm font-medium text-red-500">{t('settings.deleteAccount')}</span>
+                <span className="text-xs text-text-muted">{t('settings.deleteAccountSub')}</span>
+              </div>
+              <ChevronRight size={16} className="text-red-400 flex-shrink-0" />
+            </button>
+          ) : (
+            <div className="px-4 py-4 flex flex-col gap-3">
+              <p className="text-xs text-text-secondary leading-relaxed">
+                {t('settings.deleteAccountWarning')}
+              </p>
+              <div>
+                <p className="mb-1.5 text-xs text-text-muted">{t('settings.deleteAccountConfirmHint')}</p>
+                <input
+                  ref={deleteInputRef}
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={t('settings.deleteAccountConfirmPlaceholder')}
+                  className="w-full rounded-[8px] bg-bg-input px-3 py-2 text-sm font-mono text-red-500 placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-red-500/40"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}
+                  className="flex-1 rounded-[8px] border border-border py-2 text-sm text-text-secondary hover:bg-bg-hover transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                  className="flex-1 rounded-[8px] bg-red-500 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-30"
+                >
+                  {deleteLoading ? '...' : t('settings.deleteAccountConfirmButton')}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

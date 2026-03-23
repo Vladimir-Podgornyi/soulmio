@@ -145,7 +145,7 @@ export function AddMovieForm({
           <button
             type="button"
             onClick={() => setSentiment('wants')}
-            className={`h-9 flex-1 min-w-0 whitespace-nowrap rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
+            className={`flex-1 min-w-0 rounded-[20px] py-2 px-2 text-[12px] font-medium text-center leading-tight transition-colors ${
               sentiment === 'wants' ? 'bg-wants-bg text-wants' : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
             }`}
           >
@@ -154,7 +154,7 @@ export function AddMovieForm({
           <button
             type="button"
             onClick={() => setSentiment('likes')}
-            className={`h-9 flex-1 min-w-0 whitespace-nowrap rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
+            className={`flex-1 min-w-0 rounded-[20px] py-2 px-2 text-[12px] font-medium text-center leading-tight transition-colors ${
               sentiment === 'likes' ? 'bg-loves-bg text-loves' : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
             }`}
           >
@@ -163,7 +163,7 @@ export function AddMovieForm({
           <button
             type="button"
             onClick={() => setSentiment('dislikes')}
-            className={`h-9 flex-1 min-w-0 whitespace-nowrap rounded-[20px] px-3 text-[13px] font-medium transition-colors ${
+            className={`flex-1 min-w-0 rounded-[20px] py-2 px-2 text-[12px] font-medium text-center leading-tight transition-colors ${
               sentiment === 'dislikes' ? 'bg-avoid-bg text-avoid' : 'bg-bg-input text-text-secondary hover:bg-bg-hover'
             }`}
           >
@@ -231,7 +231,7 @@ export function AddMovieForm({
             type="date"
             value={releaseDate}
             onChange={(e) => setReleaseDate(e.target.value)}
-            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
           />
           {releaseDate && (
             isPro ? (
