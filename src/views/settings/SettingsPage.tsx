@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap, Mail } from 'lucide-react'
@@ -29,7 +28,6 @@ export function SettingsPage({ profile }: SettingsPageProps) {
   const isPro = profile.subscription_tier === 'pro'
   const { theme, setTheme } = useTheme()
   const locale = useLocale()
-  const router = useRouter()
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -54,7 +52,7 @@ export function SettingsPage({ profile }: SettingsPageProps) {
 
   function changeLocale(locale: LocaleKey) {
     document.cookie = `locale=${locale}; path=/; max-age=31536000`
-    router.refresh()
+    window.location.reload()
   }
 
   async function handleSaveName() {

@@ -15,7 +15,7 @@
     "unpin": "Retirer des favoris"
   },
   "brand": {
-    "name": "Soulmio",
+    "name": "SoulMio",
     "tagline": "Souvenez-vous de ce qui compte pour ceux que vous aimez."
   },
   "auth": {
@@ -43,6 +43,12 @@
       "title": "Vérifiez votre e-mail",
       "message": "Nous avons envoyé un lien de confirmation dans votre boîte. Cliquez dessus pour activer votre compte.",
       "backToSignIn": "Retour à la connexion"
+    },
+    "passwordRequirements": {
+      "minLength": "Au moins 8 caractères",
+      "uppercase": "Une lettre majuscule",
+      "number": "Un chiffre",
+      "symbol": "Un caractère spécial (!@#$...)"
     }
   },
   "nav": {
@@ -395,7 +401,7 @@
     "privacy": "Politique de confidentialité",
     "impressum": "Impressum",
     "terms": "Conditions d'utilisation",
-    "copyright": "© 2026 Soulmio"
+    "copyright": "© 2026 SoulMio"
   },
   "travel": {
     "add": "Ajouter un voyage",
@@ -516,7 +522,7 @@
     "turnsAge": "Fête ses {age} ans"
   },
   "meta": {
-    "title": "Soulmio — Souvenez-vous de ce qui compte pour vos proches",
+    "title": "SoulMio — Souvenez-vous de ce qui compte pour vos proches",
     "description": "Suivez les préférences, les goûts et les souhaits de vos proches. Suggestions IA pour les restaurants, cadeaux, films et plus encore."
   }
 }

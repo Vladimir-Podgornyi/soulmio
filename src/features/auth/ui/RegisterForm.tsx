@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Check, X } from 'lucide-react'
 import { GoogleIcon } from '@/shared/ui/GoogleIcon'
 import { AppleIcon } from '@/shared/ui/AppleIcon'
 import { useRegister } from '../model/useRegister'
@@ -11,7 +11,8 @@ import { useRegister } from '../model/useRegister'
 export function RegisterForm() {
   const t = useTranslations()
   const { form, isLoading, state, onSubmit, signInWithGoogle, signInWithApple } = useRegister()
-  const { register, handleSubmit, formState: { errors } } = form
+  const { register, handleSubmit, formState: { errors }, watch } = form
+  const passwordValue = watch('password', '')
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -123,8 +124,22 @@ export function RegisterForm() {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && (
-            <span className="text-xs text-red-500">{errors.password.message}</span>
+          {passwordValue.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1">
+              {(
+                [
+                  { key: 'minLength', ok: passwordValue.length >= 8 },
+                  { key: 'uppercase', ok: /[A-Z]/.test(passwordValue) },
+                  { key: 'number', ok: /[0-9]/.test(passwordValue) },
+                  { key: 'symbol', ok: /[^A-Za-z0-9]/.test(passwordValue) },
+                ] as const
+              ).map(({ key, ok }) => (
+                <span key={key} className={`flex items-center gap-1.5 text-xs transition-colors ${ok ? 'text-[#5CBD8A]' : 'text-text-muted'}`}>
+                  {ok ? <Check size={11} /> : <X size={11} />}
+                  {t(`auth.passwordRequirements.${key}`)}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 

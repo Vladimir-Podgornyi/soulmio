@@ -32,7 +32,7 @@ function AuthCard({
         {/* Логотип / бренд */}
         <div className="mb-8 text-center">
           <p className="text-2xl">🫶</p>
-          <h1 className="mt-2 text-xl font-bold tracking-[-0.5px] text-text-primary">Soulmio</h1>
+          <h1 className="mt-2 text-xl font-bold tracking-[-0.5px] text-text-primary">SoulMio</h1>
           <p className="mt-1 text-xs text-text-muted">{tagline}</p>
         </div>
 

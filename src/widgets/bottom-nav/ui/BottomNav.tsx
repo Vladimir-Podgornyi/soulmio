@@ -107,7 +107,7 @@ export function BottomNav() {
           href="/dashboard"
           className="text-[17px] font-bold tracking-[-0.5px] text-text-primary hover:text-primary transition-colors"
         >
-          Soulmio
+          SoulMio
         </Link>
 
         <div className="flex items-center gap-1">

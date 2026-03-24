@@ -15,7 +15,7 @@
     "unpin": "Quitar de favoritos"
   },
   "brand": {
-    "name": "Soulmio",
+    "name": "SoulMio",
     "tagline": "Recuerda lo que importa a las personas que amas."
   },
   "auth": {
@@ -43,6 +43,12 @@
       "title": "Revisa tu correo",
       "message": "Enviamos un enlace de confirmación a tu bandeja de entrada. Haz clic para activar tu cuenta.",
       "backToSignIn": "Volver al inicio de sesión"
+    },
+    "passwordRequirements": {
+      "minLength": "Al menos 8 caracteres",
+      "uppercase": "Una letra mayúscula",
+      "number": "Un número",
+      "symbol": "Un carácter especial (!@#$...)"
     }
   },
   "nav": {
@@ -395,7 +401,7 @@
     "privacy": "Política de privacidad",
     "impressum": "Impressum",
     "terms": "Términos de uso",
-    "copyright": "© 2026 Soulmio"
+    "copyright": "© 2026 SoulMio"
   },
   "travel": {
     "add": "Añadir viaje",
@@ -516,7 +522,7 @@
     "turnsAge": "Cumple {age}"
   },
   "meta": {
-    "title": "Soulmio — Recuerda lo que importa a quienes amas",
+    "title": "SoulMio — Recuerda lo que importa a quienes amas",
     "description": "Lleva un registro de las preferencias, gustos y deseos de las personas más cercanas a ti. Sugerencias con IA para restaurantes, regalos, películas y más."
   }
 }
