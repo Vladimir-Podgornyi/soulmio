@@ -38,8 +38,10 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup')
+  const isStaticFile = /\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot|mp4|webm)$/.test(pathname)
   const isProtectedRoute =
     !isAuthRoute &&
+    !isStaticFile &&
     !pathname.startsWith('/_next') &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/auth')
@@ -53,7 +55,9 @@ export async function proxy(request: NextRequest) {
   return supabaseResponse
 }
 
-export const proxyConfig = {
+export default proxy
+
+export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

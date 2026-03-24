@@ -51,6 +51,30 @@
       "symbol": "Ein Sonderzeichen (!@#$...)"
     }
   },
+  "onboarding": {
+    "slide1": {
+      "title": "Denk daran, was den Menschen wichtig ist, die du liebst",
+      "subtitle": "SoulMio hilft dir, nie zu vergessen, was deinen Liebsten wirklich am Herzen liegt"
+    },
+    "slide2": {
+      "title": "Füge die Menschen hinzu, die dir am nächsten stehen",
+      "subtitle": "Partner, Freunde, Familie — alle, die zählen, an einem Ort"
+    },
+    "slide3": {
+      "title": "Verfolge ihre Vorlieben und Wünsche",
+      "subtitle": "Restaurants, Geschenke, Filme, Reisen — jedes Detail, das sie einzigartig macht"
+    },
+    "slide4": {
+      "title": "Erhalte KI-gestützte Vorschläge",
+      "subtitle": "SoulMio lernt ihre Vorlieben kennen und schlägt das perfekte Restaurant, Geschenk oder einen Filmtipp vor"
+    },
+    "slide5": {
+      "title": "Nie vergessen, immer beeindrucken",
+      "subtitle": "Sei der Mensch, der immer genau weiß, was sie zum Lächeln bringt"
+    },
+    "getStarted": "Loslegen",
+    "skip": "Überspringen"
+  },
   "nav": {
     "home": "Startseite",
     "people": "Personen",
