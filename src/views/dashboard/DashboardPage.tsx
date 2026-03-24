@@ -15,6 +15,7 @@ import type { UpcomingPersonDate } from '@/entities/person/api/personDates'
 import { QuickAddWidget } from '@/widgets/quick-add'
 import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { getMilestoneToday, getRelationStats, type MilestoneMatch, type RelationStats } from '@/shared/lib/milestones'
+import { InAppOnboarding, shouldShowInAppOnboarding } from '@/widgets/in-app-onboarding'
 
 interface DashboardPageProps {
   profile: Profile
@@ -88,6 +89,12 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       if (!milestone) return []
       return [{ person: p, milestone, stats: getRelationStats(p.relation_since!) }]
     })
+
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (shouldShowInAppOnboarding()) setShowOnboarding(true)
+  }, [])
 
   const [selectedMilestone, setSelectedMilestone] = useState<MilestonePerson | null>(null)
   const [selectedBirthday, setSelectedBirthday] = useState<UpcomingBirthday | null>(null)
@@ -175,6 +182,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
 
   return (
     <div className="min-h-screen bg-bg-primary pb-28">
+      {showOnboarding && <InAppOnboarding onDone={() => setShowOnboarding(false)} />}
       {/* Шапка с приветствием */}
       <div className="px-4 pt-14 pb-6">
         <p className="text-sm font-medium uppercase tracking-widest text-text-muted mb-1">
