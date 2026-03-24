@@ -51,6 +51,30 @@
       "symbol": "One special character (!@#$...)"
     }
   },
+  "onboarding": {
+    "slide1": {
+      "title": "Remember what matters to the people you love",
+      "subtitle": "SoulMio helps you never forget what your loved ones truly care about"
+    },
+    "slide2": {
+      "title": "Add the people closest to you",
+      "subtitle": "Partner, friends, family — keep everyone who matters in one place"
+    },
+    "slide3": {
+      "title": "Track their tastes and wishes",
+      "subtitle": "Restaurants, gifts, movies, travel — save every little detail that makes them unique"
+    },
+    "slide4": {
+      "title": "Get AI-powered suggestions",
+      "subtitle": "SoulMio learns their preferences and suggests the perfect restaurant, gift or movie idea"
+    },
+    "slide5": {
+      "title": "Never forget, always impress",
+      "subtitle": "Be the person who always knows exactly what would make them smile"
+    },
+    "getStarted": "Get started",
+    "skip": "Skip"
+  },
   "nav": {
     "home": "Home",
     "people": "People",

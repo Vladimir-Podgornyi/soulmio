@@ -51,6 +51,30 @@
       "symbol": "Un carácter especial (!@#$...)"
     }
   },
+  "onboarding": {
+    "slide1": {
+      "title": "Recuerda lo que importa a las personas que amas",
+      "subtitle": "SoulMio te ayuda a nunca olvidar lo que realmente les importa a tus seres queridos"
+    },
+    "slide2": {
+      "title": "Añade a las personas más cercanas a ti",
+      "subtitle": "Pareja, amigos, familia — todos los que importan en un solo lugar"
+    },
+    "slide3": {
+      "title": "Rastrea sus gustos y deseos",
+      "subtitle": "Restaurantes, regalos, películas, viajes — cada detalle que los hace únicos"
+    },
+    "slide4": {
+      "title": "Obtén sugerencias impulsadas por IA",
+      "subtitle": "SoulMio aprende sus preferencias y sugiere el restaurante, regalo o película perfectos"
+    },
+    "slide5": {
+      "title": "Nunca olvides, siempre impresiona",
+      "subtitle": "Sé la persona que siempre sabe exactamente qué les hará sonreír"
+    },
+    "getStarted": "Comenzar",
+    "skip": "Omitir"
+  },
   "nav": {
     "home": "Inicio",
     "people": "Personas",
