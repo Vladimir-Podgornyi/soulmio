@@ -75,6 +75,36 @@
     "getStarted": "Comenzar",
     "skip": "Omitir"
   },
+  "inAppOnboarding": {
+    "step1": {
+      "emoji": "🎉",
+      "title": "¡Todo listo!",
+      "subtitle": "SoulMio te ayuda a recordar todo lo que importa a las personas que amas."
+    },
+    "step2": {
+      "emoji": "👥",
+      "title": "Agrega a alguien especial",
+      "subtitle": "Abre la sección «Personas» para agregar a tu pareja, amigos o familiares — todos los que importan."
+    },
+    "step3": {
+      "emoji": "🍽️",
+      "title": "Sigue sus preferencias",
+      "subtitle": "Para cada persona, guarda restaurantes, regalos, películas, comidas favoritas y sueños de viaje — o crea tus propias categorías."
+    },
+    "step4": {
+      "emoji": "🔔",
+      "title": "No te pierdas momentos importantes",
+      "subtitle": "Tu panel muestra cumpleaños, aniversarios y plazos de regalos — siempre preparado."
+    },
+    "step5": {
+      "emoji": "✨",
+      "title": "¿Listo para empezar?",
+      "subtitle": "Agrega a tu primera persona y comienza a construir un perfil de sus preferencias únicas."
+    },
+    "addFirstPerson": "Agregar primera persona",
+    "next": "Siguiente",
+    "skipTour": "Omitir tour"
+  },
   "nav": {
     "home": "Inicio",
     "people": "Personas",
@@ -413,6 +443,8 @@
     "feedback": "Contacto",
     "feedbackSub": "Envíanos tus comentarios o reporta un problema",
     "dangerZone": "Zona de peligro",
+    "restartTour": "Reiniciar tour",
+    "restartTourSub": "Mostrar la guía de introducción de nuevo",
     "deleteAccount": "Eliminar cuenta",
     "deleteAccountSub": "Eliminar permanentemente tu cuenta y todos los datos",
     "deleteAccountWarning": "Esta acción no se puede deshacer. Todas tus personas, preferencias y datos serán eliminados permanentemente.",

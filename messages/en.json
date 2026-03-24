@@ -75,6 +75,36 @@
     "getStarted": "Get started",
     "skip": "Skip"
   },
+  "inAppOnboarding": {
+    "step1": {
+      "emoji": "🎉",
+      "title": "You're all set!",
+      "subtitle": "SoulMio helps you remember everything that matters to the people you love."
+    },
+    "step2": {
+      "emoji": "👥",
+      "title": "Add someone special",
+      "subtitle": "Open the People section to add your partner, friends, or family — everyone who matters to you."
+    },
+    "step3": {
+      "emoji": "🍽️",
+      "title": "Track their preferences",
+      "subtitle": "For each person, save restaurants, gifts, movies, food they love, and travel dreams — or create your own categories."
+    },
+    "step4": {
+      "emoji": "🔔",
+      "title": "Never miss a moment",
+      "subtitle": "Your dashboard shows birthdays, anniversaries and gift deadlines — so you're always prepared."
+    },
+    "step5": {
+      "emoji": "✨",
+      "title": "Ready to start?",
+      "subtitle": "Add your first person and begin building a profile of their unique preferences."
+    },
+    "addFirstPerson": "Add first person",
+    "next": "Next",
+    "skipTour": "Skip tour"
+  },
   "nav": {
     "home": "Home",
     "people": "People",
@@ -413,6 +443,8 @@
     "feedback": "Feedback",
     "feedbackSub": "Send us your thoughts or report an issue",
     "dangerZone": "Danger Zone",
+    "restartTour": "Restart app tour",
+    "restartTourSub": "Show the onboarding guide again",
     "deleteAccount": "Delete Account",
     "deleteAccountSub": "Permanently delete your account and all data",
     "deleteAccountWarning": "This action cannot be undone. All your people, preferences, and data will be permanently deleted.",

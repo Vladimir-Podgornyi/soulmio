@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap, Mail } from 'lucide-react'
+import { Sun, Moon, Monitor, LogOut, ChevronRight, Zap, Mail, PlayCircle } from 'lucide-react'
 import type { Profile } from '@/entities/user/model/types'
 import { useCurrency, CURRENCIES, CURRENCY_SYMBOLS } from '@/shared/lib/currency'
 import { useUpdateName } from '@/features/settings/model/useUpdateName'
@@ -308,6 +308,24 @@ export function SettingsPage({ profile }: SettingsPageProps) {
         <LogOut size={16} />
         {t('auth.signOut')}
       </button>
+
+      {/* ── Перезапуск тура ── */}
+      <div className="mt-8">
+        <SectionLabel>{t('settings.restartTour')}</SectionLabel>
+        <button
+          onClick={() => {
+            try { localStorage.removeItem('soulmio_app_onboarded') } catch { /* ignore */ }
+            window.location.href = '/dashboard'
+          }}
+          className="flex w-full items-center justify-between rounded-[14px] bg-bg-card px-4 py-3.5 min-h-[56px] hover:bg-bg-hover transition-colors"
+        >
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="text-sm font-medium text-text-primary">{t('settings.restartTour')}</span>
+            <span className="text-xs text-text-muted">{t('settings.restartTourSub')}</span>
+          </div>
+          <PlayCircle size={16} className="text-text-muted flex-shrink-0" />
+        </button>
+      </div>
 
       {/* ── Опасная зона ── */}
       <div className="mt-8">
