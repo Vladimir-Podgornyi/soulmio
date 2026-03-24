@@ -178,7 +178,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       {/* Шапка с приветствием */}
       <div className="px-4 pt-14 pb-6">
         <p className="text-sm font-medium uppercase tracking-widest text-text-muted mb-1">
-          Soulmio
+          SoulMio
         </p>
         <h1 className="text-[30px] font-bold tracking-[-0.5px] text-text-primary">
           {t('dashboard.greeting', { name: displayName })}

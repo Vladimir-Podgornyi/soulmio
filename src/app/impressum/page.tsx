@@ -90,7 +90,7 @@ export default function ImpressumPage() {
         </div>
 
         <p className="mt-10 text-xs text-text-muted">
-          © 2026 Soulmio
+          © 2026 SoulMio
         </p>
       </div>
     </div>

@@ -15,7 +15,7 @@
     "unpin": "Aus Favoriten entfernen"
   },
   "brand": {
-    "name": "Soulmio",
+    "name": "SoulMio",
     "tagline": "Erinnere dich, was deinen Liebsten wichtig ist."
   },
   "auth": {
@@ -43,6 +43,12 @@
       "title": "Überprüfe deine E-Mail",
       "message": "Wir haben dir einen Bestätigungslink geschickt. Klicke darauf, um dein Konto zu aktivieren.",
       "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "passwordRequirements": {
+      "minLength": "Mindestens 8 Zeichen",
+      "uppercase": "Ein Großbuchstabe",
+      "number": "Eine Zahl",
+      "symbol": "Ein Sonderzeichen (!@#$...)"
     }
   },
   "nav": {
@@ -396,7 +402,7 @@
     "privacy": "Datenschutzerklärung",
     "impressum": "Impressum",
     "terms": "Nutzungsbedingungen",
-    "copyright": "© 2026 Soulmio"
+    "copyright": "© 2026 SoulMio"
   },
   "travel": {
     "add": "Reise hinzufügen",
@@ -517,7 +523,7 @@
     "turnsAge": "Wird {age}"
   },
   "meta": {
-    "title": "Soulmio — Vergiss nie, was deinen Liebsten wichtig ist",
+    "title": "SoulMio — Vergiss nie, was deinen Liebsten wichtig ist",
     "description": "Behalte die Vorlieben, Geschmäcker und Wünsche deiner Liebsten im Blick. KI-gestützte Empfehlungen für Restaurants, Geschenke, Filme und mehr."
   }
 }

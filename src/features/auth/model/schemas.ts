@@ -5,12 +5,19 @@ export const loginSchema = z.object({
   password: z.string().min(6),
 })
 
+const passwordSchema = z
+  .string()
+  .min(8, 'auth.passwordRequirements.minLength')
+  .regex(/[A-Z]/, 'auth.passwordRequirements.uppercase')
+  .regex(/[0-9]/, 'auth.passwordRequirements.number')
+  .regex(/[^A-Za-z0-9]/, 'auth.passwordRequirements.symbol')
+
 export const registerSchema = z
   .object({
     fullName: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email(),
-    password: z.string().min(6),
-    confirmPassword: z.string().min(6),
+    password: passwordSchema,
+    confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',

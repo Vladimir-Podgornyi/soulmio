@@ -56,7 +56,7 @@ export function ProPage({ isPro }: ProPageProps) {
         <div className="mb-3 flex items-center justify-center gap-2">
           <Zap size={22} className="text-white" fill="white" />
           <span className="text-2xl font-bold tracking-[-0.5px] text-white">
-            Soulmio Pro
+            SoulMio Pro
           </span>
         </div>
         <p className="text-sm text-white/70 leading-relaxed mb-4">

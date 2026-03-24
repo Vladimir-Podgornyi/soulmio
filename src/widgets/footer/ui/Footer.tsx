@@ -14,7 +14,7 @@ export function Footer() {
       <div className="mx-auto max-w-3xl flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         {/* Лого + копирайт */}
         <p className="text-xs text-text-muted">
-          <span className="font-semibold text-text-secondary">Soulmio</span>
+          <span className="font-semibold text-text-secondary">SoulMio</span>
           {' · '}
           {t('footer.copyright')}
         </p>
