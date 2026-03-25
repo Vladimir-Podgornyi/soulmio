@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 .mcp.json
+.claude/
+.claude-flow/
+.swarm/
 
 # testing
 /coverage
