@@ -2,6 +2,8 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "clear": "Clear",
+    "optional": "optional",
     "delete": "Delete",
     "edit": "Edit",
     "add": "Add",
@@ -12,7 +14,8 @@
     "or": "or",
     "all": "All",
     "pin": "Add to favorites",
-    "unpin": "Remove from favorites"
+    "unpin": "Remove from favorites",
+    "emptyHint": "Tap + to add the first item"
   },
   "brand": {
     "name": "SoulMio",
@@ -94,7 +97,7 @@
     "step4": {
       "emoji": "🔔",
       "title": "Never miss a moment",
-      "subtitle": "Your dashboard shows birthdays, anniversaries and gift deadlines — so you're always prepared."
+      "subtitle": "Your dashboard shows birthdays, anniversaries, gift deadlines and upcoming restaurant reservations — so you're always prepared."
     },
     "step5": {
       "emoji": "✨",
@@ -243,7 +246,38 @@
     "cuisinePlaceholder": "Search or type your own...",
     "cuisineSelect": "Select cuisine",
     "cuisineCustom": "Use",
-    "cuisineList": ["Italian", "Japanese", "Chinese", "French", "Mexican", "Thai", "Indian", "Mediterranean", "American", "Korean", "Vietnamese", "Greek", "Spanish", "Turkish", "Georgian", "Middle Eastern", "Sushi", "Pizza", "Burgers", "BBQ", "Seafood", "Vegetarian", "Vegan", "Ramen", "Tapas", "Peruvian", "Brazilian", "Lebanese", "Moroccan", "Austrian"],
+    "cuisineList": [
+      "Italian",
+      "Japanese",
+      "Chinese",
+      "French",
+      "Mexican",
+      "Thai",
+      "Indian",
+      "Mediterranean",
+      "American",
+      "Korean",
+      "Vietnamese",
+      "Greek",
+      "Spanish",
+      "Turkish",
+      "Georgian",
+      "Middle Eastern",
+      "Sushi",
+      "Pizza",
+      "Burgers",
+      "BBQ",
+      "Seafood",
+      "Vegetarian",
+      "Vegan",
+      "Ramen",
+      "Tapas",
+      "Peruvian",
+      "Brazilian",
+      "Lebanese",
+      "Moroccan",
+      "Austrian"
+    ],
     "linkRestaurant": "Linked restaurant",
     "linkRestaurantBtn": "Link to restaurant",
     "noRestaurantsLinked": "No restaurant linked",
@@ -277,11 +311,14 @@
     "visitDate": "Planned visit date",
     "visitDateHint": "You'll get a reminder 7 days before",
     "reminder": "Restaurant reminder",
+    "addTime": "Add booking time",
     "bookTable": "Book a table",
+    "openInMaps": "Open in Maps",
     "alreadyBooked": "Already booked",
     "changedMind": "Changed my mind",
     "markingBooked": "Saving...",
-    "markingMind": "Removing..."
+    "markingMind": "Removing...",
+    "visitTime": "Booking time"
   },
   "gifts": {
     "add": "Add gift",
@@ -350,7 +387,7 @@
     "actorNotesPlaceholder": "Any notes about this actor...",
     "buyTickets": "Buy tickets",
     "notGoing": "We're not going",
-    "actorSentiment": "Your attitude",
+    "actorSentiment": "Their attitude towards this actor",
     "actorAdded": "Actor added",
     "actorUpdated": "Actor updated",
     "actorDeleted": "Actor deleted",

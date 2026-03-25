@@ -10,14 +10,15 @@ import type { ItemWithPerson } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
 import type { Person } from '@/entities/person/model/types'
 import { getGiftPinned, getGiftDate } from '@/features/add-gift'
+import { getVisitTime } from '@/features/add-restaurant'
 import { AddGiftForm } from '@/features/add-gift'
-import { getCuisineType, getFoodType } from '@/features/add-food'
+import { BottomSheet } from '@/shared/ui/BottomSheet'
+import { getCuisineType, getFoodType, getLinkedRestaurant } from '@/features/add-food'
 import { AddFoodForm } from '@/features/add-food'
 import { AddRestaurantForm } from '@/features/add-restaurant'
-import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActorItem } from '@/features/add-movie'
-import { AddTravelForm, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget } from '@/features/add-travel'
-import { getFlagEmoji } from '@/features/add-travel'
-import { AddCustomItemForm, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
+import { AddMovieForm, AddActorForm, getMovieGenres, getMovieReleaseDate, isActorItem, getActorFilms } from '@/features/add-movie'
+import { AddTravelForm, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji, type TravelBudget } from '@/features/add-travel'
+import { AddCustomItemForm, getCustomItemLikesLabel, getCustomItemDislikesLabel, getCustomItemDate } from '@/features/add-custom-item'
 import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 
 interface OverviewPageProps {
@@ -46,6 +47,7 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
 
   const [items, setItems] = useState<ItemWithPerson[]>(initialItems)
   const [editingItem, setEditingItem] = useState<ItemWithPerson | null>(null)
+  const [previewItem, setPreviewItem] = useState<ItemWithPerson | null>(null)
   const [addOpen, setAddOpen] = useState(false)
 
   const customParsed = isCustom ? parseCategoryIconField(categoryIcon ?? null) : null
@@ -194,6 +196,7 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
               category={category}
               currency={currency}
               onEdit={() => setEditingItem(item)}
+              onPreview={() => setPreviewItem(item)}
               isCustom={isCustom}
               customLikesLabel={customLikesLabel}
               customDislikesLabel={customDislikesLabel}
@@ -272,6 +275,20 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
         </BottomSheet>
       )}
 
+      {/* Превью элемента */}
+      {previewItem && (
+        <OverviewItemPreviewSheet
+          item={previewItem}
+          category={category}
+          isCustom={isCustom ?? false}
+          customLikesLabel={customLikesLabel}
+          customDislikesLabel={customDislikesLabel}
+          onClose={() => setPreviewItem(null)}
+          onEdit={() => { const it = previewItem; setPreviewItem(null); setEditingItem(it) }}
+          t={t}
+        />
+      )}
+
       {/* FAB — добавить запись */}
       {people.length > 0 && (
         <button
@@ -345,6 +362,327 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
   )
 }
 
+/* ── Секция бюджета путешествия (overview) ── */
+
+function OverviewBudgetSection({
+  label, budget, total, currency, t,
+}: {
+  label: string
+  budget: TravelBudget
+  total: number
+  currency: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  const rows = [
+    { key: t('travel.budgetHotel'),     amount: budget.hotel },
+    { key: t('travel.budgetTransport'), amount: budget.transport },
+    { key: t('travel.budgetOnsite'),    amount: budget.onsite },
+    { key: t('travel.budgetOther'),     amount: budget.other },
+    ...budget.customItems.map((ci) => ({ key: ci.label, amount: ci.amount })),
+  ].filter((r) => r.amount != null && r.amount > 0)
+
+  return (
+    <div className="rounded-xl p-3 flex flex-col gap-2" style={{ backgroundColor: 'var(--bg-card)' }}>
+      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">{label}</p>
+      {rows.map((r) => (
+        <div key={r.key} className="flex items-center justify-between gap-2">
+          <span className="text-xs text-text-secondary">{r.key}</span>
+          <span className="text-xs font-medium text-text-primary">{formatPrice(r.amount!, currency as Parameters<typeof formatPrice>[1])}</span>
+        </div>
+      ))}
+      <div className="flex items-center justify-between gap-2 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
+        <span className="text-xs font-semibold text-text-primary">{t('travel.budgetTotal')}</span>
+        <span className="text-sm font-bold text-text-primary">{formatPrice(total, currency as Parameters<typeof formatPrice>[1])}</span>
+      </div>
+    </div>
+  )
+}
+
+/* ── Превью элемента в обзоре ── */
+
+function OverviewItemPreviewSheet({
+  item,
+  category,
+  isCustom,
+  customLikesLabel,
+  customDislikesLabel,
+  onClose,
+  onEdit,
+  t,
+}: {
+  item: ItemWithPerson
+  category: string
+  isCustom: boolean
+  customLikesLabel: string
+  customDislikesLabel: string
+  onClose: () => void
+  onEdit: () => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  const { currency } = useCurrency()
+
+  const isRestaurants = category === 'restaurants'
+  const isGifts       = category === 'gifts'
+  const isFood        = category === 'food'
+  const isMovies      = category === 'movies'
+  const isTravel      = category === 'travel'
+  const isActor       = isMovies && isActorItem(item.tags ?? null)
+
+  const sStyle =
+    item.sentiment === 'likes' || item.sentiment === 'visited'
+      ? { backgroundColor: 'var(--loves-bg)', color: 'var(--loves-text)' }
+      : item.sentiment === 'dislikes'
+      ? { backgroundColor: 'var(--avoid-bg)', color: 'var(--avoid-text)' }
+      : item.sentiment === 'wants' && isTravel
+      ? { backgroundColor: 'var(--travel-wants-bg)', color: 'var(--travel-wants-text)' }
+      : item.sentiment === 'wants'
+      ? { backgroundColor: 'var(--wants-bg)', color: 'var(--wants-text)' }
+      : null
+
+  const sentimentLabel = (() => {
+    if (isCustom) {
+      if (item.sentiment === 'likes') return customLikesLabel || t('items.sentiments.likes')
+      if (item.sentiment === 'dislikes') return customDislikesLabel || t('items.sentiments.dislikes')
+    }
+    if (item.sentiment === 'likes') return isGifts ? t('gifts.filterGifted') : t('items.sentiments.likes')
+    if (item.sentiment === 'dislikes') return t('items.sentiments.dislikes')
+    if (item.sentiment === 'wants') return isTravel ? `✈️ ${t('travel.statusWants')}` : t('items.sentiments.wants')
+    if (item.sentiment === 'visited') return isTravel ? `✅ ${t('travel.statusVisited')}` : t('items.sentiments.visited')
+    return ''
+  })()
+
+  const tags = item.tags ?? []
+  const restaurantAddress = tags.find(tg => tg.startsWith('📍'))?.slice(2).trim() ?? null
+  const visitDate = tags.find(tg => tg.startsWith('visit_date:'))?.replace('visit_date:', '') ?? null
+  const visitTime = isRestaurants ? getVisitTime(item.tags ?? null) : ''
+  const visitBooked = tags.includes('visit_booked:true')
+
+  const movieGenreKeys = isMovies && !isActor ? getMovieGenres(item.tags ?? null) : []
+  const releaseDate = isMovies && !isActor ? getMovieReleaseDate(item.tags ?? null) : null
+  const actorFilms  = isActor ? getActorFilms(item.tags ?? null) : []
+
+  const travelCountryObj = isTravel ? getTravelCountry(item.tags ?? null) : null
+  const travelCity    = isTravel ? getTravelCity(item.tags ?? null) : ''
+  const travelCountry = travelCountryObj?.name ?? ''
+  const countryCode   = travelCountryObj?.code ?? ''
+  const tripDate      = isTravel ? getTravelDate(item.tags ?? null) : null
+  const tripBooked    = tags.includes('trip_booked:true')
+  const travelBudgetData = isTravel ? getTravelBudget(item.tags ?? null) : null
+
+  function budgetTotal(b: TravelBudget): number {
+    return [b.hotel, b.transport, b.onsite, b.other]
+      .reduce<number>((s, v) => s + (v ?? 0), 0)
+      + b.customItems.reduce<number>((s, ci) => s + (ci.amount ?? 0), 0)
+  }
+  const hasPlan   = isTravel && travelBudgetData != null && budgetTotal(travelBudgetData.plan)   > 0
+  const hasActual = isTravel && travelBudgetData != null && budgetTotal(travelBudgetData.actual) > 0
+
+  const giftDate   = isGifts  ? getGiftDate(item.tags ?? null) : null
+  const customDate = isCustom ? getCustomItemDate(item.tags ?? null) : null
+  const linkedRestaurant = isFood ? getLinkedRestaurant(item.tags ?? null) : null
+  const foodType   = isFood ? getFoodType(item.tags ?? null) : null
+  const cuisineType = isFood ? getCuisineType(item.tags ?? null) : null
+
+  return (
+    <BottomSheet title={item.title} onClose={onClose}>
+      <div className="flex flex-col gap-4">
+        {/* Человек */}
+        <Link
+          href={`/people/${item.person_id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
+          {item.personAvatar ? (
+            <img src={item.personAvatar} alt={item.personName} className="h-6 w-6 rounded-full object-cover" />
+          ) : (
+            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-primary/60 to-primary flex items-center justify-center text-white text-[10px] font-bold">
+              {item.personName[0]?.toUpperCase()}
+            </div>
+          )}
+          <span className="text-sm font-medium text-text-secondary">{item.personName}</span>
+          <ArrowRight size={12} className="text-text-muted" />
+        </Link>
+
+        {/* Sentiment badge */}
+        {sStyle && sentimentLabel && (
+          <div>
+            <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={sStyle}>
+              {sentimentLabel}
+            </span>
+          </div>
+        )}
+
+        {/* Image */}
+        {item.image_url && (
+          <div className="w-full overflow-hidden rounded-[14px]" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <img src={item.image_url} alt={item.title} className="w-full object-contain" style={{ maxHeight: '260px' }} />
+          </div>
+        )}
+
+        {/* Description */}
+        {item.description && (
+          <p className="text-sm leading-relaxed text-text-secondary">{item.description}</p>
+        )}
+
+        {/* Ratings */}
+        {(item.my_rating != null || item.partner_rating != null) && (
+          <div className="flex gap-6">
+            {item.my_rating != null && (
+              <div>
+                <p className="mb-1 text-xs text-text-muted">{t('movies.myRating')}</p>
+                <span className="text-amber-400">{'★'.repeat(item.my_rating)}</span>
+                <span className="text-text-muted">{'★'.repeat(5 - item.my_rating)}</span>
+              </div>
+            )}
+            {item.partner_rating != null && (
+              <div>
+                <p className="mb-1 text-xs text-text-muted">{t('movies.partnerRating')}</p>
+                <span className="text-amber-400">{'★'.repeat(item.partner_rating)}</span>
+                <span className="text-text-muted">{'★'.repeat(5 - item.partner_rating)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Price */}
+        {item.price != null && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('gifts.price')}:</span>
+            <span className="text-sm font-medium text-text-primary">{formatPrice(item.price, currency)}</span>
+          </div>
+        )}
+
+        {/* Restaurant */}
+        {isRestaurants && restaurantAddress && (
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5">📍</span>
+            <span className="text-sm text-text-secondary">{restaurantAddress}</span>
+          </div>
+        )}
+        {isRestaurants && visitDate && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+              {t('restaurants.visitDate')}
+            </span>
+            <span className={`font-medium ${visitTime ? 'text-base text-text-primary' : 'text-sm text-text-secondary'}`}>
+              {new Date(visitDate + 'T00:00').toLocaleDateString()}
+              {visitTime && <span className="ml-2">⏰ {visitTime}</span>}
+            </span>
+            {visitBooked && <span className="text-xs font-medium" style={{ color: 'var(--loves-text)' }}>✓ {t('restaurants.alreadyBooked')}</span>}
+          </div>
+        )}
+
+        {/* Food */}
+        {isFood && (foodType || cuisineType) && (
+          <p className="text-sm text-text-secondary">
+            {[foodType
+              ? (foodType === 'dish' ? `🍽️ ${t('food.types.dish')}` : foodType === 'cuisine' ? `🍜 ${t('food.types.cuisine')}` : `🥗 ${t('food.types.food_type')}`)
+              : null, cuisineType].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        {isFood && linkedRestaurant && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">🍴</span>
+            <span className="text-sm text-text-secondary">{linkedRestaurant.name}</span>
+          </div>
+        )}
+
+        {/* Gift date */}
+        {isGifts && giftDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('gifts.date')}:</span>
+            <span className="text-sm text-text-secondary">{giftDate}</span>
+          </div>
+        )}
+
+        {/* Movies */}
+        {isMovies && !isActor && movieGenreKeys.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {movieGenreKeys.map(g => (
+              <span key={g} className="rounded-full px-2.5 py-0.5 text-xs" style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+              </span>
+            ))}
+          </div>
+        )}
+        {isMovies && !isActor && releaseDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('movies.releaseDate')}:</span>
+            <span className="text-sm text-text-secondary">{releaseDate}</span>
+          </div>
+        )}
+        {isActor && actorFilms.length > 0 && (
+          <div className="space-y-1.5">
+            {actorFilms.map((film, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs text-text-muted">🎬</span>
+                <span className="text-sm text-text-secondary">{film}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Travel */}
+        {isTravel && (travelCity || travelCountry) && (
+          <div className="flex items-center gap-3">
+            {countryCode && <span className="text-3xl">{getFlagEmoji(countryCode)}</span>}
+            <div>
+              {travelCity    && <p className="text-sm font-medium text-text-primary">{travelCity}</p>}
+              {travelCountry && <p className="text-xs text-text-muted">{travelCountry}</p>}
+            </div>
+          </div>
+        )}
+        {isTravel && tripDate && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-text-muted">{t('travel.tripDate')}:</span>
+            <span className="text-sm text-text-secondary">{tripDate}</span>
+            {tripBooked && <span className="text-xs font-medium" style={{ color: 'var(--loves-text)' }}>✓ {t('travel.statusBooked')}</span>}
+          </div>
+        )}
+
+        {/* Travel: budget */}
+        {hasPlan && travelBudgetData && (
+          <OverviewBudgetSection label={t('travel.planBudget')} budget={travelBudgetData.plan} total={budgetTotal(travelBudgetData.plan)} currency={currency} t={t} />
+        )}
+        {hasActual && travelBudgetData && (
+          <OverviewBudgetSection label={t('travel.actualBudget')} budget={travelBudgetData.actual} total={budgetTotal(travelBudgetData.actual)} currency={currency} t={t} />
+        )}
+
+        {/* Custom date */}
+        {isCustom && customDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">📅</span>
+            <span className="text-sm text-text-secondary">{customDate}</span>
+          </div>
+        )}
+
+        {/* External link */}
+        {item.external_url && (
+          <a
+            href={item.external_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}
+          >
+            <ExternalLink size={14} />
+            <span className="truncate">{item.external_url.replace(/^https?:\/\//, '').split('/')[0]}</span>
+          </a>
+        )}
+
+        {/* Edit button */}
+        <button
+          onClick={onEdit}
+          className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98]"
+          style={{ backgroundColor: 'var(--primary)' }}
+        >
+          {t('common.edit')}
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
 /* ── Карточка элемента в обзоре ── */
 
 interface OverviewItemCardProps {
@@ -352,13 +690,14 @@ interface OverviewItemCardProps {
   category: string
   currency: string
   onEdit: () => void
+  onPreview: () => void
   isCustom?: boolean
   customLikesLabel?: string
   customDislikesLabel?: string
   t: ReturnType<typeof useTranslations>
 }
 
-function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLikesLabel, customDislikesLabel, t }: OverviewItemCardProps) {
+function OverviewItemCard({ item, category, currency, onEdit, onPreview, isCustom, customLikesLabel, customDislikesLabel, t }: OverviewItemCardProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -373,6 +712,10 @@ function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLi
   const isLikes = item.sentiment === 'likes'
 
   const addressTag = item.tags?.find((tag) => tag.startsWith('📍'))
+  const restVisitDate = !isGifts && !isFood && !isMovies && !isTravel && !isCustom
+    ? item.tags?.find((tg) => tg.startsWith('visit_date:'))?.replace('visit_date:', '') ?? null
+    : null
+  const restVisitTime = category === 'restaurants' ? getVisitTime(item.tags ?? null) : ''
   const giftDate = isGifts ? getGiftDate(item.tags ?? null) : ''
   const isPinned = isGifts
     ? getGiftPinned(item.tags ?? null)
@@ -460,7 +803,17 @@ function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLi
   }
 
   return (
-    <div className="rounded-[14px] bg-bg-card border border-border-card p-4">
+    <div
+      className="rounded-[14px] bg-bg-card border border-border-card p-4 cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        const interactive = (e.target as Element).closest('button, a, input, [role="button"]')
+        if (interactive && interactive !== e.currentTarget) return
+        onPreview()
+      }}
+      onKeyDown={(e) => { if (e.key === 'Enter') onPreview() }}
+    >
       {/* Верхняя строка: изображение + контент + kebab */}
       <div className="flex gap-3">
         {item.image_url && (
@@ -484,6 +837,11 @@ function OverviewItemCard({ item, category, currency, onEdit, isCustom, customLi
 
               {addressTag && (
                 <p className="text-xs text-text-secondary mt-0.5">{addressTag}</p>
+              )}
+              {restVisitDate && (
+                <p className="text-xs text-text-muted mt-0.5">
+                  📅 {restVisitDate}{restVisitTime && ` · ⏰ ${restVisitTime}`}
+                </p>
               )}
               {isFood && (foodType || cuisineType) && (
                 <p className="text-xs text-text-secondary mt-0.5">{cuisineType ?? foodType}</p>
@@ -689,33 +1047,3 @@ function MiniRating({ label, value }: { label: string; value: number }) {
   )
 }
 
-/* ── Bottom Sheet ── */
-
-function BottomSheet({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: React.ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
-          >
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}

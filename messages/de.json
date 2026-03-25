@@ -2,6 +2,8 @@
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
+    "clear": "Löschen",
+    "optional": "optional",
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "add": "Hinzufügen",
@@ -12,7 +14,8 @@
     "or": "oder",
     "all": "Alle",
     "pin": "Zu Favoriten",
-    "unpin": "Aus Favoriten entfernen"
+    "unpin": "Aus Favoriten entfernen",
+    "emptyHint": "Tippe auf + um das erste Element hinzuzufügen"
   },
   "brand": {
     "name": "SoulMio",
@@ -94,7 +97,7 @@
     "step4": {
       "emoji": "🔔",
       "title": "Verpasse keine wichtigen Momente",
-      "subtitle": "Dein Dashboard zeigt Geburtstage, Jahrestage und Geschenk-Deadlines — immer vorbereitet."
+      "subtitle": "Dein Dashboard zeigt Geburtstage, Jahrestage, Geschenk-Deadlines und bevorstehende Restaurantreservierungen — immer vorbereitet."
     },
     "step5": {
       "emoji": "✨",
@@ -237,14 +240,44 @@
       "dish": "Gericht",
       "food_type": "Lebensmittelart",
       "cuisine": "Küche"
-
     },
     "cuisineType": "Küche",
     "cuisineTitle": "Küche",
     "cuisinePlaceholder": "Suchen oder eigene eingeben...",
     "cuisineSelect": "Küche auswählen",
     "cuisineCustom": "Verwenden",
-    "cuisineList": ["Italienisch", "Japanisch", "Chinesisch", "Französisch", "Mexikanisch", "Thailändisch", "Indisch", "Mediterran", "Amerikanisch", "Koreanisch", "Vietnamesisch", "Griechisch", "Spanisch", "Türkisch", "Georgisch", "Nahöstlich", "Sushi", "Pizza", "Burger", "BBQ", "Meeresfrüchte", "Vegetarisch", "Vegan", "Ramen", "Tapas", "Peruanisch", "Brasilianisch", "Libanesisch", "Marokkanisch", "Österreichisch"],
+    "cuisineList": [
+      "Italienisch",
+      "Japanisch",
+      "Chinesisch",
+      "Französisch",
+      "Mexikanisch",
+      "Thailändisch",
+      "Indisch",
+      "Mediterran",
+      "Amerikanisch",
+      "Koreanisch",
+      "Vietnamesisch",
+      "Griechisch",
+      "Spanisch",
+      "Türkisch",
+      "Georgisch",
+      "Nahöstlich",
+      "Sushi",
+      "Pizza",
+      "Burger",
+      "BBQ",
+      "Meeresfrüchte",
+      "Vegetarisch",
+      "Vegan",
+      "Ramen",
+      "Tapas",
+      "Peruanisch",
+      "Brasilianisch",
+      "Libanesisch",
+      "Marokkanisch",
+      "Österreichisch"
+    ],
     "linkRestaurant": "Verknüpftes Restaurant",
     "linkRestaurantBtn": "Mit Restaurant verknüpfen",
     "noRestaurantsLinked": "Kein Restaurant verknüpft",
@@ -278,11 +311,14 @@
     "visitDate": "Geplantes Besuchsdatum",
     "visitDateHint": "Erinnerung erscheint 7 Tage vorher",
     "reminder": "Restaurant-Erinnerung",
+    "addTime": "Uhrzeit hinzufügen",
     "bookTable": "Tisch reservieren",
+    "openInMaps": "In Maps öffnen",
     "alreadyBooked": "Schon reserviert",
     "changedMind": "Doch nicht hingehen",
     "markingBooked": "Speichere...",
-    "markingMind": "Entferne..."
+    "markingMind": "Entferne...",
+    "visitTime": "Buchungszeit"
   },
   "gifts": {
     "add": "Geschenk hinzufügen",
@@ -351,7 +387,7 @@
     "actorNotesPlaceholder": "Notizen zum Schauspieler...",
     "buyTickets": "Tickets kaufen",
     "notGoing": "Wir gehen nicht",
-    "actorSentiment": "Ihre Haltung",
+    "actorSentiment": "Ihre Haltung zu diesem Schauspieler",
     "actorAdded": "Schauspieler hinzugefügt",
     "actorUpdated": "Schauspieler aktualisiert",
     "actorDeleted": "Schauspieler gelöscht",

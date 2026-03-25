@@ -13,6 +13,7 @@ import { DEFAULT_RELATIONS } from '@/entities/person/model/types'
 import { getRelationDuration } from '@/shared/lib/milestones'
 import { AddPersonWidget } from '@/widgets/add-person'
 import { AddPersonForm } from '@/features/add-person'
+import { BottomSheet } from '@/shared/ui/BottomSheet'
 
 interface PeoplePageProps {
   initialPeople: Person[]
@@ -224,7 +225,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
         {/* Аватар — нажатие переходит на страницу */}
         <Link href={`/people/${person.id}`} className="flex items-center gap-4 flex-1 min-w-0">
           <div className="relative flex-shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
               {person.avatar_url
                 ? <img src={person.avatar_url} alt={person.name} className="h-full w-full object-cover" />
                 : person.name.charAt(0)
@@ -337,33 +338,3 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
   )
 }
 
-/* ── Bottom sheet ── */
-
-function BottomSheet({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: React.ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
-          >
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}

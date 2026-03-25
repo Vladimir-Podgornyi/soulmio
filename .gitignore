@@ -9,6 +9,10 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.mcp.json
+.claude/
+.claude-flow/
+.swarm/
 
 # testing
 /coverage
@@ -41,3 +45,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 CLAUDE.md
+SKILL.md

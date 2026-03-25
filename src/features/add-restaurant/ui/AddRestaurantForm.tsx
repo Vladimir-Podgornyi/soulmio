@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Link, Star } from 'lucide-react'
+import { Clock, Link, Star, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Item } from '@/entities/item/model/types'
-import { useAddRestaurant, getVisitDate, getVisitBooked } from '../model/useAddRestaurant'
+import { useAddRestaurant, getVisitDate, getVisitTime, getVisitBooked } from '../model/useAddRestaurant'
+import { TimePicker } from '@/shared/ui/TimePicker'
 
 interface AddRestaurantFormProps {
   personId: string
@@ -59,6 +60,7 @@ export function AddRestaurantForm({
     item?.sentiment === 'visited' ? 'visited' : 'wants'
   )
   const [visitDate, setVisitDate]     = useState(getVisitDate(item?.tags ?? null))
+  const [visitTime, setVisitTime]     = useState(getVisitTime(item?.tags ?? null))
   const [myRating, setMyRating]       = useState<number | null>(item?.my_rating ?? null)
   const [partnerRating, setPartnerRating] = useState<number | null>(item?.partner_rating ?? null)
 
@@ -85,7 +87,7 @@ export function AddRestaurantForm({
     e.preventDefault()
     if (!name.trim()) { toast.error(t('restaurants.nameRequired')); return }
 
-    const values = { mapsUrl, name, address, comment, sentiment, visitDate, isBooked, myRating, partnerRating }
+    const values = { mapsUrl, name, address, comment, sentiment, visitDate, visitTime, isBooked, myRating, partnerRating }
 
     try {
       if (isEdit) {
@@ -182,23 +184,61 @@ export function AddRestaurantForm({
         </div>
       </div>
 
-      {/* Дата планируемого посещения — только для "хочу посетить" */}
+      {/* Дата + время посещения — только для "хочу посетить" */}
       {sentiment === 'wants' && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
-            {t('restaurants.visitDate')}
-          </label>
-          <input
-            type="date"
-            value={visitDate}
-            onChange={(e) => setVisitDate(e.target.value)}
-            min={new Date().toISOString().slice(0, 10)}
-            className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
-          />
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              {t('restaurants.visitDate')}
+            </label>
+            <input
+              type="date"
+              value={visitDate}
+              onChange={(e) => setVisitDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
+              className="h-11 rounded-xl bg-bg-input px-4 text-sm text-text-primary outline-none transition-colors focus:bg-bg-input-focus focus:ring-1 focus:ring-primary/40 dark:[color-scheme:dark]"
+            />
+            {visitDate && (
+              <p className="text-[11px] text-text-muted">{t('restaurants.visitDateHint')}</p>
+            )}
+          </div>
+
           {visitDate && (
-            <p className="text-[11px] text-text-muted">{t('restaurants.visitDateHint')}</p>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+                  {t('restaurants.visitTime')}
+                </label>
+                <span className="text-[10px] text-text-muted">{t('common.optional')}</span>
+              </div>
+
+              {visitTime ? (
+                <>
+                  <div className="rounded-xl bg-bg-input px-4 py-3">
+                    <TimePicker value={visitTime} onChange={setVisitTime} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setVisitTime('')}
+                    className="self-start flex items-center gap-1.5 rounded-full border border-[var(--avoid-text)]/30 bg-[var(--avoid-bg)] px-3 py-1.5 text-[12px] font-medium text-[var(--avoid-text)] hover:opacity-80 transition-opacity"
+                  >
+                    <X size={11} strokeWidth={2.5} />
+                    {t('common.clear')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setVisitTime('19:00')}
+                  className="flex h-11 items-center gap-2 rounded-xl bg-bg-input px-4 text-sm text-text-muted hover:bg-bg-hover hover:text-text-secondary transition-colors"
+                >
+                  <Clock size={14} />
+                  {t('restaurants.addTime')}
+                </button>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Рейтинги — только если посещали */}

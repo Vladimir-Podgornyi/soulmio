@@ -2,6 +2,8 @@
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
+    "clear": "Effacer",
+    "optional": "facultatif",
     "delete": "Supprimer",
     "edit": "Modifier",
     "add": "Ajouter",
@@ -12,7 +14,8 @@
     "or": "ou",
     "all": "Tout",
     "pin": "Ajouter aux favoris",
-    "unpin": "Retirer des favoris"
+    "unpin": "Retirer des favoris",
+    "emptyHint": "Appuie sur + pour ajouter le premier élément"
   },
   "brand": {
     "name": "SoulMio",
@@ -94,7 +97,7 @@
     "step4": {
       "emoji": "🔔",
       "title": "Ne manque aucun moment important",
-      "subtitle": "Ton tableau de bord affiche anniversaires, commémorations et délais de cadeaux — toujours prêt."
+      "subtitle": "Ton tableau de bord affiche anniversaires, commémorations, délais de cadeaux et rappels de réservations de restaurants — toujours prêt."
     },
     "step5": {
       "emoji": "✨",
@@ -243,7 +246,38 @@
     "cuisinePlaceholder": "Rechercher ou saisir...",
     "cuisineSelect": "Sélectionner une cuisine",
     "cuisineCustom": "Utiliser",
-    "cuisineList": ["Italienne", "Japonaise", "Chinoise", "Française", "Mexicaine", "Thaïlandaise", "Indienne", "Méditerranéenne", "Américaine", "Coréenne", "Vietnamienne", "Grecque", "Espagnole", "Turque", "Géorgienne", "Moyen-orientale", "Sushi", "Pizza", "Burgers", "BBQ", "Fruits de mer", "Végétarienne", "Végane", "Ramen", "Tapas", "Péruvienne", "Brésilienne", "Libanaise", "Marocaine", "Autrichienne"],
+    "cuisineList": [
+      "Italienne",
+      "Japonaise",
+      "Chinoise",
+      "Française",
+      "Mexicaine",
+      "Thaïlandaise",
+      "Indienne",
+      "Méditerranéenne",
+      "Américaine",
+      "Coréenne",
+      "Vietnamienne",
+      "Grecque",
+      "Espagnole",
+      "Turque",
+      "Géorgienne",
+      "Moyen-orientale",
+      "Sushi",
+      "Pizza",
+      "Burgers",
+      "BBQ",
+      "Fruits de mer",
+      "Végétarienne",
+      "Végane",
+      "Ramen",
+      "Tapas",
+      "Péruvienne",
+      "Brésilienne",
+      "Libanaise",
+      "Marocaine",
+      "Autrichienne"
+    ],
     "linkRestaurant": "Restaurant associé",
     "linkRestaurantBtn": "Lier à un restaurant",
     "noRestaurantsLinked": "Aucun restaurant lié",
@@ -277,11 +311,14 @@
     "visitDate": "Date de visite prévue",
     "visitDateHint": "Vous recevrez un rappel 7 jours avant",
     "reminder": "Rappel restaurant",
+    "addTime": "Ajouter l'heure de réservation",
     "bookTable": "Réserver une table",
+    "openInMaps": "Ouvrir dans Maps",
     "alreadyBooked": "Déjà réservé",
     "changedMind": "J'ai changé d'avis",
     "markingBooked": "Enregistrement...",
-    "markingMind": "Suppression..."
+    "markingMind": "Suppression...",
+    "visitTime": "Heure de réservation"
   },
   "gifts": {
     "add": "Ajouter un cadeau",
@@ -350,7 +387,7 @@
     "actorNotesPlaceholder": "Notes sur cet acteur...",
     "buyTickets": "Acheter des billets",
     "notGoing": "On n'y va pas",
-    "actorSentiment": "Votre avis",
+    "actorSentiment": "Son rapport à cet acteur",
     "actorAdded": "Acteur ajouté",
     "actorUpdated": "Acteur mis à jour",
     "actorDeleted": "Acteur supprimé",

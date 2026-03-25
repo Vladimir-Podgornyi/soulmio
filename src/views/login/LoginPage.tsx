@@ -13,10 +13,10 @@ export async function LoginPage() {
           <p className="mt-1 text-xs text-text-muted">{t('brand.tagline')}</p>
         </div>
         <div className="rounded-[20px] bg-bg-card p-7" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <h2 className="mb-1 text-lg font-semibold tracking-[-0.5px] text-text-primary">
+          <h2 className="mb-1 text-center text-lg font-semibold tracking-[-0.5px] text-text-primary">
             {t('auth.login.title')}
           </h2>
-          <p className="mb-6 text-sm text-text-secondary">{t('auth.login.subtitle')}</p>
+          <p className="mb-6 text-center text-sm text-text-secondary">{t('auth.login.subtitle')}</p>
           <LoginForm />
         </div>
       </div>

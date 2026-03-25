@@ -2,6 +2,8 @@
   "common": {
     "save": "Salvar",
     "cancel": "Cancelar",
+    "clear": "Limpar",
+    "optional": "opcional",
     "delete": "Excluir",
     "edit": "Editar",
     "add": "Adicionar",
@@ -12,7 +14,8 @@
     "or": "ou",
     "all": "Tudo",
     "pin": "Adicionar aos favoritos",
-    "unpin": "Remover dos favoritos"
+    "unpin": "Remover dos favoritos",
+    "emptyHint": "Toque em + para adicionar o primeiro item"
   },
   "brand": {
     "name": "SoulMio",
@@ -94,7 +97,7 @@
     "step4": {
       "emoji": "🔔",
       "title": "Não perca momentos importantes",
-      "subtitle": "Seu painel mostra aniversários, datas comemorativas e prazos de presentes — sempre preparado."
+      "subtitle": "Seu painel mostra aniversários, datas comemorativas, prazos de presentes e lembretes de reservas em restaurantes — sempre preparado."
     },
     "step5": {
       "emoji": "✨",
@@ -243,7 +246,38 @@
     "cuisinePlaceholder": "Pesquisar ou digitar...",
     "cuisineSelect": "Selecionar cozinha",
     "cuisineCustom": "Usar",
-    "cuisineList": ["Italiana", "Japonesa", "Chinesa", "Francesa", "Mexicana", "Tailandesa", "Indiana", "Mediterrânea", "Americana", "Coreana", "Vietnamita", "Grega", "Espanhola", "Turca", "Georgiana", "Médio-oriental", "Sushi", "Pizza", "Hambúrgueres", "BBQ", "Frutos do mar", "Vegetariana", "Vegana", "Ramen", "Tapas", "Peruana", "Brasileira", "Libanesa", "Marroquina", "Austríaca"],
+    "cuisineList": [
+      "Italiana",
+      "Japonesa",
+      "Chinesa",
+      "Francesa",
+      "Mexicana",
+      "Tailandesa",
+      "Indiana",
+      "Mediterrânea",
+      "Americana",
+      "Coreana",
+      "Vietnamita",
+      "Grega",
+      "Espanhola",
+      "Turca",
+      "Georgiana",
+      "Médio-oriental",
+      "Sushi",
+      "Pizza",
+      "Hambúrgueres",
+      "BBQ",
+      "Frutos do mar",
+      "Vegetariana",
+      "Vegana",
+      "Ramen",
+      "Tapas",
+      "Peruana",
+      "Brasileira",
+      "Libanesa",
+      "Marroquina",
+      "Austríaca"
+    ],
     "linkRestaurant": "Restaurante vinculado",
     "linkRestaurantBtn": "Vincular ao restaurante",
     "noRestaurantsLinked": "Nenhum restaurante vinculado",
@@ -277,11 +311,14 @@
     "visitDate": "Data de visita planejada",
     "visitDateHint": "Você receberá um lembrete 7 dias antes",
     "reminder": "Lembrete de restaurante",
+    "addTime": "Adicionar hora de reserva",
     "bookTable": "Reservar mesa",
+    "openInMaps": "Abrir no Maps",
     "alreadyBooked": "Já reservado",
     "changedMind": "Mudei de ideia",
     "markingBooked": "Salvando...",
-    "markingMind": "Removendo..."
+    "markingMind": "Removendo...",
+    "visitTime": "Hora da reserva"
   },
   "gifts": {
     "add": "Adicionar presente",
@@ -350,7 +387,7 @@
     "actorNotesPlaceholder": "Notas sobre este ator...",
     "buyTickets": "Comprar ingressos",
     "notGoing": "Não vamos",
-    "actorSentiment": "Sua opinião",
+    "actorSentiment": "A relação dela com este ator",
     "actorAdded": "Ator adicionado",
     "actorUpdated": "Ator atualizado",
     "actorDeleted": "Ator excluído",

@@ -13,6 +13,7 @@ export interface RestaurantFormValues {
   comment: string
   sentiment: 'visited' | 'wants'
   visitDate: string       // дата планируемого посещения (YYYY-MM-DD)
+  visitTime: string       // время бронирования (HH:MM)
   isBooked: boolean       // уже забронировано (скрытое поле, сохраняется при редактировании)
   myRating: number | null
   partnerRating: number | null
@@ -21,6 +22,11 @@ export interface RestaurantFormValues {
 export function getVisitDate(tags: string[] | null): string {
   const tag = tags?.find((t) => t.startsWith('visit_date:'))
   return tag ? tag.slice('visit_date:'.length) : ''
+}
+
+export function getVisitTime(tags: string[] | null): string {
+  const tag = tags?.find((t) => t.startsWith('visit_time:'))
+  return tag ? tag.slice('visit_time:'.length) : ''
 }
 
 export function getVisitBooked(tags: string[] | null): boolean {
@@ -49,10 +55,11 @@ export function useAddRestaurant(
     }
   }
 
-  function buildTags(address: string, visitDate: string, isBooked: boolean): string[] | null {
+  function buildTags(address: string, visitDate: string, visitTime: string, isBooked: boolean): string[] | null {
     const tags: string[] = []
     if (address.trim()) tags.push(`📍 ${address.trim()}`)
     if (visitDate.trim()) tags.push(`visit_date:${visitDate.trim()}`)
+    if (visitDate.trim() && visitTime.trim()) tags.push(`visit_time:${visitTime.trim()}`)
     if (isBooked) tags.push('visit_booked:true')
     return tags.length > 0 ? tags : null
   }
@@ -74,7 +81,7 @@ export function useAddRestaurant(
         sentiment,
         my_rating: sentiment === 'visited' ? (values.myRating ?? null) : null,
         partner_rating: sentiment === 'visited' ? (values.partnerRating ?? null) : null,
-        tags: buildTags(values.address, values.visitDate, false),
+        tags: buildTags(values.address, values.visitDate, values.visitTime, false),
       })
       onSuccess(item)
     } finally {
@@ -94,7 +101,7 @@ export function useAddRestaurant(
         sentiment,
         my_rating: sentiment === 'visited' ? (values.myRating ?? null) : null,
         partner_rating: sentiment === 'visited' ? (values.partnerRating ?? null) : null,
-        tags: buildTags(values.address, values.visitDate, values.isBooked),
+        tags: buildTags(values.address, values.visitDate, values.visitTime, values.isBooked),
       })
       onSuccess(item)
     } finally {
