@@ -214,6 +214,7 @@ export interface UpcomingRestaurant {
   personId: string
   daysLeft: number
   visitDate: string
+  visitTime: string | null
 }
 
 export async function getUpcomingRestaurants(
@@ -266,6 +267,7 @@ export async function getUpcomingRestaurants(
 
     if (daysLeft >= 0 && daysLeft <= daysBefore) {
       const addressTag = tags.find((t: string) => t.startsWith('📍'))
+      const timeTag = tags.find((t: string) => t.startsWith('visit_time:'))
       upcoming.push({
         itemId: item.id,
         title: item.title,
@@ -277,6 +279,7 @@ export async function getUpcomingRestaurants(
         personId: item.person_id,
         daysLeft,
         visitDate: dateStr,
+        visitTime: timeTag ? (timeTag as string).slice('visit_time:'.length) : null,
       })
     }
   }

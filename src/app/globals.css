@@ -84,6 +84,69 @@
   --card-sub-color:   rgba(255,255,255,0.45);
 }
 
+/* ─── Reminder notification card color tokens ───────────────────────────── */
+:root {
+  --rn-milestone-bg: #EEE8F5; --rn-milestone-bd: #D5CCEC; --rn-milestone-ic: #D5CCEC; --rn-milestone-tx: #6A5090;
+  --rn-birthday-bg:  #FDEEE9; --rn-birthday-bd:  #F8C4B8; --rn-birthday-ic:  #F8C4B8; --rn-birthday-tx:  #A0406A;
+  --rn-date-bg:      #EAF4F7; --rn-date-bd:      #B8D5F2; --rn-date-ic:      #B8D5F2; --rn-date-tx:      #3A6080;
+  --rn-gift-bg:      #FDEEE9; --rn-gift-bd:      rgba(232,115,90,0.3); --rn-gift-ic: rgba(232,115,90,0.12); --rn-gift-tx: #E8735A;
+  --rn-restaurant-bg:#E8F3EE; --rn-restaurant-bd:#B4DFC0; --rn-restaurant-ic:#B4DFC0; --rn-restaurant-tx: #4A7A62;
+  --rn-movie-bg:     #EAF4F7; --rn-movie-bd:     #B8D5F2; --rn-movie-ic:     #B8D5F2; --rn-movie-tx:     #3A6080;
+  --rn-trip-bg:      #EEE8F5; --rn-trip-bd:      #D5CCEC; --rn-trip-ic:      #D5CCEC; --rn-trip-tx:      #6A5090;
+}
+.dark {
+  --rn-milestone-bg: #241A30; --rn-milestone-bd: rgba(124,74,156,0.3);  --rn-milestone-ic: rgba(124,74,156,0.2);  --rn-milestone-tx: #C080E0;
+  --rn-birthday-bg:  #2A1020; --rn-birthday-bd:  rgba(192,64,128,0.3);  --rn-birthday-ic:  rgba(192,64,128,0.2);  --rn-birthday-tx:  #E070B0;
+  --rn-date-bg:      #0E1E3A; --rn-date-bd:      rgba(32,96,176,0.3);   --rn-date-ic:      rgba(32,96,176,0.2);   --rn-date-tx:      #6090D0;
+  --rn-gift-bg:      #2A1A10; --rn-gift-bd:      rgba(232,115,90,0.2);  --rn-gift-ic:      rgba(232,115,90,0.2);  --rn-gift-tx:      #E8735A;
+  --rn-restaurant-bg:#1A2818; --rn-restaurant-bd:rgba(52,90,64,0.4);    --rn-restaurant-ic:rgba(52,90,64,0.3);    --rn-restaurant-tx:#5CBD8A;
+  --rn-movie-bg:     #182E48; --rn-movie-bd:     rgba(40,80,120,0.4);   --rn-movie-ic:     rgba(40,80,120,0.3);   --rn-movie-tx:     #4A90A4;
+  --rn-trip-bg:      #2A2030; --rn-trip-bd:      rgba(72,48,96,0.4);    --rn-trip-ic:      rgba(72,48,96,0.3);    --rn-trip-tx:      #9B70D0;
+}
+
+/* ─── Sheet / modal entrance animations ─────────────────────────────────── */
+@keyframes sheet-slide-up {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes sheet-fade-scale {
+  from { transform: scale(0.94) translateY(10px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+@keyframes backdrop-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Mobile: slide up. Desktop (sm+): scale in */
+.sheet-animate {
+  animation: sheet-slide-up 0.30s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+@media (min-width: 640px) {
+  .sheet-animate {
+    animation: sheet-fade-scale 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+}
+.backdrop-animate {
+  animation: backdrop-fade 0.2s ease both;
+}
+
+/* ─── Skeleton shimmer animation ────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: calc(400px + 100%) 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
 /* ─── Shadcn base variables ──────────────────────────────────────────────── */
 :root {
   --background: #FAF7F4;
@@ -250,6 +313,13 @@
   html {
     @apply font-sans;
     font-size: 18px;
+  }
+  /* Tailwind resets button cursor to default — restore pointer for all interactive elements */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  select:not(:disabled) {
+    cursor: pointer;
   }
 }
 

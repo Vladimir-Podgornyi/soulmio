@@ -13,18 +13,20 @@ import { updateItem } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
 import { createCustomCategory, updateCustomCategory, deleteCustomCategory } from '@/entities/category/api'
 import { AddPersonForm } from '@/features/add-person'
+import { BottomSheet } from '@/shared/ui/BottomSheet'
 import { AddRestaurantForm } from '@/features/add-restaurant'
-import { useAddRestaurant } from '@/features/add-restaurant/model/useAddRestaurant'
+import { useAddRestaurant, getVisitTime } from '@/features/add-restaurant/model/useAddRestaurant'
 import { AddFoodForm } from '@/features/add-food'
 import { useAddFood, getFoodType, getCuisineType, getLinkedRestaurant } from '@/features/add-food'
 import { AddGiftForm } from '@/features/add-gift'
 import { useAddGift, getGiftPinned, getGiftDate } from '@/features/add-gift'
 import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleaseDate, isActorItem, getActorFilms, getMoviePinned } from '@/features/add-movie'
-import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji } from '@/features/add-travel'
+import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji, type TravelBudget } from '@/features/add-travel'
 import { AddCustomItemForm, useAddCustomItem, getCustomItemPinned, getCustomItemDate, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
-import { CATEGORY_GRADIENTS, DEFAULT_CATEGORY_GRADIENT, parseCategoryIconField, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
+import { CATEGORY_GRADIENTS, parseCategoryIconField, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { EmojiPicker } from '@/shared/ui/EmojiPicker'
+import { SkeletonList } from '@/shared/ui/SkeletonList'
 
 interface PersonPageProps {
   person: Person
@@ -40,6 +42,336 @@ const CATEGORY_ICONS: Record<string, string> = {
   gifts:       '🎁',
   movies:      '🎬',
   travel:      '✈️',
+}
+
+/* ── Секция бюджета путешествия ── */
+
+function BudgetSection({
+  label, budget, total, currency, t,
+}: {
+  label: string
+  budget: TravelBudget
+  total: number
+  currency: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  const rows: { key: string; amount: number | null }[] = [
+    { key: t('travel.budgetHotel'),     amount: budget.hotel },
+    { key: t('travel.budgetTransport'), amount: budget.transport },
+    { key: t('travel.budgetOnsite'),    amount: budget.onsite },
+    { key: t('travel.budgetOther'),     amount: budget.other },
+    ...budget.customItems.map((ci) => ({ key: ci.label, amount: ci.amount })),
+  ].filter((r) => r.amount != null && r.amount > 0)
+
+  return (
+    <div className="rounded-xl p-3 flex flex-col gap-2" style={{ backgroundColor: 'var(--bg-card)' }}>
+      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">{label}</p>
+      {rows.map((r) => (
+        <div key={r.key} className="flex items-center justify-between gap-2">
+          <span className="text-xs text-text-secondary">{r.key}</span>
+          <span className="text-xs font-medium text-text-primary">{formatPrice(r.amount!, currency as Parameters<typeof formatPrice>[1])}</span>
+        </div>
+      ))}
+      <div className="flex items-center justify-between gap-2 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
+        <span className="text-xs font-semibold text-text-primary">{t('travel.budgetTotal')}</span>
+        <span className="text-sm font-bold text-text-primary">{formatPrice(total, currency as Parameters<typeof formatPrice>[1])}</span>
+      </div>
+    </div>
+  )
+}
+
+/* ── Item preview (read-only) ── */
+
+function ItemPreviewSheet({
+  item,
+  categoryName,
+  activeCategory,
+  onClose,
+  onEdit,
+  t,
+}: {
+  item: Item
+  categoryName: string
+  activeCategory: Category | undefined
+  onClose: () => void
+  onEdit: () => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  const { currency } = useCurrency()
+
+  const isRestaurants = categoryName === 'restaurants'
+  const isFood       = categoryName === 'food'
+  const isGifts      = categoryName === 'gifts'
+  const isMovies     = categoryName === 'movies'
+  const isTravel     = categoryName === 'travel'
+  const isCustom     = !['restaurants', 'food', 'gifts', 'movies', 'travel'].includes(categoryName)
+  const isActor      = isMovies && isActorItem(item.tags ?? null)
+
+  const sStyle =
+    item.sentiment === 'likes' || item.sentiment === 'visited'
+      ? { backgroundColor: 'var(--loves-bg)', color: 'var(--loves-text)' }
+      : item.sentiment === 'dislikes'
+      ? { backgroundColor: 'var(--avoid-bg)', color: 'var(--avoid-text)' }
+      : item.sentiment === 'wants' && isTravel
+      ? { backgroundColor: 'var(--travel-wants-bg)', color: 'var(--travel-wants-text)' }
+      : item.sentiment === 'wants'
+      ? { backgroundColor: 'var(--wants-bg)', color: 'var(--wants-text)' }
+      : null
+
+  const sentimentLabel = (() => {
+    if (isCustom) {
+      const { likesLabel, dislikesLabel } = parseCategoryIconField(activeCategory?.icon ?? null)
+      if (item.sentiment === 'likes' && likesLabel) return likesLabel
+      if (item.sentiment === 'dislikes' && dislikesLabel) return dislikesLabel
+    }
+    if (item.sentiment === 'likes') return isGifts ? t('gifts.filterGifted') : t('items.sentiments.likes')
+    if (item.sentiment === 'dislikes') return t('items.sentiments.dislikes')
+    if (item.sentiment === 'wants') return isTravel ? `✈️ ${t('travel.statusWants')}` : t('items.sentiments.wants')
+    if (item.sentiment === 'visited') return isTravel ? `✅ ${t('travel.statusVisited')}` : t('items.sentiments.visited')
+    return ''
+  })()
+
+  const tags = item.tags ?? []
+  const restaurantAddress = tags.find(tg => tg.startsWith('📍'))?.slice(2).trim() ?? null
+  const visitDate   = tags.find(tg => tg.startsWith('visit_date:'))?.replace('visit_date:', '') ?? null
+  const visitTime   = isRestaurants ? getVisitTime(item.tags ?? null) : ''
+  const visitBooked = tags.includes('visit_booked:true')
+
+  const movieGenres = isMovies && !isActor ? getMovieGenres(item.tags ?? null) : []
+  const releaseDate = isMovies && !isActor ? getMovieReleaseDate(item.tags ?? null) : null
+  const actorFilms  = isActor ? getActorFilms(item.tags ?? null) : []
+
+  const travelCity    = isTravel ? getTravelCity(item.tags ?? null) : ''
+  const travelCountryObj = isTravel ? getTravelCountry(item.tags ?? null) : null
+  const travelCountry = travelCountryObj?.name ?? ''
+  const countryCode   = travelCountryObj?.code ?? ''
+  const tripDate      = isTravel ? getTravelDate(item.tags ?? null) : null
+  const tripBooked    = tags.includes('trip_booked:true')
+  const travelBudget  = isTravel ? getTravelBudget(item.tags ?? null) : null
+
+  function budgetTotal(b: TravelBudget): number {
+    return [b.hotel, b.transport, b.onsite, b.other]
+      .reduce<number>((s, v) => s + (v ?? 0), 0)
+      + b.customItems.reduce<number>((s, ci) => s + (ci.amount ?? 0), 0)
+  }
+
+  const hasPlan   = isTravel && travelBudget != null && budgetTotal(travelBudget.plan)   > 0
+  const hasActual = isTravel && travelBudget != null && budgetTotal(travelBudget.actual) > 0
+
+  const giftDate   = isGifts  ? getGiftDate(item.tags ?? null)  : null
+  const customDate = isCustom ? getCustomItemDate(item.tags ?? null) : null
+
+  return (
+    <BottomSheet title={item.title} onClose={onClose}>
+      <div className="flex flex-col gap-4">
+        {/* Sentiment badge */}
+        {sStyle && sentimentLabel && (
+          <div>
+            <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold" style={sStyle}>
+              {sentimentLabel}
+            </span>
+          </div>
+        )}
+
+        {/* Image */}
+        {item.image_url && (
+          <div className="w-full overflow-hidden rounded-[14px]" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <img src={item.image_url} alt={item.title} className="w-full object-contain" style={{ maxHeight: '260px' }} />
+          </div>
+        )}
+
+        {/* Description / Comment */}
+        {item.description && (
+          isRestaurants ? (
+            <div className="rounded-[12px] px-3.5 py-3" style={{ backgroundColor: 'var(--bg-card)', borderLeft: '3px solid var(--border-card)' }}>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                {t('restaurants.comment')}
+              </p>
+              <p className="text-sm leading-relaxed text-text-secondary">{item.description}</p>
+            </div>
+          ) : (
+            <p className="text-sm leading-relaxed text-text-secondary">{item.description}</p>
+          )
+        )}
+
+        {/* Ratings */}
+        {(item.my_rating != null || item.partner_rating != null) && (
+          <div className="flex gap-6">
+            {item.my_rating != null && (
+              <div>
+                <p className="mb-1 text-xs text-text-muted">{t('movies.myRating')}</p>
+                <span className="text-amber-400">{'★'.repeat(item.my_rating)}</span>
+                <span className="text-text-muted">{'★'.repeat(5 - item.my_rating)}</span>
+              </div>
+            )}
+            {item.partner_rating != null && (
+              <div>
+                <p className="mb-1 text-xs text-text-muted">{t('movies.partnerRating')}</p>
+                <span className="text-amber-400">{'★'.repeat(item.partner_rating)}</span>
+                <span className="text-text-muted">{'★'.repeat(5 - item.partner_rating)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Price */}
+        {item.price != null && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('gifts.price')}:</span>
+            <span className="text-sm font-medium text-text-primary">{formatPrice(item.price, currency)}</span>
+          </div>
+        )}
+
+        {/* Restaurant: address + visit date */}
+        {isRestaurants && restaurantAddress && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+              {t('restaurants.address')}
+            </span>
+            <span className="text-sm text-text-secondary">{restaurantAddress}</span>
+          </div>
+        )}
+        {isRestaurants && visitDate && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
+              {t('restaurants.visitDate')}
+            </span>
+            <span className={`font-medium ${visitTime ? 'text-base text-text-primary' : 'text-sm text-text-secondary'}`}>
+              {new Date(visitDate + 'T00:00').toLocaleDateString()}
+              {visitTime && <span className="ml-2">⏰ {visitTime}</span>}
+            </span>
+            {visitBooked && (
+              <span className="text-xs font-medium" style={{ color: 'var(--loves-text)' }}>
+                ✓ {t('restaurants.alreadyBooked')}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Food: type label / cuisine / linked restaurant */}
+        {isFood && (() => {
+          const foodType = getFoodType(item.tags ?? null)
+          const cuisine  = getCuisineType(item.tags ?? null)
+          const linked   = getLinkedRestaurant(item.tags ?? null)
+          const typeLabel =
+            foodType === 'dish'    ? `🍽️ ${t('food.types.dish')}` :
+            foodType === 'cuisine' ? `🍜 ${t('food.types.cuisine')}` :
+            `🥗 ${t('food.types.food_type')}`
+          return (
+            <>
+              {(typeLabel || cuisine) && (
+                <p className="text-sm text-text-secondary">{[typeLabel, cuisine].filter(Boolean).join(' · ')}</p>
+              )}
+              {linked && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-text-muted">🍴</span>
+                  <span className="text-sm text-text-secondary">{linked.name}</span>
+                </div>
+              )}
+            </>
+          )
+        })()}
+
+        {/* Gift date */}
+        {isGifts && giftDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('gifts.date')}:</span>
+            <span className="text-sm text-text-secondary">{giftDate}</span>
+          </div>
+        )}
+
+        {/* Movie: genres + release date */}
+        {isMovies && !isActor && movieGenres.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {movieGenres.map(g => (
+              <span key={g} className="rounded-full px-2.5 py-0.5 text-xs" style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+              </span>
+            ))}
+          </div>
+        )}
+        {isMovies && !isActor && releaseDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">{t('movies.releaseDate')}:</span>
+            <span className="text-sm text-text-secondary">{releaseDate}</span>
+          </div>
+        )}
+
+        {/* Actor: films */}
+        {isActor && actorFilms.length > 0 && (
+          <div className="space-y-1.5">
+            {actorFilms.map((film, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs text-text-muted">🎬</span>
+                <span className="text-sm text-text-secondary">{film}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Travel: location + trip date */}
+        {isTravel && (travelCity || travelCountry) && (
+          <div className="flex items-center gap-3">
+            {countryCode && <span className="text-3xl">{getFlagEmoji(countryCode)}</span>}
+            <div>
+              {travelCity    && <p className="text-sm font-medium text-text-primary">{travelCity}</p>}
+              {travelCountry && <p className="text-xs text-text-muted">{travelCountry}</p>}
+            </div>
+          </div>
+        )}
+        {isTravel && tripDate && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-text-muted">{t('travel.tripDate')}:</span>
+            <span className="text-sm text-text-secondary">{tripDate}</span>
+            {tripBooked && (
+              <span className="text-xs font-medium" style={{ color: 'var(--loves-text)' }}>
+                ✓ {t('travel.statusBooked')}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Travel: budget */}
+        {hasPlan && travelBudget && (
+          <BudgetSection label={t('travel.planBudget')} budget={travelBudget.plan} total={budgetTotal(travelBudget.plan)} currency={currency} t={t} />
+        )}
+        {hasActual && travelBudget && (
+          <BudgetSection label={t('travel.actualBudget')} budget={travelBudget.actual} total={budgetTotal(travelBudget.actual)} currency={currency} t={t} />
+        )}
+
+        {/* Custom: date */}
+        {isCustom && customDate && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted">📅</span>
+            <span className="text-sm text-text-secondary">{customDate}</span>
+          </div>
+        )}
+
+        {/* External link */}
+        {item.external_url && (
+          <a
+            href={item.external_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}
+          >
+            <ExternalLink size={14} />
+            <span className="truncate">{item.external_url.replace(/^https?:\/\//, '').split('/')[0]}</span>
+          </a>
+        )}
+
+        {/* Edit button */}
+        <button
+          onClick={onEdit}
+          className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98]"
+          style={{ backgroundColor: 'var(--primary)' }}
+        >
+          {t('common.edit')}
+        </button>
+      </div>
+    </BottomSheet>
+  )
 }
 
 export function PersonPage({
@@ -77,6 +409,7 @@ export function PersonPage({
   })
   const [isAddOpen, setIsAddOpen] = useState(addParam !== null && targetCategoryId !== null)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [previewItem, setPreviewItem] = useState<Item | null>(null)
   const [filter, setFilter] = useState<'all' | 'visited' | 'wants' | 'likes' | 'dislikes'>('all')
   const [foodTypeFilter, setFoodTypeFilter] = useState<'all' | 'dish' | 'food_type' | 'cuisine'>('all')
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
@@ -87,6 +420,7 @@ export function PersonPage({
   const [movieSubTab, setMovieSubTab] = useState<'movies' | 'actors'>('movies')
   const [movieGenreFilter, setMovieGenreFilter] = useState('all')
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(highlightParam)
+  const [loadingCategoryId, setLoadingCategoryId] = useState<string | null>(null)
 
   // При переходе через ?section= — загружаем items для целевой категории если их нет (начальная загрузка)
   useEffect(() => {
@@ -223,9 +557,14 @@ export function PersonPage({
     setMovieSubTab('movies')
     setMovieGenreFilter('all')
     if (!(categoryId in itemsByCategory)) {
-      const res = await fetch(`/api/items?personId=${person.id}&categoryId=${categoryId}`)
-      const data = (await res.json()) as Item[]
-      setItemsByCategory((prev) => ({ ...prev, [categoryId]: data }))
+      setLoadingCategoryId(categoryId)
+      try {
+        const res = await fetch(`/api/items?personId=${person.id}&categoryId=${categoryId}`)
+        const data = (await res.json()) as Item[]
+        setItemsByCategory((prev) => ({ ...prev, [categoryId]: data }))
+      } finally {
+        setLoadingCategoryId(null)
+      }
     }
   }
 
@@ -646,7 +985,9 @@ export function PersonPage({
           <span className="text-sm text-text-muted">{t('common.add')}</span>
         </button>
 
-        {items.length === 0 ? (
+        {loadingCategoryId === activeCategoryId ? (
+          <SkeletonList count={4} hasImage={activeCategory?.name === 'gifts'} />
+        ) : items.length === 0 ? (
           isMovies && movieSubTab === 'actors' && !isPro ? (
             <Link href="/pro" className="block rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center hover:border-primary/40 transition-colors">
               <p className="text-3xl mb-3">🎭</p>
@@ -656,12 +997,13 @@ export function PersonPage({
             </Link>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <span className="mb-3 text-5xl">
+              <span className="mb-4 text-[52px]">
                 {activeCategory?.is_custom
                   ? parseCategoryIconField(activeCategory.icon ?? null).emoji
-                  : (activeCategory?.icon ?? CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋')}
+                  : (CATEGORY_ICONS[activeCategory?.name ?? ''] ?? '📋')}
               </span>
-              <p className="text-sm text-text-muted">{t('common.empty')}</p>
+              <p className="mb-1 text-sm font-medium text-text-primary">{t('common.empty')}</p>
+              <p className="text-xs text-text-muted">{t('common.emptyHint')}</p>
             </div>
           )
         ) : (
@@ -672,7 +1014,16 @@ export function PersonPage({
                 <div
                   key={item.id}
                   id={`item-${item.id}`}
-                  className={`rounded-[14px] transition-all duration-300 ${
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    // Don't open preview if the click target is inside a button/link (but not the wrapper itself)
+                    const interactive = (e.target as Element).closest('button, a, input, [role="button"]')
+                    if (interactive && interactive !== e.currentTarget) return
+                    setPreviewItem(item)
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setPreviewItem(item) }}
+                  className={`cursor-pointer rounded-[14px] transition-all duration-300 ${
                     isHighlighted ? 'ring-2 ring-primary/70 ring-offset-2 ring-offset-bg-primary' : ''
                   }`}
                 >
@@ -956,6 +1307,22 @@ export function PersonPage({
           </BottomSheet>
         )
       })()}
+
+      {/* Превью карточки */}
+      {previewItem && (
+        <ItemPreviewSheet
+          item={previewItem}
+          categoryName={activeCategory?.name ?? ''}
+          activeCategory={activeCategory}
+          onClose={() => setPreviewItem(null)}
+          onEdit={() => {
+            const item = previewItem
+            setPreviewItem(null)
+            setEditingItem(item)
+          }}
+          t={t}
+        />
+      )}
     </div>
   )
 }
@@ -1053,7 +1420,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
     <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
-          <div className="flex flex-1 flex-col gap-1 min-w-0">
+          <div className="flex flex-1 flex-col gap-2 min-w-0">
             {/* Название */}
             <div className="flex items-center gap-1.5 min-w-0">
               {isPinned && <Star size={12} className="flex-shrink-0 fill-primary text-primary" />}
@@ -1061,9 +1428,9 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
             </div>
             {/* Типы — под названием */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-muted whitespace-nowrap">{typeLabel}</span>
+              <span className="rounded-[6px] bg-bg-secondary border border-border-card px-1.5 py-0.5 text-[10px] font-medium text-text-secondary whitespace-nowrap">{typeLabel}</span>
               {cuisineType && (
-                <span className="rounded-[6px] bg-bg-input px-1.5 py-0.5 text-[10px] text-text-secondary whitespace-nowrap">{cuisineType}</span>
+                <span className="rounded-[6px] bg-bg-secondary border border-border-card px-1.5 py-0.5 text-[10px] font-medium text-text-secondary whitespace-nowrap">{cuisineType}</span>
               )}
             </div>
             {linkedRestaurant && (
@@ -1176,6 +1543,8 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   }
 
   const addressTag = item.tags?.find((tag) => tag.startsWith('📍'))
+  const restVisitDate = item.tags?.find((t) => t.startsWith('visit_date:'))?.replace('visit_date:', '') ?? null
+  const restVisitTime = getVisitTime(item.tags ?? null)
   const isVisited = item.sentiment === 'visited'
   const hasRatings = isVisited && (item.my_rating !== null || item.partner_rating !== null)
 
@@ -1214,6 +1583,11 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
             </div>
             {addressTag && (
               <span className="text-xs text-text-secondary truncate">{addressTag}</span>
+            )}
+            {restVisitDate && (
+              <span className="text-xs text-text-muted">
+                📅 {restVisitDate}{restVisitTime && ` · ⏰ ${restVisitTime}`}
+              </span>
             )}
           </div>
           {/* Десктоп: статус + меню */}
@@ -2599,33 +2973,3 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   )
 }
 
-/* ── Нижний лист ── */
-
-function BottomSheet({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: React.ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
-          >
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}

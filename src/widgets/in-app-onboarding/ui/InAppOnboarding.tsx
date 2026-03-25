@@ -18,9 +18,9 @@ export function InAppOnboarding({ onDone }: Props) {
   const router = useRouter()
   const [current, setCurrent] = useState(0)
   const [visible, setVisible] = useState(false)
+  const [contentVisible, setContentVisible] = useState(true)
 
   useEffect(() => {
-    // Delay entry animation
     const id = setTimeout(() => setVisible(true), 60)
     return () => clearTimeout(id)
   }, [])
@@ -41,7 +41,12 @@ export function InAppOnboarding({ onDone }: Props) {
 
   const next = useCallback(() => {
     if (current < STEPS.length - 1) {
-      setCurrent((c) => c + 1)
+      // Fade out → change step → fade in
+      setContentVisible(false)
+      setTimeout(() => {
+        setCurrent((c) => c + 1)
+        setContentVisible(true)
+      }, 160)
     } else {
       finish(true)
     }
@@ -78,26 +83,30 @@ export function InAppOnboarding({ onDone }: Props) {
           {/* Drag handle */}
           <div className="mx-auto mb-5 h-[4px] w-10 rounded-full bg-[var(--border)]" />
 
-          {/* Emoji */}
-          <div className="mb-4 flex justify-center">
-            <span
-              className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
-              style={{ backgroundColor: 'var(--bg-input)' }}
-            >
-              {t(`${step}.emoji`)}
-            </span>
-          </div>
+          {/* Animated step content */}
+          <div
+            className="transition-all duration-150"
+            style={{ opacity: contentVisible ? 1 : 0, transform: contentVisible ? 'translateY(0)' : 'translateY(6px)' }}
+          >
+            {/* Emoji */}
+            <div className="mb-4 flex justify-center">
+              <span
+                className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
+                style={{ backgroundColor: 'var(--bg-input)' }}
+              >
+                {t(`${step}.emoji`)}
+              </span>
+            </div>
 
-          {/* Text */}
-          <div className="mb-6 text-center">
-            <h2
-              className="mb-2 text-xl font-semibold tracking-[-0.4px] text-text-primary"
-            >
-              {t(`${step}.title`)}
-            </h2>
-            <p className="text-sm leading-relaxed text-text-secondary">
-              {t(`${step}.subtitle`)}
-            </p>
+            {/* Text */}
+            <div className="mb-6 text-center">
+              <h2 className="mb-2 text-xl font-semibold tracking-[-0.4px] text-text-primary">
+                {t(`${step}.title`)}
+              </h2>
+              <p className="text-sm leading-relaxed text-text-secondary">
+                {t(`${step}.subtitle`)}
+              </p>
+            </div>
           </div>
 
           {/* Progress dots */}

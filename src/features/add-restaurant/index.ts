@@ -1,2 +1,2 @@
 export { AddRestaurantForm } from './ui/AddRestaurantForm'
-export { getVisitDate, getVisitBooked } from './model/useAddRestaurant'
+export { getVisitDate, getVisitTime, getVisitBooked } from './model/useAddRestaurant'

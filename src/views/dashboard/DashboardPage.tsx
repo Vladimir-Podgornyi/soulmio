@@ -76,6 +76,54 @@ interface MilestonePerson {
   stats: RelationStats
 }
 
+/* ── Unified reminder notification card ── */
+type ReminderScheme = 'milestone' | 'birthday' | 'date' | 'gift' | 'restaurant' | 'movie' | 'trip'
+
+function ReminderNotif({
+  scheme,
+  icon,
+  label,
+  title,
+  subtitle,
+  onClick,
+}: {
+  scheme: ReminderScheme
+  icon: React.ReactNode
+  label: string
+  title: string
+  subtitle: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 rounded-[16px] border px-4 py-3.5 mb-2 transition-all active:scale-[0.99] text-left"
+      style={{
+        backgroundColor: `var(--rn-${scheme}-bg)`,
+        borderColor: `var(--rn-${scheme}-bd)`,
+      }}
+    >
+      <div
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xl"
+        style={{ backgroundColor: `var(--rn-${scheme}-ic)` }}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-xs font-semibold uppercase tracking-wider mb-0.5"
+          style={{ color: `var(--rn-${scheme}-tx)` }}
+        >
+          {label}
+        </p>
+        <p className="text-sm font-medium text-text-primary truncate">{title}</p>
+        <p className="text-xs text-text-secondary">{subtitle}</p>
+      </div>
+    </button>
+  )
+}
+
 export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips, upcomingCustomItems: initialCustomItems, upcomingBirthdays, upcomingPersonDates }: DashboardPageProps) {
   const t = useTranslations()
   const isPro = profile.subscription_tier === 'pro'
@@ -202,25 +250,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       {milestonePeople.length > 0 && (
         <section className="px-4 mb-5">
           {milestonePeople.map(({ person, milestone }) => (
-            <button
+            <ReminderNotif
               key={person.id}
-              type="button"
+              scheme="milestone"
+              icon={<Sparkles size={18} style={{ color: 'var(--rn-milestone-tx)' }} />}
+              label={t('milestones.notification')}
+              title={t(milestone.labelKey as Parameters<typeof t>[0], milestone.labelParams)}
+              subtitle={person.name}
               onClick={() => setSelectedMilestone({ person, milestone, stats: getRelationStats(person.relation_since!) })}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#EEE8F5] dark:bg-[#241A30] border border-[#D5CCEC] dark:border-[#7C4A9C]/30 px-4 py-3.5 mb-2 hover:border-[#C0B0D8] dark:hover:border-[#7C4A9C]/60 transition-colors text-left"
-            >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#D5CCEC] dark:bg-[#7C4A9C]/20">
-                <Sparkles size={18} className="text-[#6A5090] dark:text-[#C080E0]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6A5090] dark:text-[#C080E0] mb-0.5">
-                  {t('milestones.notification')}
-                </p>
-                <p className="text-sm font-medium text-text-primary">
-                  {t(milestone.labelKey as Parameters<typeof t>[0], milestone.labelParams)}
-                </p>
-                <p className="text-xs text-text-secondary">{person.name}</p>
-              </div>
-            </button>
+            />
           ))}
         </section>
       )}
@@ -229,27 +267,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       {visibleBirthdays.length > 0 && (
         <section className="px-4 mb-5">
           {visibleBirthdays.map((b) => (
-            <button
+            <ReminderNotif
               key={b.personId}
-              type="button"
+              scheme="birthday"
+              icon="🎂"
+              label={t('dashboard.birthdayReminder')}
+              title={b.personName}
+              subtitle={`${t('milestones.turnsAge', { age: b.age })} · ${t('dashboard.giftReminderDays', { days: b.daysLeft })}`}
               onClick={() => setSelectedBirthday(b)}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#FDEEE9] dark:bg-[#2A1020] border border-[#F8C4B8] dark:border-[#C04080]/30 px-4 py-3.5 mb-2 hover:border-[#D0B5B4] dark:hover:border-[#C04080]/60 transition-colors text-left"
-            >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#F8C4B8] dark:bg-[#C04080]/20 text-xl">
-                🎂
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#A0406A] dark:text-[#E070B0] mb-0.5">
-                  {t('dashboard.birthdayReminder')}
-                </p>
-                <p className="text-sm font-medium text-text-primary">{b.personName}</p>
-                <p className="text-xs text-text-secondary">
-                  {t('milestones.turnsAge', { age: b.age })}
-                  {' · '}
-                  {t('dashboard.giftReminderDays', { days: b.daysLeft })}
-                </p>
-              </div>
-            </button>
+            />
           ))}
         </section>
       )}
@@ -258,28 +284,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
       {visiblePersonDates.length > 0 && (
         <section className="px-4 mb-5">
           {visiblePersonDates.map((d) => (
-            <button
+            <ReminderNotif
               key={d.id}
-              type="button"
+              scheme="date"
+              icon="📅"
+              label={t('dashboard.importantDateReminder')}
+              title={d.title}
+              subtitle={`${d.personName}${d.yearsSince != null ? ` · ${d.yearsSince} ${t('milestones.statYears')}` : ''} · ${t('dashboard.giftReminderDays', { days: d.daysLeft })}`}
               onClick={() => setSelectedPersonDate(d)}
-              className="w-full flex items-center gap-3 rounded-[16px] bg-[#EAF4F7] dark:bg-[#0E1E3A] border border-[#B8D5F2] dark:border-[#2060B0]/30 px-4 py-3.5 mb-2 hover:border-[#A0BFCF] dark:hover:border-[#2060B0]/60 transition-colors text-left"
-            >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B8D5F2] dark:bg-[#2060B0]/20 text-xl">
-                📅
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#3A6080] dark:text-[#6090D0] mb-0.5">
-                  {t('dashboard.importantDateReminder')}
-                </p>
-                <p className="text-sm font-medium text-text-primary">{d.title}</p>
-                <p className="text-xs text-text-secondary">
-                  {d.personName}
-                  {d.yearsSince != null && ` · ${d.yearsSince} ${t('milestones.statYears')}`}
-                  {' · '}
-                  {t('dashboard.giftReminderDays', { days: d.daysLeft })}
-                </p>
-              </div>
-            </button>
+            />
           ))}
         </section>
       )}
@@ -290,27 +303,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           {gifts.length > 0 && (
             <section className="px-4 mb-5">
               {gifts.map((gift) => (
-                <button
+                <ReminderNotif
                   key={gift.itemId}
-                  type="button"
+                  scheme="gift"
+                  icon={<Gift size={18} style={{ color: 'var(--rn-gift-tx)' }} />}
+                  label={t('dashboard.giftReminder')}
+                  title={gift.title}
+                  subtitle={`${t('dashboard.giftReminderFor', { name: gift.personName })} · ${t('dashboard.giftReminderDays', { days: gift.daysLeft })}`}
                   onClick={() => setSelectedGift(gift)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#FDEEE9] dark:bg-[#2A1A10] border border-[#F8C4B8] dark:border-primary/20 px-4 py-3.5 mb-2 hover:border-primary/40 transition-colors text-left"
-                >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20" suppressHydrationWarning>
-                    <Gift size={18} className="text-primary" suppressHydrationWarning />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-0.5">
-                      {t('dashboard.giftReminder')}
-                    </p>
-                    <p className="text-sm font-medium text-text-primary truncate">{gift.title}</p>
-                    <p className="text-xs text-text-secondary">
-                      {t('dashboard.giftReminderFor', { name: gift.personName })}
-                      {' · '}
-                      {t('dashboard.giftReminderDays', { days: gift.daysLeft })}
-                    </p>
-                  </div>
-                </button>
+                />
               ))}
             </section>
           )}
@@ -318,27 +319,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           {restaurants.length > 0 && (
             <section className="px-4 mb-5">
               {restaurants.map((restaurant) => (
-                <button
+                <ReminderNotif
                   key={restaurant.itemId}
-                  type="button"
+                  scheme="restaurant"
+                  icon={<UtensilsCrossed size={18} style={{ color: 'var(--rn-restaurant-tx)' }} />}
+                  label={t('restaurants.reminder')}
+                  title={restaurant.title}
+                  subtitle={`${t('dashboard.giftReminderFor', { name: restaurant.personName })} · ${t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}`}
                   onClick={() => setSelectedRestaurant(restaurant)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#E8F3EE] dark:bg-[#1A2818] border border-[#B4DFC0] dark:border-[#345A40]/40 px-4 py-3.5 mb-2 hover:border-[#A5C5B5] dark:hover:border-[#345A40]/70 transition-colors text-left"
-                >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B4DFC0] dark:bg-[#345A40]/30" suppressHydrationWarning>
-                    <UtensilsCrossed size={18} className="text-[#4A7A62] dark:text-[#5CBD8A]" suppressHydrationWarning />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#4A7A62] dark:text-[#5CBD8A] mb-0.5">
-                      {t('restaurants.reminder')}
-                    </p>
-                    <p className="text-sm font-medium text-text-primary truncate">{restaurant.title}</p>
-                    <p className="text-xs text-text-secondary">
-                      {t('dashboard.giftReminderFor', { name: restaurant.personName })}
-                      {' · '}
-                      {t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}
-                    </p>
-                  </div>
-                </button>
+                />
               ))}
             </section>
           )}
@@ -346,27 +335,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           {movies.length > 0 && (
             <section className="px-4 mb-5">
               {movies.map((movie) => (
-                <button
+                <ReminderNotif
                   key={movie.itemId}
-                  type="button"
+                  scheme="movie"
+                  icon="🎬"
+                  label={t('movies.releaseReminder')}
+                  title={movie.title}
+                  subtitle={`${t('dashboard.giftReminderFor', { name: movie.personName })} · ${t('dashboard.giftReminderDays', { days: movie.daysLeft })}`}
                   onClick={() => setSelectedMovie(movie)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#EAF4F7] dark:bg-[#182E48] border border-[#B8D5F2] dark:border-[#285078]/40 px-4 py-3.5 mb-2 hover:border-[#A0BFCF] dark:hover:border-[#285078]/70 transition-colors text-left"
-                >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#B8D5F2] dark:bg-[#285078]/30 text-lg">
-                    🎬
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#3A6080] dark:text-[#4A90A4] mb-0.5">
-                      {t('movies.releaseReminder')}
-                    </p>
-                    <p className="text-sm font-medium text-text-primary truncate">{movie.title}</p>
-                    <p className="text-xs text-text-secondary">
-                      {t('dashboard.giftReminderFor', { name: movie.personName })}
-                      {' · '}
-                      {t('dashboard.giftReminderDays', { days: movie.daysLeft })}
-                    </p>
-                  </div>
-                </button>
+                />
               ))}
             </section>
           )}
@@ -374,27 +351,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           {trips.length > 0 && (
             <section className="px-4 mb-5">
               {trips.map((trip) => (
-                <button
+                <ReminderNotif
                   key={trip.itemId}
-                  type="button"
+                  scheme="trip"
+                  icon={trip.flagEmoji}
+                  label={t('travel.reminder')}
+                  title={trip.title}
+                  subtitle={`${t('dashboard.giftReminderFor', { name: trip.personName })} · ${t('dashboard.giftReminderDays', { days: trip.daysLeft })}`}
                   onClick={() => setSelectedTrip(trip)}
-                  className="w-full flex items-center gap-3 rounded-[16px] bg-[#EEE8F5] dark:bg-[#2A2030] border border-[#D5CCEC] dark:border-[#483060]/40 px-4 py-3.5 mb-2 hover:border-[#C0B0D8] dark:hover:border-[#483060]/70 transition-colors text-left"
-                >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#D5CCEC] dark:bg-[#483060]/30 text-xl">
-                    {trip.flagEmoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#6A5090] dark:text-[#9B70D0] mb-0.5">
-                      {t('travel.reminder')}
-                    </p>
-                    <p className="text-sm font-medium text-text-primary truncate">{trip.title}</p>
-                    <p className="text-xs text-text-secondary">
-                      {t('dashboard.giftReminderFor', { name: trip.personName })}
-                      {' · '}
-                      {t('dashboard.giftReminderDays', { days: trip.daysLeft })}
-                    </p>
-                  </div>
-                </button>
+                />
               ))}
             </section>
           )}
@@ -461,7 +426,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
             <p className="text-sm text-text-secondary">{t('dashboard.noStats')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
             {STAT_CARDS.filter((card) => summaryMap.has(card.categoryName)).map((card) => {
               const count = summaryMap.get(card.categoryName) ?? 0
               return (
@@ -472,7 +437,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                   style={{ background: card.gradient }}
                   suppressHydrationWarning
                 >
-                  <span className="absolute -right-2 -bottom-2 text-[56px] opacity-20 select-none pointer-events-none">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[44px] opacity-[0.15] select-none pointer-events-none">
                     {card.icon}
                   </span>
                   <p
@@ -512,7 +477,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                 style={{ background: gradient }}
                 suppressHydrationWarning
               >
-                <span className="absolute -right-2 -bottom-2 text-[56px] opacity-20 select-none pointer-events-none">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[44px] opacity-[0.15] select-none pointer-events-none">
                   {emoji}
                 </span>
                 <p
@@ -556,7 +521,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               <Link
                 key={person.id}
                 href={`/people/${person.id}`}
-                className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 transition-all hover:border-primary/30"
+                className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 transition-all hover:bg-bg-hover hover:border-primary/30"
               >
                 {person.avatar_url ? (
                   <img
@@ -665,6 +630,15 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
   )
 }
 
+/* ── Блокировка скролла страницы при открытой модалке ── */
+function useScrollLock() {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+}
+
 /* ── Модальное окно с деталями подарка ── */
 
 interface GiftDetailModalProps {
@@ -674,6 +648,7 @@ interface GiftDetailModalProps {
 }
 
 function GiftDetailModal({ gift, onClose, onBought }: GiftDetailModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const { currency } = useCurrency()
   const [isMarking, setIsMarking] = useState(false)
@@ -692,18 +667,19 @@ function GiftDetailModal({ gift, onClose, onBought }: GiftDetailModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         {/* Фото подарка */}
         {gift.imageUrl && (
-          <div className="w-full h-48 bg-bg-card overflow-hidden">
+          <div className="w-full overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', maxHeight: '240px' }}>
             <img
               src={gift.imageUrl}
               alt={gift.title}
-              className="w-full h-full object-cover"
+              className="w-full object-contain"
+              style={{ maxHeight: '240px' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
@@ -794,6 +770,7 @@ interface RestaurantReminderModalProps {
 }
 
 function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantReminderModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const [isActing, setIsActing] = useState(false)
   const [action, setAction] = useState<'booked' | 'mind' | null>(null)
@@ -832,39 +809,49 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
-        <div className="px-6 pt-5 pb-6">
-          {/* Хэдер */}
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#5CBD8A] mb-1">
-                {t('restaurants.reminder')} · {t('dashboard.giftReminderFor', { name: restaurant.personName })}
-              </p>
-              <h2 className="text-lg font-bold tracking-[-0.3px] text-text-primary leading-tight">
-                {restaurant.title}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
-            >
-              <X size={16} />
-            </button>
-          </div>
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+        {/* Gradient header — icon + reminder label centered (like birthday) */}
+        <div
+          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          style={{ background: 'var(--gradient-restaurants)' }}
+          suppressHydrationWarning
+        >
+          <span className="text-3xl">🍽️</span>
+          <p className="text-sm font-semibold text-[#2A5838] dark:text-[#A0D0B0]">
+            {t('restaurants.reminder')}
+          </p>
+        </div>
 
-          {/* Срок */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-text-primary dark:text-white hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
+        >
+          <X size={16} />
+        </button>
+
+        <div className="px-6 pt-5 pb-6">
+          {/* Имя человека + название ресторана */}
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#4A7A62] dark:text-[#5CBD8A] mb-1">
+            {t('dashboard.giftReminderFor', { name: restaurant.personName })}
+          </p>
+          <h2 className="text-lg font-bold tracking-[-0.3px] text-text-primary leading-tight mb-4">
+            {restaurant.title}
+          </h2>
+
+          {/* Срок посещения */}
           <div className="flex items-center gap-2 mb-3">
-            <UtensilsCrossed size={14} className="text-[#5CBD8A] flex-shrink-0" />
+            <UtensilsCrossed size={14} className="text-[#4A7A62] dark:text-[#5CBD8A] flex-shrink-0" />
             <p className="text-sm text-text-secondary">
               {t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}
               {restaurant.visitDate && (
                 <span className="ml-1 text-text-muted">
-                  ({new Date(restaurant.visitDate).toLocaleDateString()})
+                  ({new Date(restaurant.visitDate).toLocaleDateString()}
+                  {restaurant.visitTime && ` · ⏰ ${restaurant.visitTime}`})
                 </span>
               )}
             </p>
@@ -886,47 +873,76 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
           )}
 
           {/* Кнопки */}
-          <div className="flex flex-col gap-2 mt-4">
-            {/* Забронировать — открывает Google Maps */}
-            {restaurant.externalUrl ? (
-              <a
-                href={restaurant.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full rounded-[12px] bg-bg-card border border-border-card py-3.5 text-sm font-semibold text-text-primary hover:border-primary/30 transition-colors"
-              >
-                <ExternalLink size={15} />
-                {t('restaurants.bookTable')}
-              </a>
+          <div className="flex flex-col gap-2">
+            {restaurant.visitTime ? (
+              /* Время указано → ресторан забронирован */
+              <>
+                {restaurant.externalUrl && (
+                  <a
+                    href={restaurant.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-[12px] py-3.5 text-sm font-semibold text-[#2A5838] dark:text-[#A0D0B0] hover:opacity-90 transition-opacity"
+                    style={{ background: 'var(--gradient-restaurants)' }}
+                    suppressHydrationWarning
+                  >
+                    <MapPin size={15} />
+                    {t('restaurants.openInMaps')}
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={handleChangedMind}
+                  disabled={isActing}
+                  className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
+                >
+                  {isActing && action === 'mind' ? t('restaurants.markingMind') : t('restaurants.changedMind')}
+                </button>
+              </>
             ) : (
-              <button
-                type="button"
-                disabled
-                className="w-full rounded-[12px] bg-bg-card border border-border-card py-3.5 text-sm font-semibold text-text-muted opacity-40 cursor-not-allowed"
-              >
-                {t('restaurants.bookTable')}
-              </button>
+              /* Только дата → показываем кнопку бронирования */
+              <>
+                {restaurant.externalUrl ? (
+                  <a
+                    href={restaurant.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ background: 'var(--gradient-restaurants)' }}
+                    className="flex items-center justify-center gap-2 w-full rounded-[12px] py-3.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+                    suppressHydrationWarning
+                  >
+                    <ExternalLink size={15} />
+                    {t('restaurants.bookTable')}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full rounded-[12px] bg-bg-card border border-border-card py-3.5 text-sm font-semibold text-text-muted opacity-40 cursor-not-allowed"
+                  >
+                    {t('restaurants.bookTable')}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAlreadyBooked}
+                  disabled={isActing}
+                  className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+                >
+                  {isActing && action === 'booked' ? t('restaurants.markingBooked') : t('restaurants.alreadyBooked')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleChangedMind}
+                  disabled={isActing}
+                  className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
+                >
+                  {isActing && action === 'mind' ? t('restaurants.markingMind') : t('restaurants.changedMind')}
+                </button>
+              </>
             )}
-
-            {/* Уже забронировал */}
-            <button
-              type="button"
-              onClick={handleAlreadyBooked}
-              disabled={isActing}
-              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
-            >
-              {isActing && action === 'booked' ? t('restaurants.markingBooked') : t('restaurants.alreadyBooked')}
-            </button>
-
-            {/* Передумал идти */}
-            <button
-              type="button"
-              onClick={handleChangedMind}
-              disabled={isActing}
-              className="w-full rounded-[12px] border border-border py-3.5 text-sm font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-60 transition-colors"
-            >
-              {isActing && action === 'mind' ? t('restaurants.markingMind') : t('restaurants.changedMind')}
-            </button>
           </div>
         </div>
       </div>
@@ -943,6 +959,7 @@ interface MovieReminderModalProps {
 }
 
 function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const [isActing, setIsActing] = useState(false)
 
@@ -970,11 +987,11 @@ function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div className="px-6 pt-5 pb-6">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -1043,6 +1060,7 @@ interface TripReminderModalProps {
 }
 
 function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const [isActing, setIsActing] = useState(false)
   const [action, setAction] = useState<'booked' | 'cancelled' | null>(null)
@@ -1077,9 +1095,9 @@ function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div className="px-6 pt-5 pb-6">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -1147,6 +1165,7 @@ interface CustomItemReminderModalProps {
 }
 
 function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminderModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const [isActing, setIsActing] = useState(false)
   const { gradient, emoji } = parseCategoryIconField(item.categoryIcon)
@@ -1165,9 +1184,9 @@ function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminde
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div className="px-6 pt-5 pb-6">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -1240,6 +1259,7 @@ interface MilestoneModalProps {
 }
 
 function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
+  useScrollLock()
   const t = useTranslations()
   const { person, milestone, stats } = milestonePerson
 
@@ -1254,10 +1274,10 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         {/* Градиентная шапка */}
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
@@ -1343,6 +1363,7 @@ interface BirthdayModalProps {
 }
 
 function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
+  useScrollLock()
   const t = useTranslations()
 
   const birthDateFormatted = new Date(birthday.birthDate + 'T00:00:00').toLocaleDateString(undefined, {
@@ -1352,8 +1373,8 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-coral)' }}
@@ -1430,6 +1451,7 @@ interface PersonDateModalProps {
 }
 
 function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) {
+  useScrollLock()
   const t = useTranslations()
 
   const dateFormatted = new Date(personDate.date + 'T00:00:00').toLocaleDateString(undefined, {
@@ -1440,8 +1462,8 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
         <div
           className="w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-ocean)' }}

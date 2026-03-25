@@ -11,7 +11,8 @@
       "Bash(curl -s --max-time 10 \"https://api.microlink.io/?url=https%3A%2F%2Fmarket.yandex.ru%2Fcard%2Fsmartfon-apple-iphone-17-pro-512gb-simesim-orange-global%2F4643219409\")",
       "Bash(grep -v \"^$\")",
       "Bash(ls -la \"/Users/vladimir/Desktop/Front End/soulmio/src/app/\\(dashboard\\)\")",
-      "Bash(ls -la \"/Users/vladimir/Desktop/Front End/soulmio/src/app/\\(dashboard\\)/dashboard\")"
+      "Bash(ls -la \"/Users/vladimir/Desktop/Front End/soulmio/src/app/\\(dashboard\\)/dashboard\")",
+      "Bash(python3 -c \":*)"
     ]
   }
 }
