@@ -8,20 +8,20 @@
 /* Light theme (default) */
 :root {
   color-scheme: light;
-  --bg-primary:    #FAF7F4;
-  --bg-secondary:  #F5F0EB;
-  --bg-card:       #EDE7E0;
-  --bg-input:      #E5DDD4;
-  --bg-input-focus:#D8CFC5;
-  --bg-hover:      #E5DDD4;
-  --text-primary:  #2C1F14;
-  --text-secondary:#7A6B5E;
-  --text-muted:    #B0A090;
-  --border:        #DDD5CC;
-  --border-card:   #E8E0D8;
+  --bg-primary:    #FBF6F0;
+  --bg-secondary:  #F2EBE2;
+  --bg-card:       #EBE3D9;
+  --bg-input:      #E2D8CC;
+  --bg-input-focus:#D5CABD;
+  --bg-hover:      #E8DDD2;
+  --text-primary:  #2A1C10;
+  --text-secondary:#70604F;
+  --text-muted:    #A89480;
+  --border:        #D8CEBC;
+  --border-card:   #E5DDD0;
   --shadow-card:   0 1px 4px rgba(0,0,0,0.06);
-  --primary-bg:    #FDEEE9;
-  --accent-bg:     #EAF4F7;
+  --primary-bg:    #FDECEA;
+  --accent-bg:     #E5F2F6;
   --loves-bg:      #E6F5ED;
   --loves-text:    #2E7A4A;
   --avoid-bg:      #FEE9E9;
@@ -33,20 +33,20 @@
 /* Dark theme */
 .dark {
   color-scheme: dark;
-  --bg-primary:    #100F0E;
-  --bg-secondary:  #171614;
-  --bg-card:       #1E1C1A;
-  --bg-input:      #2C2A27;
-  --bg-input-focus:#343230;
-  --bg-hover:      #262422;
-  --text-primary:  #EDE8E2;
-  --text-secondary:#8A8078;
-  --text-muted:    #504840;
-  --border:        #282522;
-  --border-card:   #222020;
+  --bg-primary:    #0E0C0A;
+  --bg-secondary:  #161310;
+  --bg-card:       #1D1A17;
+  --bg-input:      #2A2722;
+  --bg-input-focus:#323029;
+  --bg-hover:      #242119;
+  --text-primary:  #EDE8E1;
+  --text-secondary:#857A70;
+  --text-muted:    #4E4438;
+  --border:        #252220;
+  --border-card:   #201E1B;
   --shadow-card:   0 1px 4px rgba(0,0,0,0.3);
-  --primary-bg:    #2E1E19;
-  --accent-bg:     #182E3A;
+  --primary-bg:    #2C1C16;
+  --accent-bg:     #162C38;
   --loves-bg:      #1E3028;
   --loves-text:    #5CBD8A;
   --avoid-bg:      #3A1E1E;
@@ -118,14 +118,9 @@
   to   { opacity: 1; }
 }
 
-/* Mobile: slide up. Desktop (sm+): scale in */
+/* Always scale in (no bottom-slide — modals are always centred) */
 .sheet-animate {
-  animation: sheet-slide-up 0.30s cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-@media (min-width: 640px) {
-  .sheet-animate {
-    animation: sheet-fade-scale 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
-  }
+  animation: sheet-fade-scale 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 .backdrop-animate {
   animation: backdrop-fade 0.2s ease both;
@@ -149,22 +144,22 @@
 
 /* ─── Shadcn base variables ──────────────────────────────────────────────── */
 :root {
-  --background: #FAF7F4;
-  --foreground: #2C1F14;
-  --card: #EDE7E0;
-  --card-foreground: #2C1F14;
-  --popover: #F5F0EB;
-  --popover-foreground: #2C1F14;
+  --background: #FBF6F0;
+  --foreground: #2A1C10;
+  --card: #EBE3D9;
+  --card-foreground: #2A1C10;
+  --popover: #F2EBE2;
+  --popover-foreground: #2A1C10;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #E5DDD4;
-  --secondary-foreground: #2C1F14;
-  --muted: #E5DDD4;
-  --muted-foreground: #7A6B5E;
-  --accent: #E5DDD4;
-  --accent-foreground: #2C1F14;
+  --secondary: #E2D8CC;
+  --secondary-foreground: #2A1C10;
+  --muted: #E2D8CC;
+  --muted-foreground: #70604F;
+  --accent: #E2D8CC;
+  --accent-foreground: #2A1C10;
   --destructive: oklch(0.577 0.245 27.325);
-  --input: #E5DDD4;
+  --input: #E2D8CC;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -172,46 +167,46 @@
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
-  --sidebar: #F5F0EB;
-  --sidebar-foreground: #2C1F14;
+  --sidebar: #F2EBE2;
+  --sidebar-foreground: #2A1C10;
   --sidebar-primary: #E8735A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E5DDD4;
-  --sidebar-accent-foreground: #2C1F14;
-  --sidebar-border: #DDD5CC;
+  --sidebar-accent: #E2D8CC;
+  --sidebar-accent-foreground: #2A1C10;
+  --sidebar-border: #D8CEBC;
   --sidebar-ring: #E8735A;
 }
 
 .dark {
-  --background: #100F0E;
-  --foreground: #EDE8E2;
-  --card: #1E1C1A;
-  --card-foreground: #EDE8E2;
-  --popover: #1E1C1A;
-  --popover-foreground: #EDE8E2;
+  --background: #0E0C0A;
+  --foreground: #EDE8E1;
+  --card: #1D1A17;
+  --card-foreground: #EDE8E1;
+  --popover: #1D1A17;
+  --popover-foreground: #EDE8E1;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #2C2A27;
-  --secondary-foreground: #EDE8E2;
-  --muted: #2C2A27;
-  --muted-foreground: #8A8078;
-  --accent: #2C2A27;
-  --accent-foreground: #EDE8E2;
+  --secondary: #2A2722;
+  --secondary-foreground: #EDE8E1;
+  --muted: #2A2722;
+  --muted-foreground: #857A70;
+  --accent: #2A2722;
+  --accent-foreground: #EDE8E1;
   --destructive: oklch(0.704 0.191 22.216);
-  --input: #2C2A27;
+  --input: #2A2722;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: #171614;
-  --sidebar-foreground: #EDE8E2;
+  --sidebar: #161310;
+  --sidebar-foreground: #EDE8E1;
   --sidebar-primary: #E8735A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #2C2A27;
-  --sidebar-accent-foreground: #EDE8E2;
-  --sidebar-border: #282522;
+  --sidebar-accent: #2A2722;
+  --sidebar-accent-foreground: #EDE8E1;
+  --sidebar-border: #252220;
   --sidebar-ring: #E8735A;
 }
 
@@ -335,11 +330,11 @@
 /* Light (pastel) */
 :root {
   /* 5 default stat card categories */
-  --gradient-restaurants: linear-gradient(145deg, #D0EDD8, #B4DFC0);
-  --gradient-gifts:       linear-gradient(145deg, #F5D6E8, #EEB8D4);
-  --gradient-movies:      linear-gradient(145deg, #D4E8F8, #B8D5F2);
-  --gradient-food:        linear-gradient(145deg, #FCDDD6, #F8C4B8);
-  --gradient-travel:      linear-gradient(145deg, #E0D8F0, #CFC4E8);
+  --gradient-restaurants: linear-gradient(145deg, #C8E8D2, #A8D8B8);
+  --gradient-gifts:       linear-gradient(145deg, #F2CCDE, #E8A8C8);
+  --gradient-movies:      linear-gradient(145deg, #C8E0F5, #A8CCF0);
+  --gradient-food:        linear-gradient(145deg, #FAD8CE, #F5BFAD);
+  --gradient-travel:      linear-gradient(145deg, #DDD0EE, #C8B8E5);
   /* 16 custom category gradients */
   --gradient-gray:        linear-gradient(145deg, #E8E0D8, #D5CCC2);
   --gradient-coral:       linear-gradient(145deg, #FCDDD6, #F8C4B8);
@@ -361,11 +356,11 @@
 
 /* Dark — rich saturated gradients */
 .dark {
-  --gradient-restaurants: linear-gradient(145deg, #1A3022, #285038);
-  --gradient-gifts:       linear-gradient(145deg, #501C38, #803050);
-  --gradient-movies:      linear-gradient(145deg, #142638, #204060);
-  --gradient-food:        linear-gradient(145deg, #6A2818, #9E3A22);
-  --gradient-travel:      linear-gradient(145deg, #261E3A, #3C2C58);
+  --gradient-restaurants: linear-gradient(145deg, #1F3828, #2D5840);
+  --gradient-gifts:       linear-gradient(145deg, #5C1E3A, #8C3055);
+  --gradient-movies:      linear-gradient(145deg, #162A40, #224868);
+  --gradient-food:        linear-gradient(145deg, #6E2818, #A03A22);
+  --gradient-travel:      linear-gradient(145deg, #2A1E40, #402C60);
   --gradient-gray:        linear-gradient(145deg, #282522, #383430);
   --gradient-coral:       linear-gradient(145deg, #6A2818, #9E3A22);
   --gradient-rose:        linear-gradient(145deg, #501C38, #803050);
@@ -389,3 +384,188 @@
 .card-rose  { background: var(--gradient-rose);  }
 .card-ocean { background: var(--gradient-ocean); }
 .card-sage  { background: var(--gradient-sage);  }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN UPDATE — март 2026: animations & micro-interactions
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Easing variables */
+:root {
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ─── Page transitions ───────────────────────────────────────────────────── */
+/* IMPORTANT: No transform here — transforms create a new stacking context
+   which traps position:fixed descendants (FAB, modals, bottom sheets) */
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.page-transition {
+  animation: pageEnter 0.25s var(--ease-out) both;
+}
+
+/* ─── Modal / dialog entrance ────────────────────────────────────────────── */
+/* NOTE: We intentionally do NOT apply transform-based animations to
+   [role="dialog"] or Radix primitives — Radix uses transform for centering
+   and overriding it breaks dialog positioning.
+   Sheet animations (.sheet-animate, .backdrop-animate) handle our modals. */
+@keyframes overlayEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+[data-radix-dialog-overlay] {
+  animation: overlayEnter 0.2s var(--ease-smooth) both;
+}
+
+/* ─── Staggered card list ────────────────────────────────────────────────── */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.stagger-list > * { animation: cardEnter 0.3s var(--ease-out) both; }
+.stagger-list > *:nth-child(1)    { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2)    { animation-delay: 40ms; }
+.stagger-list > *:nth-child(3)    { animation-delay: 80ms; }
+.stagger-list > *:nth-child(4)    { animation-delay: 120ms; }
+.stagger-list > *:nth-child(5)    { animation-delay: 160ms; }
+.stagger-list > *:nth-child(6)    { animation-delay: 200ms; }
+.stagger-list > *:nth-child(7)    { animation-delay: 240ms; }
+.stagger-list > *:nth-child(8)    { animation-delay: 280ms; }
+.stagger-list > *:nth-child(9)    { animation-delay: 300ms; }
+.stagger-list > *:nth-child(n+10) { animation-delay: 320ms; }
+
+/* ─── Item cards hover ───────────────────────────────────────────────────── */
+.item-card {
+  transition:
+    background-color 0.2s var(--ease-smooth),
+    transform 0.15s var(--ease-smooth),
+    border-color 0.2s var(--ease-smooth);
+}
+.item-card:hover {
+  transform: translateX(4px);
+  background-color: var(--bg-hover) !important;
+}
+
+/* ─── Stat cards (gradient dashboard cards) hover ────────────────────────── */
+.stat-card {
+  transition:
+    transform 0.2s var(--ease-bounce),
+    box-shadow 0.2s var(--ease-smooth);
+}
+.stat-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+.stat-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* ─── Person cards hover ─────────────────────────────────────────────────── */
+.person-card {
+  transition:
+    transform 0.2s var(--ease-bounce),
+    background-color 0.15s var(--ease-smooth),
+    border-color 0.15s var(--ease-smooth);
+}
+.person-card:hover { transform: translateY(-2px); }
+.person-card:active { transform: translateY(0) scale(0.98); }
+
+/* Avatar wiggle on person card hover */
+@keyframes wiggle {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-8deg); }
+  50%  { transform: rotate(8deg); }
+  75%  { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}
+.person-card:hover .avatar-img {
+  animation: wiggle 0.5s var(--ease-bounce);
+}
+
+/* ─── FAB (Floating Action Button) ──────────────────────────────────────── */
+.fab {
+  transition:
+    transform 0.2s var(--ease-bounce),
+    box-shadow 0.2s var(--ease-smooth);
+}
+.fab:hover {
+  transform: scale(1.08) rotate(3deg);
+  box-shadow: 0 8px 24px rgba(232, 115, 90, 0.4);
+}
+.fab:active {
+  transform: scale(0.95) rotate(0deg);
+}
+
+/* ─── Favourite button ───────────────────────────────────────────────────── */
+@keyframes heartPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35) rotate(-10deg); }
+  70%  { transform: scale(0.9) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.favourite-btn { transition: color 0.2s var(--ease-smooth); }
+.favourite-btn.active {
+  animation: heartPop 0.4s var(--ease-bounce);
+  color: var(--primary);
+}
+
+/* ─── Notification banners ───────────────────────────────────────────────── */
+@keyframes bannerSlideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bannerSlideUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+.notification-banner {
+  animation: bannerSlideDown 0.35s var(--ease-bounce) both;
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s var(--ease-smooth), filter 0.15s var(--ease-smooth);
+}
+.notification-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  filter: brightness(1.05);
+}
+.notification-banner:active {
+  transform: translateY(0) scale(0.99);
+}
+.notification-banner.dismissing {
+  animation: bannerSlideUp 0.25s var(--ease-smooth) both;
+}
+
+/* ─── Dark mode hover overrides (more visible contrast) ─────────────────── */
+/* item-card: bg-hover is too close to bg-card in dark — brighten instead */
+.dark .item-card:hover {
+  background-color: var(--bg-hover) !important;
+  filter: brightness(1.35);
+}
+/* stat-card: black shadow is invisible in dark — use glow + stronger lift */
+.dark .stat-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+  filter: brightness(1.18);
+}
+/* notification-banner: bump brightness significantly in dark mode */
+.dark .notification-banner:hover {
+  filter: brightness(1.22);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+/* person-card: add subtle glow in dark */
+.dark .person-card:hover {
+  border-color: rgba(232, 115, 90, 0.2);
+  background-color: var(--bg-hover);
+}
+
+/* ─── Accessibility ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

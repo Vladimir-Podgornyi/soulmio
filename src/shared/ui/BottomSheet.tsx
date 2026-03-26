@@ -31,12 +31,12 @@ export function BottomSheet({ title, onClose, children, contentClassName }: Bott
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] backdrop-animate" onClick={onClose} />
 
       {/* Sheet */}
-      <div className="sheet-animate relative z-10 flex w-full max-w-md flex-col rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary max-h-[92dvh] sm:max-h-[90dvh]">
+      <div className="sheet-animate relative z-10 flex w-full max-w-md flex-col rounded-[28px] bg-bg-secondary max-h-[90dvh]">
         {/* Sticky header — always visible */}
         <div className="flex flex-shrink-0 items-center justify-between gap-3 px-6 pt-6 pb-5">
           <h2 className="min-w-0 flex-1 text-lg font-semibold tracking-[-0.5px] text-text-primary leading-snug">{title}</h2>
@@ -51,7 +51,7 @@ export function BottomSheet({ title, onClose, children, contentClassName }: Bott
 
         {/* Scrollable content */}
         <div
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-8 ${contentClassName ?? ''}`}
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-14 ${contentClassName ?? ''}`}
         >
           {children}
         </div>

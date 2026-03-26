@@ -1007,7 +1007,7 @@ export function PersonPage({
             </div>
           )
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="stagger-list flex flex-col gap-2">
             {items.map((item) => {
               const isHighlighted = highlightedItemId === item.id
               return (
@@ -1417,7 +1417,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-2 min-w-0">
@@ -1572,7 +1572,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         {/* Верхняя строка */}
         <div className="flex items-start gap-2">
@@ -1781,7 +1781,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   return (
-    <div className="rounded-[14px] bg-bg-card border border-border-card">
+    <div className={`item-card rounded-[14px] bg-bg-card border border-border-card ${menuOpen ? 'relative z-[50]' : ''}`}>
 
       {/* ── Верхняя часть: фото + текст ── */}
       <div className="flex gap-3 p-4 pb-3">
@@ -2017,7 +2017,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-3 min-w-0">
@@ -2170,7 +2170,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-1.5 min-w-0">
@@ -2325,7 +2325,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -2465,9 +2465,9 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
@@ -2663,9 +2663,9 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
@@ -2907,7 +2907,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   )
 
   return (
-    <div className={`rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-1 min-w-0">

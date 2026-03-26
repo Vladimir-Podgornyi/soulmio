@@ -43,7 +43,15 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
   const [newCatDislikesLabel, setNewCatDislikesLabel] = useState('')
   const [isSavingCat, setIsSavingCat] = useState(false)
 
-  // FAB останавливается в 8px от footer, не падает ниже дефолтной позиции
+  // Блокировка скролла страницы когда модалка открыта
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [isOpen])
+
+  // FAB останавливается в 5px от footer, не падает ниже дефолтной позиции
   const [fabBottom, setFabBottom] = useState(96)
   useEffect(() => {
     const footer = document.getElementById('site-footer')
@@ -52,10 +60,10 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
     function update() {
       const isMobile = window.innerWidth < 768
       const defaultBottom = isMobile ? 96 : 24
-      const footerRect = footer.getBoundingClientRect()
+      const footerRect = (footer as HTMLElement).getBoundingClientRect()
       const vh = window.innerHeight
-      // Нижний край FAB должен быть в 8px выше верхнего края footer
-      const needed = footerRect.top < vh ? vh - footerRect.top + 8 : 0
+      // Нижний край FAB должен быть в 5px выше верхнего края footer
+      const needed = footerRect.top < vh ? vh - footerRect.top + 5 : 0
       setFabBottom(Math.max(defaultBottom, needed))
     }
 
@@ -152,16 +160,16 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
         onClick={open}
         aria-label={t('dashboard.quickAdd')}
         style={{ bottom: fabBottom, transition: 'bottom 0.08s ease-out' }}
-        className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary-dark active:scale-95"
+        className="fab fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary-dark active:scale-95"
       >
         <Plus size={26} strokeWidth={2.5} className="text-white" />
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
 
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe max-h-[85vh] flex flex-col">
+          <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary max-h-[90dvh] flex flex-col">
             {/* Хэдер */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
               {step === 'category' && !isAddingPerson ? (

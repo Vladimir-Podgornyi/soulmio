@@ -182,7 +182,7 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
       )}
 
       {/* Список */}
-      <div className="px-4 flex flex-col gap-2">
+      <div className="stagger-list px-4 flex flex-col gap-2">
         {sortedItems.length === 0 ? (
           <div className="rounded-[20px] bg-bg-card border border-border-card px-6 py-10 text-center">
             <p className="text-2xl mb-2">{icon}</p>
@@ -302,9 +302,9 @@ export function OverviewPage({ category, items: initialItems, isPro, people = []
 
       {/* Модал выбора человека для добавления */}
       {addOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe">
+          <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary pb-safe">
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <span />
               <h2 className="text-base font-semibold tracking-[-0.3px] text-text-primary">
@@ -804,7 +804,7 @@ function OverviewItemCard({ item, category, currency, onEdit, onPreview, isCusto
 
   return (
     <div
-      className="rounded-[14px] bg-bg-card border border-border-card p-4 cursor-pointer"
+      className={`item-card rounded-[14px] bg-bg-card border border-border-card p-4 cursor-pointer${menuOpen ? ' relative z-[60]' : ''}`}
       role="button"
       tabIndex={0}
       onClick={(e) => {
@@ -931,7 +931,7 @@ function OverviewItemCard({ item, category, currency, onEdit, onPreview, isCusto
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 min-w-[200px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+                <div className="absolute right-0 top-8 z-50 min-w-[200px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
                   <button
                     type="button"
                     onClick={handleEdit}
