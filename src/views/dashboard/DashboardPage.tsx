@@ -98,7 +98,7 @@ function ReminderNotif({
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 rounded-[16px] border px-4 py-3.5 mb-2 transition-all active:scale-[0.99] text-left"
+      className="notification-banner w-full flex items-center gap-3 rounded-[16px] border px-4 py-3.5 mb-2 transition-all active:scale-[0.99] text-left"
       style={{
         backgroundColor: `var(--rn-${scheme}-bg)`,
         borderColor: `var(--rn-${scheme}-bd)`,
@@ -426,14 +426,14 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
             <p className="text-sm text-text-secondary">{t('dashboard.noStats')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
+          <div className="stagger-list grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
             {STAT_CARDS.filter((card) => summaryMap.has(card.categoryName)).map((card) => {
               const count = summaryMap.get(card.categoryName) ?? 0
               return (
                 <Link
                   key={card.categoryName}
                   href={`/overview/${card.categoryName}`}
-                  className="relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between active:scale-[0.97] transition-transform"
+                  className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
                   style={{ background: card.gradient }}
                   suppressHydrationWarning
                 >
@@ -473,7 +473,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
               <Link
                 key={s.categoryName}
                 href={`/overview/custom/${encodeURIComponent(s.categoryName)}`}
-                className="relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between active:scale-[0.97] transition-transform"
+                className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
                 style={{ background: gradient }}
                 suppressHydrationWarning
               >
@@ -516,21 +516,21 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-3">
             {t('dashboard.yourPeople')}
           </h2>
-          <div className="flex flex-col gap-2">
+          <div className="stagger-list flex flex-col gap-2">
             {sortedPeople.map((person) => (
               <Link
                 key={person.id}
                 href={`/people/${person.id}`}
-                className="flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 transition-all hover:bg-bg-hover hover:border-primary/30"
+                className="person-card flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 hover:border-primary/30"
               >
                 {person.avatar_url ? (
                   <img
                     src={person.avatar_url}
                     alt={person.name}
-                    className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/60 to-primary flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary/60 to-primary flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
                     {person.name[0].toUpperCase()}
                   </div>
                 )}
@@ -665,28 +665,28 @@ function GiftDetailModal({ gift, onClose, onBought }: GiftDetailModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         {/* Фото подарка */}
         {gift.imageUrl && (
-          <div className="w-full overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', maxHeight: '240px' }}>
+          <div className="flex-shrink-0 w-full overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', maxHeight: '200px' }}>
             <img
               src={gift.imageUrl}
               alt={gift.title}
               className="w-full object-contain"
-              style={{ maxHeight: '240px' }}
+              style={{ maxHeight: '200px' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
         )}
 
         {/* Контент */}
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1 min-w-0">
@@ -807,16 +807,16 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
-        {/* Gradient header — icon + reminder label centered (like birthday) */}
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
+        {/* Gradient header */}
         <div
-          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          className="flex-shrink-0 w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-restaurants)' }}
           suppressHydrationWarning
         >
@@ -834,7 +834,7 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
           <X size={16} />
         </button>
 
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Имя человека + название ресторана */}
           <p className="text-xs font-semibold uppercase tracking-wider text-[#4A7A62] dark:text-[#5CBD8A] mb-1">
             {t('dashboard.giftReminderFor', { name: restaurant.personName })}
@@ -985,14 +985,14 @@ function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
 
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
-        <div className="px-6 pt-5 pb-6">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1 min-w-0">
@@ -1094,11 +1094,11 @@ function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
-        <div className="px-6 pt-5 pb-6">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1 min-w-0">
@@ -1183,11 +1183,11 @@ function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminde
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
-        <div className="px-6 pt-5 pb-6">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Хэдер */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1272,15 +1272,15 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
     : ''
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
       />
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         {/* Градиентная шапка */}
         <div
-          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          className="flex-shrink-0 w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-purple)' }}
           suppressHydrationWarning
         >
@@ -1290,7 +1290,7 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
           </p>
         </div>
 
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           {/* Закрыть */}
           <button
             type="button"
@@ -1372,11 +1372,11 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         <div
-          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          className="flex-shrink-0 w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-coral)' }}
           suppressHydrationWarning
         >
@@ -1384,7 +1384,7 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
           <p className="text-sm font-semibold text-[#7A3A40] dark:text-[#FFB0D8]">{t('dashboard.birthdayReminder')}</p>
         </div>
 
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           <button
             type="button"
             onClick={onClose}
@@ -1461,11 +1461,11 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
-      <div className="sheet-animate relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary pb-safe overflow-hidden">
+      <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         <div
-          className="w-full h-28 flex flex-col items-center justify-center gap-2"
+          className="flex-shrink-0 w-full h-28 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--gradient-ocean)' }}
           suppressHydrationWarning
         >
@@ -1473,7 +1473,7 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
           <p className="text-sm font-semibold text-[#3A6080] dark:text-[#90B8FF]">{t('dashboard.importantDateReminder')}</p>
         </div>
 
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 overflow-y-auto">
           <button
             type="button"
             onClick={onClose}

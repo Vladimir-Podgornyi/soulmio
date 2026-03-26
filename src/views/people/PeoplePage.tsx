@@ -125,7 +125,7 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="stagger-list flex flex-col gap-2">
         <AddPersonWidget
           isPro={isPro}
           canAdd={isPro || people.length === 0}
@@ -220,12 +220,12 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
   }
 
   return (
-    <div className="flex flex-col rounded-[14px] bg-bg-card border border-border-card">
+    <div className={`person-card flex flex-col rounded-[14px] bg-bg-card border border-border-card${menuOpen ? ' relative z-[60]' : ''}`}>
       <div className="flex items-center gap-4 px-4 py-3 min-h-[60px]">
         {/* Аватар — нажатие переходит на страницу */}
         <Link href={`/people/${person.id}`} className="flex items-center gap-4 flex-1 min-w-0">
           <div className="relative flex-shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
+            <div className="avatar-img flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
               {person.avatar_url
                 ? <img src={person.avatar_url} alt={person.name} className="h-full w-full object-cover" />
                 : person.name.charAt(0)
@@ -278,7 +278,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-9 z-20 min-w-max rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+            <div className="absolute right-0 top-9 z-50 min-w-max rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
               <button
                 onClick={() => { setMenuOpen(false); onEdit() }}
                 className="flex w-full items-center justify-start gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors whitespace-nowrap"
@@ -291,7 +291,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
               <div className="mx-3 h-px bg-border-card" />
               <button
                 onClick={handleToggleFavorite}
-                className="flex w-full items-center justify-start gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors whitespace-nowrap"
+                className={`favourite-btn${person.is_favorite ? ' active' : ''} flex w-full items-center justify-start gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors whitespace-nowrap`}
               >
                 <span className="flex w-4 flex-shrink-0 items-center justify-center">
                   <Star size={15} className={person.is_favorite ? 'fill-primary text-primary' : 'text-text-secondary'} />

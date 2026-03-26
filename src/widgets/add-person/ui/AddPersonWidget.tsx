@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
@@ -18,6 +18,13 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPe
   const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [isOpen])
 
   function handleSuccess(person: Person) {
     setIsOpen(false)
@@ -74,7 +81,7 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPe
 
       {/* Оверлей модального окна */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Фон */}
           <div
             className="absolute inset-0 bg-black/60"
@@ -82,7 +89,7 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPe
           />
 
           {/* Лист */}
-          <div className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-bg-secondary flex flex-col max-h-[90dvh]">
+          <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary flex flex-col max-h-[90dvh]">
             <div className="flex items-center justify-between px-6 pt-6 pb-5 flex-shrink-0">
               <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
                 {t('people.addPerson')}
