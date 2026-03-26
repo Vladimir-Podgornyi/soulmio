@@ -34,6 +34,25 @@
     "continueWithApple": "Continuar com Apple",
     "alreadyHaveAccount": "Já tem uma conta?",
     "dontHaveAccount": "Não tem uma conta?",
+    "forgotPassword": "Esqueceu a senha?",
+    "forgotPasswordTitle": "Redefinir senha",
+    "forgotPasswordSubtitle": "Digite seu email — enviaremos um link de redefinição",
+    "sendResetLink": "Enviar link",
+    "resetLinkSent": "Verifique seu email",
+    "resetLinkSentMessage": "Enviamos um link de redefinição de senha para o seu email.",
+    "backToSignIn": "Voltar para o login",
+    "resetPassword": {
+      "title": "Nova senha",
+      "subtitle": "Crie uma senha forte para sua conta",
+      "newPassword": "Nova senha",
+      "confirmPassword": "Confirmar senha",
+      "submit": "Salvar senha",
+      "success": "Senha atualizada",
+      "successMessage": "Sua senha foi alterada. Entrando na conta...",
+      "invalidLink": "Link inválido ou expirado",
+      "invalidLinkMessage": "Este link de redefinição expirou ou já foi usado. Solicite um novo.",
+      "requestNew": "Solicitar novo link"
+    },
     "login": {
       "title": "Bem-vindo de volta",
       "subtitle": "Entre na sua conta"

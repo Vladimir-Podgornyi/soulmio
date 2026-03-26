@@ -34,6 +34,25 @@
     "continueWithApple": "Mit Apple fortfahren",
     "alreadyHaveAccount": "Bereits ein Konto?",
     "dontHaveAccount": "Noch kein Konto?",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotPasswordTitle": "Passwort zurücksetzen",
+    "forgotPasswordSubtitle": "Gib deine E-Mail ein — wir senden dir einen Reset-Link",
+    "sendResetLink": "Link senden",
+    "resetLinkSent": "E-Mail wurde gesendet",
+    "resetLinkSentMessage": "Wir haben einen Passwort-Reset-Link an deine E-Mail gesendet.",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "subtitle": "Erstelle ein sicheres Passwort für dein Konto",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "submit": "Passwort speichern",
+      "success": "Passwort aktualisiert",
+      "successMessage": "Dein Passwort wurde geändert. Du wirst eingeloggt...",
+      "invalidLink": "Ungültiger oder abgelaufener Link",
+      "invalidLinkMessage": "Dieser Reset-Link ist abgelaufen oder wurde bereits verwendet. Bitte fordere einen neuen an.",
+      "requestNew": "Neuen Link anfordern"
+    },
     "login": {
       "title": "Willkommen zurück",
       "subtitle": "Melde dich bei deinem Konto an"

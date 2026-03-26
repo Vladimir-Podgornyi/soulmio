@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from '@/shared/api/supabase-server'
  * Вызывается после:
  *  - Подтверждения email (регистрация)
  *  - Редиректа Google OAuth
+ *  - Сброса пароля: redirectTo указывает на /auth/callback?next=/reset-password
  *
  * Обменивает одноразовый `code` на сессию и перенаправляет пользователя.
  */
