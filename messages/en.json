@@ -34,6 +34,25 @@
     "continueWithApple": "Continue with Apple",
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtitle": "Enter your email — we'll send you a reset link",
+    "sendResetLink": "Send reset link",
+    "resetLinkSent": "Check your email",
+    "resetLinkSentMessage": "We sent a password reset link to your inbox.",
+    "backToSignIn": "Back to sign in",
+    "resetPassword": {
+      "title": "Set new password",
+      "subtitle": "Create a strong password for your account",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Save new password",
+      "success": "Password updated",
+      "successMessage": "Your password has been changed. Signing you in...",
+      "invalidLink": "Invalid or expired link",
+      "invalidLinkMessage": "This reset link has expired or already been used. Please request a new one.",
+      "requestNew": "Request new link"
+    },
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to your account"

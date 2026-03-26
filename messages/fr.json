@@ -34,6 +34,25 @@
     "continueWithApple": "Continuer avec Apple",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
     "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgotPasswordTitle": "Réinitialiser le mot de passe",
+    "forgotPasswordSubtitle": "Entrez votre email — nous vous enverrons un lien de réinitialisation",
+    "sendResetLink": "Envoyer le lien",
+    "resetLinkSent": "Vérifiez votre email",
+    "resetLinkSentMessage": "Nous avons envoyé un lien de réinitialisation à votre adresse email.",
+    "backToSignIn": "Retour à la connexion",
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Créez un mot de passe sécurisé pour votre compte",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Enregistrer le mot de passe",
+      "success": "Mot de passe mis à jour",
+      "successMessage": "Votre mot de passe a été modifié. Connexion en cours...",
+      "invalidLink": "Lien invalide ou expiré",
+      "invalidLinkMessage": "Ce lien de réinitialisation a expiré ou a déjà été utilisé. Veuillez en demander un nouveau.",
+      "requestNew": "Demander un nouveau lien"
+    },
     "login": {
       "title": "Bon retour",
       "subtitle": "Connectez-vous à votre compte"

@@ -34,6 +34,25 @@
     "continueWithApple": "Продолжить через Apple",
     "alreadyHaveAccount": "Уже есть аккаунт?",
     "dontHaveAccount": "Нет аккаунта?",
+    "forgotPassword": "Забыли пароль?",
+    "forgotPasswordTitle": "Восстановление пароля",
+    "forgotPasswordSubtitle": "Введите email — мы отправим ссылку для сброса",
+    "sendResetLink": "Отправить ссылку",
+    "resetLinkSent": "Проверьте почту",
+    "resetLinkSentMessage": "Мы отправили ссылку для сброса пароля на ваш email.",
+    "backToSignIn": "Назад ко входу",
+    "resetPassword": {
+      "title": "Новый пароль",
+      "subtitle": "Придумайте надёжный пароль для вашего аккаунта",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "submit": "Сохранить пароль",
+      "success": "Пароль изменён",
+      "successMessage": "Пароль успешно обновлён. Входим в аккаунт...",
+      "invalidLink": "Недействительная ссылка",
+      "invalidLinkMessage": "Срок действия ссылки истёк или она уже была использована. Запросите новую.",
+      "requestNew": "Запросить новую ссылку"
+    },
     "login": {
       "title": "С возвращением",
       "subtitle": "Войдите в свой аккаунт"

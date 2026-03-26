@@ -34,6 +34,25 @@
     "continueWithApple": "Continuar con Apple",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "dontHaveAccount": "¿No tienes una cuenta?",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordTitle": "Restablecer contraseña",
+    "forgotPasswordSubtitle": "Ingresa tu email — te enviaremos un enlace de restablecimiento",
+    "sendResetLink": "Enviar enlace",
+    "resetLinkSent": "Revisa tu email",
+    "resetLinkSentMessage": "Enviamos un enlace para restablecer tu contraseña a tu email.",
+    "backToSignIn": "Volver al inicio de sesión",
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Crea una contraseña segura para tu cuenta",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Guardar contraseña",
+      "success": "Contraseña actualizada",
+      "successMessage": "Tu contraseña ha sido cambiada. Iniciando sesión...",
+      "invalidLink": "Enlace inválido o expirado",
+      "invalidLinkMessage": "Este enlace ha expirado o ya fue usado. Solicita uno nuevo.",
+      "requestNew": "Solicitar nuevo enlace"
+    },
     "login": {
       "title": "Bienvenido de nuevo",
       "subtitle": "Inicia sesión en tu cuenta"
