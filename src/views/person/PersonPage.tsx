@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2, X } from 'lucide-react'
+import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2, X, Calendar, Clock, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
 import type { Category } from '@/entities/category/model/types'
 import { updateItem } from '@/entities/item/api'
 import type { Item } from '@/entities/item/model/types'
-import { createCustomCategory, updateCustomCategory, deleteCustomCategory } from '@/entities/category/api'
+import { createCustomCategory, updateCustomCategory, deleteCustomCategory, getCategories } from '@/entities/category/api'
 import { AddPersonForm } from '@/features/add-person'
 import { BottomSheet } from '@/shared/ui/BottomSheet'
 import { AddRestaurantForm } from '@/features/add-restaurant'
@@ -24,6 +24,7 @@ import { AddMovieForm, AddActorForm, useAddMovie, getMovieGenres, getMovieReleas
 import { AddTravelForm, useAddTravel, getTravelPinned, getTravelCity, getTravelCountry, getTravelDate, getTravelBudget, getFlagEmoji, type TravelBudget } from '@/features/add-travel'
 import { AddCustomItemForm, useAddCustomItem, getCustomItemPinned, getCustomItemDate, getCustomItemLikesLabel, getCustomItemDislikesLabel } from '@/features/add-custom-item'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
+import { getRelationDuration } from '@/shared/lib/milestones'
 import { CATEGORY_GRADIENTS, parseCategoryIconField, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { EmojiPicker } from '@/shared/ui/EmojiPicker'
 import { SkeletonList } from '@/shared/ui/SkeletonList'
@@ -42,6 +43,11 @@ const CATEGORY_ICONS: Record<string, string> = {
   gifts:       '🎁',
   movies:      '🎬',
   travel:      '✈️',
+}
+
+function getDropdownStyle(pos: 'top' | 'bottom'): React.CSSProperties {
+  if (pos === 'bottom') return { position: 'absolute', right: 0, bottom: '100%', marginBottom: 4, zIndex: 500 }
+  return { position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 500 }
 }
 
 /* ── Секция бюджета путешествия ── */
@@ -236,9 +242,14 @@ function ItemPreviewSheet({
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted">
               {t('restaurants.visitDate')}
             </span>
-            <span className={`font-medium ${visitTime ? 'text-base text-text-primary' : 'text-sm text-text-secondary'}`}>
+            <span className={`flex items-center gap-1.5 flex-wrap font-medium ${visitTime ? 'text-base text-text-primary' : 'text-sm text-text-secondary'}`}>
               {new Date(visitDate + 'T00:00').toLocaleDateString()}
-              {visitTime && <span className="ml-2">⏰ {visitTime}</span>}
+              {visitTime && (
+                <span className="flex items-center gap-1">
+                  <Clock size={13} className="text-text-muted flex-shrink-0" />
+                  {visitTime}
+                </span>
+              )}
             </span>
             {visitBooked && (
               <span className="text-xs font-medium" style={{ color: 'var(--loves-text)' }}>
@@ -341,8 +352,8 @@ function ItemPreviewSheet({
 
         {/* Custom: date */}
         {isCustom && customDate && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-text-muted">📅</span>
+          <div className="flex items-center gap-1.5">
+            <Calendar size={13} className="text-text-muted flex-shrink-0" />
             <span className="text-sm text-text-secondary">{customDate}</span>
           </div>
         )}
@@ -362,13 +373,19 @@ function ItemPreviewSheet({
         )}
 
         {/* Edit button */}
-        <button
-          onClick={onEdit}
-          className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98]"
-          style={{ backgroundColor: 'var(--primary)' }}
-        >
-          {t('common.edit')}
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={onEdit}
+            className="rounded-xl px-5 py-2.5 text-sm font-medium transition-all active:scale-[0.98]"
+            style={{
+              border: '1.5px solid var(--primary)',
+              backgroundColor: 'transparent',
+              color: 'var(--primary)',
+            }}
+          >
+            {t('common.edit')}
+          </button>
+        </div>
       </div>
     </BottomSheet>
   )
@@ -420,6 +437,25 @@ export function PersonPage({
   const [movieSubTab, setMovieSubTab] = useState<'movies' | 'actors'>('movies')
   const [movieGenreFilter, setMovieGenreFilter] = useState('all')
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(highlightParam)
+  const [fabBottom, setFabBottom] = useState(96)
+  useEffect(() => {
+    const footer = document.getElementById('site-footer')
+    if (!footer) return
+    function updateFab() {
+      const defaultBottom = 96
+      const footerRect = (footer as HTMLElement).getBoundingClientRect()
+      const vh = window.innerHeight
+      const needed = footerRect.top < vh ? vh - footerRect.top + 8 : 0
+      setFabBottom(Math.max(defaultBottom, needed))
+    }
+    window.addEventListener('scroll', updateFab, { passive: true })
+    window.addEventListener('resize', updateFab, { passive: true })
+    updateFab()
+    return () => {
+      window.removeEventListener('scroll', updateFab)
+      window.removeEventListener('resize', updateFab)
+    }
+  }, [])
   const [loadingCategoryId, setLoadingCategoryId] = useState<string | null>(null)
 
   // При переходе через ?section= — загружаем items для целевой категории если их нет (начальная загрузка)
@@ -591,7 +627,7 @@ export function PersonPage({
           <button
             type="button"
             onClick={() => setShowEditPerson(true)}
-            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[18px] font-bold text-white uppercase leading-none overflow-hidden hover:opacity-85 transition-opacity"
+            className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8735A] to-[#C94F38] text-[22px] font-bold text-white uppercase leading-none overflow-hidden hover:opacity-85 transition-opacity"
           >
             {localPerson.avatar_url
               ? <img src={localPerson.avatar_url} alt={localPerson.name} className="h-full w-full object-cover" />
@@ -599,16 +635,23 @@ export function PersonPage({
             }
           </button>
           <div>
-            <h1 className="text-[24px] font-bold tracking-[-0.5px] text-text-primary leading-tight">
+            <h1 className="text-[22px] font-bold tracking-[-0.5px] text-text-primary leading-tight">
               {localPerson.name}
             </h1>
-            {localPerson.relation && (
-              <p className="text-sm text-text-secondary capitalize">
-                {['partner', 'friend', 'family', 'other'].includes(localPerson.relation)
-                  ? t(`people.relations.${localPerson.relation as 'partner' | 'friend' | 'family' | 'other'}`)
-                  : localPerson.relation}
-              </p>
-            )}
+            {localPerson.relation && (() => {
+              const relationLabel = ['partner', 'friend', 'family', 'other'].includes(localPerson.relation)
+                ? t(`people.relations.${localPerson.relation as 'partner' | 'friend' | 'family' | 'other'}`)
+                : localPerson.relation
+              const dur = localPerson.relation_since ? getRelationDuration(localPerson.relation_since) : null
+              const durationText = dur && dur.value > 0
+                ? ` · ${dur.value} ${dur.unit === 'years' ? t('milestones.statYears') : dur.unit === 'months' ? t('milestones.statMonths') : t('milestones.statDays')}${dur.secondary != null ? ` ${dur.secondary} ${t('milestones.statMonths')}` : ''}`
+                : ''
+              return (
+                <p className="text-sm text-text-secondary">
+                  <span className="capitalize">{relationLabel}</span>{durationText}
+                </p>
+              )
+            })()}
           </div>
         </div>
       </div>
@@ -740,11 +783,9 @@ export function PersonPage({
                   }`}
                 >
                   {label}
-                  {key !== 'all' && (
-                    <span className="ml-1.5 text-text-muted">
-                      {allItems.filter((it) => it.sentiment === key).length}
-                    </span>
-                  )}
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                    {key === 'all' ? allItems.length : allItems.filter((it) => it.sentiment === key).length}
+                  </span>
                 </button>
               ))}
             </div>
@@ -766,6 +807,9 @@ export function PersonPage({
                   }`}
                 >
                   {label}
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${foodTypeFilter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                    {key === 'all' ? allItems.length : allItems.filter((it) => getFoodType(it.tags ?? null) === key).length}
+                  </span>
                 </button>
               ))}
             </div>
@@ -791,11 +835,9 @@ export function PersonPage({
               }`}
             >
               {label}
-              {key !== 'all' && (
-                <span className="ml-1.5 text-text-muted">
-                  {allItems.filter((it) => it.sentiment === key).length}
-                </span>
-              )}
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                {key === 'all' ? allItems.length : allItems.filter((it) => it.sentiment === key).length}
+              </span>
             </button>
           ))}
         </div>
@@ -819,11 +861,9 @@ export function PersonPage({
               }`}
             >
               {label}
-              {key !== 'all' && (
-                <span className="ml-1.5 text-text-muted">
-                  {allItems.filter((it) => it.sentiment === key).length}
-                </span>
-              )}
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                {key === 'all' ? allItems.length : allItems.filter((it) => it.sentiment === key).length}
+              </span>
             </button>
           ))}
         </div>
@@ -847,11 +887,9 @@ export function PersonPage({
               }`}
             >
               {label}
-              {key !== 'all' && (
-                <span className="ml-1.5 text-text-muted">
-                  {allItems.filter((it) => it.sentiment === key).length}
-                </span>
-              )}
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                {key === 'all' ? allItems.length : allItems.filter((it) => it.sentiment === key).length}
+              </span>
             </button>
           ))}
         </div>
@@ -879,11 +917,9 @@ export function PersonPage({
                 }`}
               >
                 {label}
-                {key !== 'all' && (
-                  <span className="ml-1.5 text-text-muted">
-                    {allItems.filter((it) => it.sentiment === key).length}
-                  </span>
-                )}
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                  {key === 'all' ? allItems.length : allItems.filter((it) => it.sentiment === key).length}
+                </span>
               </button>
             ))}
           </div>
@@ -935,11 +971,9 @@ export function PersonPage({
                     }`}
                   >
                     {label}
-                    {key !== 'all' && (
-                      <span className="ml-1.5 text-text-muted">
-                        {movieOnlyItems.filter((it) => it.sentiment === key).length}
-                      </span>
-                    )}
+                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${filter === key ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                      {key === 'all' ? movieOnlyItems.length : movieOnlyItems.filter((it) => it.sentiment === key).length}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -953,6 +987,9 @@ export function PersonPage({
                     }`}
                   >
                     {t('common.all')}
+                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${movieGenreFilter === 'all' ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                      {movieOnlyItems.length}
+                    </span>
                   </button>
                   {availableMovieGenres.map((g) => (
                     <button
@@ -963,6 +1000,9 @@ export function PersonPage({
                       }`}
                     >
                       {t(`movies.genres.${g}` as Parameters<typeof t>[0])}
+                      <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${movieGenreFilter === g ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'}`}>
+                        {movieOnlyItems.filter((it) => getMovieGenres(it.tags ?? null).includes(g)).length}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1105,7 +1145,8 @@ export function PersonPage({
       {!(isMovies && movieSubTab === 'actors' && !isPro) && (
         <button
           onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
-          className="md:hidden fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
+          className="md:hidden fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
+          style={{ bottom: fabBottom, transition: 'bottom 0.08s ease-out' }}
         >
           <Plus size={24} className="text-white" />
         </button>
@@ -1345,6 +1386,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   const [confirmDelete, setConfirmDelete] = useState(false)
   const desktopMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -1400,7 +1442,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   const foodMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -1417,7 +1459,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-2 min-w-0">
@@ -1441,7 +1483,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={desktopMenuRef}>
             {foodStatusBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {foodMenuDropdown('top')}
@@ -1473,7 +1515,7 @@ function FoodCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
         <div className="flex flex-1 items-center px-3 py-2.5">{foodStatusBadge}</div>
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={mobileMenuRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {foodMenuDropdown('bottom')}
@@ -1501,6 +1543,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   const [confirmDelete, setConfirmDelete] = useState(false)
   const restDesktopRef = useRef<HTMLDivElement>(null)
   const restMobileRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   // Закрываем меню по клику снаружи
   useEffect(() => {
@@ -1555,7 +1598,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   )
 
   const restMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -1572,7 +1615,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         {/* Верхняя строка */}
         <div className="flex items-start gap-2">
@@ -1585,8 +1628,16 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
               <span className="text-xs text-text-secondary truncate">{addressTag}</span>
             )}
             {restVisitDate && (
-              <span className="text-xs text-text-muted">
-                📅 {restVisitDate}{restVisitTime && ` · ⏰ ${restVisitTime}`}
+              <span className="flex items-center gap-1.5 text-xs text-text-muted flex-wrap">
+                <Calendar size={12} className="flex-shrink-0" />
+                {restVisitDate}
+                {restVisitTime && (
+                  <>
+                    <span>·</span>
+                    <Clock size={12} className="flex-shrink-0" />
+                    {restVisitTime}
+                  </>
+                )}
               </span>
             )}
           </div>
@@ -1594,7 +1645,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={restDesktopRef}>
             {restStatusBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {restMenuDropdown('top')}
@@ -1652,7 +1703,7 @@ function RestaurantCard({ item, personId, categoryId, onEdit, onDeleted, onUpdat
         )}
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={restMobileRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {restMenuDropdown('bottom')}
@@ -1700,6 +1751,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   const [confirmDelete, setConfirmDelete] = useState(false)
   const desktopMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -1753,7 +1805,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   const menuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button
         onClick={() => { setMenuOpen(false); onEdit() }}
         className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors"
@@ -1781,7 +1833,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border border-border-card ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border border-border-card ${menuOpen ? 'relative z-[200]' : ''}`}>
 
       {/* ── Верхняя часть: фото + текст ── */}
       <div className="flex gap-3 p-4 pb-3">
@@ -1826,8 +1878,9 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
                     </a>
                   )}
                   {giftDate && (
-                    <span className="flex items-center gap-1 text-xs text-text-secondary">
-                      📅 {new Date(giftDate).toLocaleDateString()}
+                    <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+                      <Calendar size={12} className="text-text-muted flex-shrink-0" />
+                      {new Date(giftDate).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -1847,7 +1900,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
             {statusBadge}
             <div className="relative">
               <button
-                onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+                onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }}
                 className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
               >
                 <MoreVertical size={15} />
@@ -1887,7 +1940,7 @@ function GiftCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }: 
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={mobileMenuRef}>
           <button
-            onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
+            onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }}
             className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary"
           >
             <MoreVertical size={15} />
@@ -1992,6 +2045,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
 
   const movieDesktopRef = useRef<HTMLDivElement>(null)
   const movieMobileRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   const movieStatusBadge = (
     <span className={`rounded-[8px] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${sentimentCls}`}>
@@ -2000,7 +2054,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   )
 
   const movieMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -2017,7 +2071,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-3 min-w-0">
@@ -2051,7 +2105,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={movieDesktopRef}>
             {movieStatusBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {movieMenuDropdown('top')}
@@ -2077,7 +2131,7 @@ function MovieCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
         <div className="flex flex-1 items-center px-3 py-2.5">{movieStatusBadge}</div>
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={movieMobileRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {movieMenuDropdown('bottom')}
@@ -2105,6 +2159,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   const [confirmDelete, setConfirmDelete] = useState(false)
   const actorDesktopRef = useRef<HTMLDivElement>(null)
   const actorMobileRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -2153,7 +2208,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   ) : null
 
   const actorMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -2170,7 +2225,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-1.5 min-w-0">
@@ -2195,7 +2250,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={actorDesktopRef}>
             {actorSentimentBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {actorMenuDropdown('top')}
@@ -2223,7 +2278,7 @@ function ActorCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }:
         </div>
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={actorMobileRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {actorMenuDropdown('bottom')}
@@ -2252,6 +2307,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
   const [confirmDelete, setConfirmDelete] = useState(false)
   const customDesktopRef = useRef<HTMLDivElement>(null)
   const customMobileRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -2308,7 +2364,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
   )
 
   const customMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -2325,7 +2381,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -2346,7 +2402,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={customDesktopRef}>
             {customStatusBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {customMenuDropdown('top')}
@@ -2396,7 +2452,7 @@ function CustomItemCard({ item, personId, categoryId, categoryIcon, onEdit, onDe
         )}
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={customMobileRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {customMenuDropdown('bottom')}
@@ -2465,7 +2521,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
@@ -2476,7 +2532,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-primary hover:bg-primary/10"
           >
             <X size={16} />
           </button>
@@ -2565,7 +2621,7 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || isSaving}
-            className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:!bg-bg-input disabled:!text-text-muted disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? '...' : t('common.save')}
           </button>
@@ -2646,11 +2702,33 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
           .eq('user_id', userId)
 
         if (people && people.length > 0) {
-          const current = await createCustomCategory(supabase, personId, name.trim(), iconField)
-          const others = people.filter((p) => p.id !== personId)
-          await Promise.all(others.map((p) => createCustomCategory(supabase, p.id, name.trim(), iconField)))
-          if (current) onCreated(current)
-          else toast.error(t('common.error'))
+          const normalizedName = name.trim().toLowerCase()
+
+          // Получаем категории каждого человека и фильтруем тех, у кого нет дубликата
+          const checks = await Promise.all(
+            people.map(async (p) => {
+              const cats = await getCategories(supabase, p.id)
+              const hasDuplicate = cats.some((c) => c.name.trim().toLowerCase() === normalizedName)
+              return { id: p.id, hasDuplicate }
+            })
+          )
+
+          const peopleWithoutDuplicate = checks.filter((c) => !c.hasDuplicate).map((c) => c.id)
+
+          // Создаём категорию только тем, у кого её ещё нет
+          const results = await Promise.all(
+            peopleWithoutDuplicate.map((id) => createCustomCategory(supabase, id, name.trim(), iconField))
+          )
+
+          const currentIdx = peopleWithoutDuplicate.indexOf(personId)
+          const current = currentIdx >= 0 ? results[currentIdx] : null
+
+          if (current) {
+            onCreated(current)
+          } else {
+            // У текущего человека уже есть категория с таким именем
+            onClose()
+          }
         }
       } else {
         const cat = await createCustomCategory(supabase, personId, name.trim(), iconField)
@@ -2663,7 +2741,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
@@ -2674,7 +2752,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-primary hover:bg-primary/10"
           >
             <X size={16} />
           </button>
@@ -2775,7 +2853,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
                 type="button"
                 onClick={() => setScope('one')}
                 className={`flex-1 rounded-[8px] py-2.5 text-sm font-medium transition-colors ${
-                  scope === 'one' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+                  scope === 'one' ? 'bg-primary text-white shadow-sm' : 'text-text-muted'
                 }`}
               >
                 {t('categories.scopeOne', { name: personName })}
@@ -2784,7 +2862,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
                 type="button"
                 onClick={() => setScope('all')}
                 className={`flex-1 rounded-[8px] py-2.5 text-sm font-medium transition-colors ${
-                  scope === 'all' ? 'bg-bg-secondary text-text-primary shadow-sm' : 'text-text-muted'
+                  scope === 'all' ? 'bg-primary text-white shadow-sm' : 'text-text-muted'
                 }`}
               >
                 {t('categories.scopeAll')}
@@ -2795,7 +2873,7 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
               type="button"
               onClick={handleSave}
               disabled={!name.trim() || isSaving}
-              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+              className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:!bg-bg-input disabled:!text-text-muted disabled:cursor-not-allowed transition-colors"
             >
               {isSaving ? '...' : t('common.save')}
             </button>
@@ -2824,6 +2902,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   const [confirmDelete, setConfirmDelete] = useState(false)
   const travelDesktopRef = useRef<HTMLDivElement>(null)
   const travelMobileRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -2890,7 +2969,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   )
 
   const travelMenuDropdown = (pos: 'top' | 'bottom') => menuOpen && (
-    <div className={`absolute right-0 ${pos === 'bottom' ? 'bottom-8' : 'top-8'} z-30 w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap`}>
+    <div style={getDropdownStyle(pos)} className="w-max min-w-[180px] rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden [&_button]:whitespace-nowrap">
       <button onClick={() => { setMenuOpen(false); onEdit() }} className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors">
         <Pencil size={14} className="text-text-secondary" />{t('common.edit')}
       </button>
@@ -2907,7 +2986,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
   )
 
   return (
-    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[50]' : ''}`}>
+    <div className={`item-card rounded-[14px] bg-bg-card border ${isPinned ? 'border-primary/30' : 'border-border-card'} ${menuOpen ? 'relative z-[200]' : ''}`}>
       <div className="p-4 pb-3">
         <div className="flex items-start gap-2">
           <div className="flex flex-1 flex-col gap-1 min-w-0">
@@ -2924,7 +3003,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
           <div className="hidden md:flex flex-shrink-0 items-start gap-1.5" ref={travelDesktopRef}>
             {travelStatusBadge}
             <div className="relative">
-              <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
+              <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary">
                 <MoreVertical size={15} />
               </button>
               {travelMenuDropdown('top')}
@@ -2963,7 +3042,7 @@ function TravelCard({ item, personId, categoryId, onEdit, onDeleted, onUpdated }
         <div className="flex flex-1 items-center px-3 py-2.5">{travelStatusBadge}</div>
         <div className="w-px h-7 flex-shrink-0 bg-border-card" />
         <div className="relative flex items-center" ref={travelMobileRef}>
-          <button onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
+          <button onClick={(e) => { menuBtnRef.current = e.currentTarget as HTMLButtonElement; setMenuOpen((v) => !v); setConfirmDelete(false) }} className="flex h-10 w-11 items-center justify-center text-text-muted transition-colors hover:text-text-secondary">
             <MoreVertical size={15} />
           </button>
           {travelMenuDropdown('bottom')}

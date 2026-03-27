@@ -81,7 +81,7 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPe
 
       {/* Оверлей модального окна */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
           {/* Фон */}
           <div
             className="absolute inset-0 bg-black/60"
@@ -97,7 +97,7 @@ export function AddPersonWidget({ isPro, canAdd, onPersonAdded, compact }: AddPe
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-primary hover:bg-primary/10"
               >
                 ✕
               </button>

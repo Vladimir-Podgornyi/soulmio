@@ -8,26 +8,26 @@
 /* Light theme (default) */
 :root {
   color-scheme: light;
-  --bg-primary:    #FBF6F0;
-  --bg-secondary:  #F2EBE2;
-  --bg-card:       #EBE3D9;
-  --bg-input:      #E2D8CC;
-  --bg-input-focus:#D5CABD;
-  --bg-hover:      #E8DDD2;
-  --text-primary:  #2A1C10;
-  --text-secondary:#70604F;
-  --text-muted:    #A89480;
-  --border:        #D8CEBC;
-  --border-card:   #E5DDD0;
-  --shadow-card:   0 1px 4px rgba(0,0,0,0.06);
+  --bg-primary:    #faf7f4;
+  --bg-secondary:  #faf7f4;
+  --bg-card:       #ffffff;
+  --bg-input:      #f0ebe6;
+  --bg-input-focus:#e8e2dc;
+  --bg-hover:      #f5f1ee;
+  --text-primary:  #1c1410;
+  --text-secondary:#6b6058;
+  --text-muted:    #9c8f85;
+  --border:        #ddd5cc;
+  --border-card:   #e8e2dc;
+  --shadow-card:   0 1px 3px rgba(42,28,16,0.07), 0 1px 2px rgba(42,28,16,0.04);
   --primary-bg:    #FDECEA;
   --accent-bg:     #E5F2F6;
-  --loves-bg:      #E6F5ED;
-  --loves-text:    #2E7A4A;
-  --avoid-bg:      #FEE9E9;
-  --avoid-text:    #B83838;
-  --wants-bg:      #FEF4E0;
-  --wants-text:    #9A6A00;
+  --loves-bg:      #D6F0E2;
+  --loves-text:    #1E6640;
+  --avoid-bg:      #FDDEDE;
+  --avoid-text:    #9B2020;
+  --wants-bg:      #FEF0CC;
+  --wants-text:    #92600A;
 }
 
 /* Dark theme */
@@ -36,13 +36,13 @@
   --bg-primary:    #0E0C0A;
   --bg-secondary:  #161310;
   --bg-card:       #1D1A17;
-  --bg-input:      #2A2722;
-  --bg-input-focus:#323029;
+  --bg-input:      #312D28;
+  --bg-input-focus:#3A3530;
   --bg-hover:      #242119;
   --text-primary:  #EDE8E1;
-  --text-secondary:#857A70;
-  --text-muted:    #4E4438;
-  --border:        #252220;
+  --text-secondary:#9A8C80;
+  --text-muted:    #6B5E52;
+  --border:        #3A3530;
   --border-card:   #201E1B;
   --shadow-card:   0 1px 4px rgba(0,0,0,0.3);
   --primary-bg:    #2C1C16;
@@ -144,22 +144,22 @@
 
 /* ─── Shadcn base variables ──────────────────────────────────────────────── */
 :root {
-  --background: #FBF6F0;
+  --background: #EDE5DA;
   --foreground: #2A1C10;
-  --card: #EBE3D9;
+  --card: #FFFFFF;
   --card-foreground: #2A1C10;
-  --popover: #F2EBE2;
+  --popover: #E5DBD0;
   --popover-foreground: #2A1C10;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #E2D8CC;
+  --secondary: #E8DFD4;
   --secondary-foreground: #2A1C10;
-  --muted: #E2D8CC;
+  --muted: #E8DFD4;
   --muted-foreground: #70604F;
-  --accent: #E2D8CC;
+  --accent: #E8DFD4;
   --accent-foreground: #2A1C10;
   --destructive: oklch(0.577 0.245 27.325);
-  --input: #E2D8CC;
+  --input: #E8DFD4;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -167,11 +167,11 @@
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
-  --sidebar: #F2EBE2;
+  --sidebar: #E5DBD0;
   --sidebar-foreground: #2A1C10;
   --sidebar-primary: #E8735A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E2D8CC;
+  --sidebar-accent: #F0EBE4;
   --sidebar-accent-foreground: #2A1C10;
   --sidebar-border: #D8CEBC;
   --sidebar-ring: #E8735A;
@@ -186,14 +186,14 @@
   --popover-foreground: #EDE8E1;
   --primary: #E8735A;
   --primary-foreground: #FFFFFF;
-  --secondary: #2A2722;
+  --secondary: #312D28;
   --secondary-foreground: #EDE8E1;
-  --muted: #2A2722;
-  --muted-foreground: #857A70;
-  --accent: #2A2722;
+  --muted: #312D28;
+  --muted-foreground: #9A8C80;
+  --accent: #312D28;
   --accent-foreground: #EDE8E1;
   --destructive: oklch(0.704 0.191 22.216);
-  --input: #2A2722;
+  --input: #312D28;
   --ring: #E8735A;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -206,7 +206,7 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #2A2722;
   --sidebar-accent-foreground: #EDE8E1;
-  --sidebar-border: #252220;
+  --sidebar-border: #3A3530;
   --sidebar-ring: #E8735A;
 }
 
@@ -330,11 +330,11 @@
 /* Light (pastel) */
 :root {
   /* 5 default stat card categories */
-  --gradient-restaurants: linear-gradient(145deg, #C8E8D2, #A8D8B8);
-  --gradient-gifts:       linear-gradient(145deg, #F2CCDE, #E8A8C8);
-  --gradient-movies:      linear-gradient(145deg, #C8E0F5, #A8CCF0);
-  --gradient-food:        linear-gradient(145deg, #FAD8CE, #F5BFAD);
-  --gradient-travel:      linear-gradient(145deg, #DDD0EE, #C8B8E5);
+  --gradient-restaurants: linear-gradient(145deg, #9ECFB0, #78BB96);
+  --gradient-gifts:       linear-gradient(145deg, #E8A0C0, #D878A8);
+  --gradient-movies:      linear-gradient(145deg, #9DC4E8, #78AAD8);
+  --gradient-food:        linear-gradient(145deg, #F0B09A, #E59078);
+  --gradient-travel:      linear-gradient(145deg, #C0A8E0, #A888D0);
   /* 16 custom category gradients */
   --gradient-gray:        linear-gradient(145deg, #E8E0D8, #D5CCC2);
   --gradient-coral:       linear-gradient(145deg, #FCDDD6, #F8C4B8);
@@ -424,10 +424,11 @@
 /* ─── Staggered card list ────────────────────────────────────────────────── */
 @keyframes cardEnter {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 1; transform: none; }
 }
 
-.stagger-list > * { animation: cardEnter 0.3s var(--ease-out) both; }
+.stagger-list { isolation: isolate; }
+.stagger-list > * { animation: cardEnter 0.3s var(--ease-out) backwards; }
 .stagger-list > *:nth-child(1)    { animation-delay: 0ms; }
 .stagger-list > *:nth-child(2)    { animation-delay: 40ms; }
 .stagger-list > *:nth-child(3)    { animation-delay: 80ms; }
@@ -441,13 +442,13 @@
 
 /* ─── Item cards hover ───────────────────────────────────────────────────── */
 .item-card {
+  box-shadow: var(--shadow-card);
   transition:
     background-color 0.2s var(--ease-smooth),
-    transform 0.15s var(--ease-smooth),
-    border-color 0.2s var(--ease-smooth);
+    border-color 0.2s var(--ease-smooth),
+    box-shadow 0.2s var(--ease-smooth);
 }
 .item-card:hover {
-  transform: translateX(4px);
   background-color: var(--bg-hover) !important;
 }
 
@@ -475,17 +476,6 @@
 .person-card:hover { transform: translateY(-2px); }
 .person-card:active { transform: translateY(0) scale(0.98); }
 
-/* Avatar wiggle on person card hover */
-@keyframes wiggle {
-  0%   { transform: rotate(0deg); }
-  25%  { transform: rotate(-8deg); }
-  50%  { transform: rotate(8deg); }
-  75%  { transform: rotate(-4deg); }
-  100% { transform: rotate(0deg); }
-}
-.person-card:hover .avatar-img {
-  animation: wiggle 0.5s var(--ease-bounce);
-}
 
 /* ─── FAB (Floating Action Button) ──────────────────────────────────────── */
 .fab {
@@ -508,11 +498,7 @@
   70%  { transform: scale(0.9) rotate(5deg); }
   100% { transform: scale(1) rotate(0deg); }
 }
-.favourite-btn { transition: color 0.2s var(--ease-smooth); }
-.favourite-btn.active {
-  animation: heartPop 0.4s var(--ease-bounce);
-  color: var(--primary);
-}
+.favourite-btn.active { color: var(--primary); }
 
 /* ─── Notification banners ───────────────────────────────────────────────── */
 @keyframes bannerSlideDown {
@@ -543,7 +529,6 @@
 /* item-card: bg-hover is too close to bg-card in dark — brighten instead */
 .dark .item-card:hover {
   background-color: var(--bg-hover) !important;
-  filter: brightness(1.35);
 }
 /* stat-card: black shadow is invisible in dark — use glow + stronger lift */
 .dark .stat-card:hover {
