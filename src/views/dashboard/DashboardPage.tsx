@@ -3,7 +3,7 @@
 import { useState, useEffect, startTransition } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles } from 'lucide-react'
+import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles, CheckCircle } from 'lucide-react'
 import { createClient } from '@/shared/api/supabase'
 import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
@@ -76,8 +76,38 @@ interface MilestonePerson {
   stats: RelationStats
 }
 
+/* ── Solid accent colors for custom category gradients (border-left) ── */
+const GRADIENT_SOLID_COLOR: Record<string, string> = {
+  gray:    '#8A8078',
+  coral:   '#E8735A',
+  rose:    '#C05080',
+  ocean:   '#4A80B4',
+  sage:    '#5CBD8A',
+  purple:  '#9B70D0',
+  amber:   '#D4A020',
+  teal:    '#4A90A4',
+  crimson: '#C04040',
+  indigo:  '#5060C0',
+  olive:   '#70A040',
+  brown:   '#906040',
+  pink:    '#D060A0',
+  mint:    '#40B080',
+  slate:   '#6080A0',
+  gold:    '#C09020',
+}
+
 /* ── Unified reminder notification card ── */
 type ReminderScheme = 'milestone' | 'birthday' | 'date' | 'gift' | 'restaurant' | 'movie' | 'trip'
+
+const SCHEME_LEFT_COLOR: Record<ReminderScheme, string> = {
+  milestone:  '#9B70D0',
+  birthday:   '#E8735A',
+  date:       '#4A90A4',
+  gift:       '#E8735A',
+  restaurant: '#5CBD8A',
+  movie:      '#4A90A4',
+  trip:       '#9B70D0',
+}
 
 function ReminderNotif({
   scheme,
@@ -102,6 +132,8 @@ function ReminderNotif({
       style={{
         backgroundColor: `var(--rn-${scheme}-bg)`,
         borderColor: `var(--rn-${scheme}-bd)`,
+        borderLeftColor: SCHEME_LEFT_COLOR[scheme],
+        borderLeftWidth: '3px',
       }}
     >
       <div
@@ -297,105 +329,110 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
         </section>
       )}
 
-      {/* Напоминания — только для Pro */}
+      {/* Напоминания — только для Pro, отсортированы по daysLeft */}
       {isPro ? (
         <>
-          {gifts.length > 0 && (
+          {(gifts.length > 0 || restaurants.length > 0 || movies.length > 0 || trips.length > 0 || customItems.length > 0) && (
             <section className="px-4 mb-5">
-              {gifts.map((gift) => (
-                <ReminderNotif
-                  key={gift.itemId}
-                  scheme="gift"
-                  icon={<Gift size={18} style={{ color: 'var(--rn-gift-tx)' }} />}
-                  label={t('dashboard.giftReminder')}
-                  title={gift.title}
-                  subtitle={`${t('dashboard.giftReminderFor', { name: gift.personName })} · ${t('dashboard.giftReminderDays', { days: gift.daysLeft })}`}
-                  onClick={() => setSelectedGift(gift)}
-                />
-              ))}
-            </section>
-          )}
-
-          {restaurants.length > 0 && (
-            <section className="px-4 mb-5">
-              {restaurants.map((restaurant) => (
-                <ReminderNotif
-                  key={restaurant.itemId}
-                  scheme="restaurant"
-                  icon={<UtensilsCrossed size={18} style={{ color: 'var(--rn-restaurant-tx)' }} />}
-                  label={t('restaurants.reminder')}
-                  title={restaurant.title}
-                  subtitle={`${t('dashboard.giftReminderFor', { name: restaurant.personName })} · ${t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}`}
-                  onClick={() => setSelectedRestaurant(restaurant)}
-                />
-              ))}
-            </section>
-          )}
-
-          {movies.length > 0 && (
-            <section className="px-4 mb-5">
-              {movies.map((movie) => (
-                <ReminderNotif
-                  key={movie.itemId}
-                  scheme="movie"
-                  icon="🎬"
-                  label={t('movies.releaseReminder')}
-                  title={movie.title}
-                  subtitle={`${t('dashboard.giftReminderFor', { name: movie.personName })} · ${t('dashboard.giftReminderDays', { days: movie.daysLeft })}`}
-                  onClick={() => setSelectedMovie(movie)}
-                />
-              ))}
-            </section>
-          )}
-
-          {trips.length > 0 && (
-            <section className="px-4 mb-5">
-              {trips.map((trip) => (
-                <ReminderNotif
-                  key={trip.itemId}
-                  scheme="trip"
-                  icon={trip.flagEmoji}
-                  label={t('travel.reminder')}
-                  title={trip.title}
-                  subtitle={`${t('dashboard.giftReminderFor', { name: trip.personName })} · ${t('dashboard.giftReminderDays', { days: trip.daysLeft })}`}
-                  onClick={() => setSelectedTrip(trip)}
-                />
-              ))}
-            </section>
-          )}
-
-          {customItems.length > 0 && (
-            <section className="px-4 mb-5">
-              {customItems.map((ci) => {
-                const { gradient, emoji } = parseCategoryIconField(ci.categoryIcon)
-                return (
-                  <button
-                    key={ci.itemId}
-                    type="button"
-                    onClick={() => setSelectedCustomItem(ci)}
-                    className="w-full relative overflow-hidden flex items-center gap-3 rounded-[16px] border border-border-card px-4 py-3.5 mb-2 transition-colors text-left"
-                    suppressHydrationWarning
-                  >
-                    {/* Тинт фона из цвета категории */}
-                    <div className="absolute inset-0 opacity-[0.18] pointer-events-none" style={{ background: gradient }} suppressHydrationWarning />
-                    {/* Контент */}
-                    <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xl" style={{ background: gradient }} suppressHydrationWarning>
-                      {emoji}
-                    </div>
-                    <div className="relative z-10 flex-1 min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-0.5 truncate">
-                        {ci.categoryName}
-                      </p>
-                      <p className="text-sm font-medium text-text-primary truncate">{ci.title}</p>
-                      <p className="text-xs text-text-secondary">
-                        {t('dashboard.giftReminderFor', { name: ci.personName })}
-                        {' · '}
-                        {t('dashboard.giftReminderDays', { days: ci.daysLeft })}
-                      </p>
-                    </div>
-                  </button>
-                )
-              })}
+              {[
+                ...gifts.map((d) => ({ kind: 'gift' as const, data: d })),
+                ...restaurants.map((d) => ({ kind: 'restaurant' as const, data: d })),
+                ...movies.map((d) => ({ kind: 'movie' as const, data: d })),
+                ...trips.map((d) => ({ kind: 'trip' as const, data: d })),
+                ...customItems.map((d) => ({ kind: 'custom' as const, data: d })),
+              ]
+                .sort((a, b) => a.data.daysLeft - b.data.daysLeft)
+                .map((reminder) => {
+                  if (reminder.kind === 'gift') {
+                    const gift = reminder.data
+                    return (
+                      <ReminderNotif
+                        key={`gift-${gift.itemId}`}
+                        scheme="gift"
+                        icon={<Gift size={18} style={{ color: 'var(--rn-gift-tx)' }} />}
+                        label={t('dashboard.giftReminder')}
+                        title={gift.title}
+                        subtitle={`${t('dashboard.giftReminderFor', { name: gift.personName })} · ${t('dashboard.giftReminderDays', { days: gift.daysLeft })}`}
+                        onClick={() => setSelectedGift(gift)}
+                      />
+                    )
+                  }
+                  if (reminder.kind === 'restaurant') {
+                    const restaurant = reminder.data
+                    return (
+                      <ReminderNotif
+                        key={`restaurant-${restaurant.itemId}`}
+                        scheme="restaurant"
+                        icon={<UtensilsCrossed size={18} style={{ color: 'var(--rn-restaurant-tx)' }} />}
+                        label={t('restaurants.reminder')}
+                        title={restaurant.title}
+                        subtitle={`${t('dashboard.giftReminderFor', { name: restaurant.personName })} · ${t('dashboard.giftReminderDays', { days: restaurant.daysLeft })}`}
+                        onClick={() => setSelectedRestaurant(restaurant)}
+                      />
+                    )
+                  }
+                  if (reminder.kind === 'movie') {
+                    const movie = reminder.data
+                    return (
+                      <ReminderNotif
+                        key={`movie-${movie.itemId}`}
+                        scheme="movie"
+                        icon="🎬"
+                        label={t('movies.releaseReminder')}
+                        title={movie.title}
+                        subtitle={`${t('dashboard.giftReminderFor', { name: movie.personName })} · ${t('dashboard.giftReminderDays', { days: movie.daysLeft })}`}
+                        onClick={() => setSelectedMovie(movie)}
+                      />
+                    )
+                  }
+                  if (reminder.kind === 'trip') {
+                    const trip = reminder.data
+                    return (
+                      <ReminderNotif
+                        key={`trip-${trip.itemId}`}
+                        scheme="trip"
+                        icon={trip.flagEmoji}
+                        label={t('travel.reminder')}
+                        title={trip.title}
+                        subtitle={`${t('dashboard.giftReminderFor', { name: trip.personName })} · ${t('dashboard.giftReminderDays', { days: trip.daysLeft })}`}
+                        onClick={() => setSelectedTrip(trip)}
+                      />
+                    )
+                  }
+                  // kind === 'custom'
+                  const ci = reminder.data
+                  const { gradient, emoji } = parseCategoryIconField(ci.categoryIcon)
+                  const colorKey = ci.categoryIcon?.split(':')[0] ?? 'gray'
+                  const borderColor = GRADIENT_SOLID_COLOR[colorKey] ?? '#8A8078'
+                  return (
+                    <button
+                      key={`custom-${ci.itemId}`}
+                      type="button"
+                      onClick={() => setSelectedCustomItem(ci)}
+                      className="notification-banner w-full relative overflow-hidden flex items-center gap-3 rounded-[16px] border border-border-card px-4 py-3.5 mb-2 transition-all active:scale-[0.99] text-left"
+                      style={{ borderLeftColor: borderColor, borderLeftWidth: '3px' }}
+                      suppressHydrationWarning
+                    >
+                      {/* Тинт фона из цвета категории */}
+                      <div className="absolute inset-0 opacity-[0.18] pointer-events-none" style={{ background: gradient }} suppressHydrationWarning />
+                      {/* Контент */}
+                      <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xl" style={{ background: gradient }} suppressHydrationWarning>
+                        {emoji}
+                      </div>
+                      <div className="relative z-10 flex-1 min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-wider mb-0.5 truncate" style={{ color: borderColor }}>
+                          {ci.categoryName}
+                        </p>
+                        <p className="text-sm font-medium text-text-primary truncate">{ci.title}</p>
+                        <p className="text-xs text-text-secondary">
+                          {t('dashboard.giftReminderFor', { name: ci.personName })}
+                          {' · '}
+                          {t('dashboard.giftReminderDays', { days: ci.daysLeft })}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
             </section>
           )}
         </>
@@ -411,6 +448,51 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
             </p>
             <ChevronRight size={14} className="text-text-muted flex-shrink-0" />
           </Link>
+        </section>
+      )}
+
+      {/* Ваши люди — избранные первыми */}
+      {sortedPeople.length > 0 && (
+        <section className="px-4 mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-3">
+            {t('dashboard.yourPeople')}
+          </h2>
+          <div className="stagger-list flex flex-col gap-2">
+            {sortedPeople.map((person) => (
+              <Link
+                key={person.id}
+                href={`/people/${person.id}`}
+                className="person-card flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 hover:border-primary/30"
+              >
+                {person.avatar_url ? (
+                  <img
+                    src={person.avatar_url}
+                    alt={person.name}
+                    className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                    {person.name[0].toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-text-primary leading-tight">{person.name}</p>
+                    {person.is_favorite && (
+                      <Star size={12} className="fill-primary text-primary flex-shrink-0" />
+                    )}
+                  </div>
+                  {person.relation && (
+                    <p className="text-xs text-text-secondary capitalize">
+                      {['partner', 'friend', 'family', 'other'].includes(person.relation)
+                        ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
+                        : person.relation}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 
@@ -509,51 +591,6 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           </div>
         )}
       </section>
-
-      {/* Ваши люди — избранные первыми */}
-      {sortedPeople.length > 0 && (
-        <section className="px-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-3">
-            {t('dashboard.yourPeople')}
-          </h2>
-          <div className="stagger-list flex flex-col gap-2">
-            {sortedPeople.map((person) => (
-              <Link
-                key={person.id}
-                href={`/people/${person.id}`}
-                className="person-card flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 hover:border-primary/30"
-              >
-                {person.avatar_url ? (
-                  <img
-                    src={person.avatar_url}
-                    alt={person.name}
-                    className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary/60 to-primary flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
-                    {person.name[0].toUpperCase()}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-text-primary leading-tight">{person.name}</p>
-                    {person.is_favorite && (
-                      <Star size={12} className="fill-primary text-primary flex-shrink-0" />
-                    )}
-                  </div>
-                  {person.relation && (
-                    <p className="text-xs text-text-secondary capitalize">
-                      {['partner', 'friend', 'family', 'other'].includes(person.relation)
-                        ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
-                        : person.relation}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* FAB — быстрое добавление */}
       <QuickAddWidget people={people} isPro={isPro} />
@@ -665,7 +702,7 @@ function GiftDetailModal({ gift, onClose, onBought }: GiftDetailModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
@@ -751,8 +788,14 @@ function GiftDetailModal({ gift, onClose, onBought }: GiftDetailModalProps) {
             type="button"
             onClick={handleAlreadyBought}
             disabled={isMarking}
-            className="w-full rounded-[12px] bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60 transition-colors"
+            className="w-full rounded-[12px] py-3.5 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60 transition-colors"
+            style={{
+              background: 'var(--loves-bg)',
+              color: 'var(--loves-text)',
+              border: '1.5px solid var(--loves-text)',
+            }}
           >
+            <CheckCircle size={16} />
             {isMarking ? t('dashboard.giftMarkingBought') : t('dashboard.giftAlreadyBought')}
           </button>
         </div>
@@ -807,7 +850,7 @@ function RestaurantReminderModal({ restaurant, onClose, onDismiss }: RestaurantR
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
@@ -985,7 +1028,7 @@ function MovieReminderModal({ movie, onClose, onDismiss }: MovieReminderModalPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
@@ -1094,7 +1137,7 @@ function TripReminderModal({ trip, onClose, onDismiss }: TripReminderModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
       <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
@@ -1183,7 +1226,7 @@ function CustomItemReminderModal({ item, onClose, onDismiss }: CustomItemReminde
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
 
       <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
@@ -1272,7 +1315,7 @@ function MilestoneModal({ milestonePerson, onClose }: MilestoneModalProps) {
     : ''
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate"
         onClick={onClose}
@@ -1372,7 +1415,7 @@ function BirthdayModal({ birthday, onClose, onHide }: BirthdayModalProps) {
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
       <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         <div
@@ -1461,7 +1504,7 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pt-20">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm backdrop-animate" onClick={onClose} />
       <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary overflow-hidden flex flex-col max-h-[85dvh]">
         <div
@@ -1470,7 +1513,7 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
           suppressHydrationWarning
         >
           <span className="text-3xl">📅</span>
-          <p className="text-sm font-semibold text-[#3A6080] dark:text-[#90B8FF]">{t('dashboard.importantDateReminder')}</p>
+          <p className="text-sm font-semibold text-text-primary">{t('dashboard.importantDateReminder')}</p>
         </div>
 
         <div className="px-6 pt-5 pb-6 overflow-y-auto">
@@ -1520,7 +1563,8 @@ function PersonDateModal({ personDate, onClose, onHide }: PersonDateModalProps) 
           <Link
             href={`/people/${personDate.personId}`}
             onClick={onClose}
-            className="flex w-full items-center justify-center rounded-[12px] bg-[#2060B0] py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 mb-2"
+            className="flex w-full items-center justify-center rounded-[12px] py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 mb-2"
+            style={{ background: 'var(--primary)' }}
           >
             {t('milestones.viewProfile')}
           </Link>

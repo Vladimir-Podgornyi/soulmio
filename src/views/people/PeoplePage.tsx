@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Star, Trash2, MoreVertical, Pencil } from 'lucide-react'
@@ -105,6 +105,11 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
             }`}
           >
             {t('common.all')}
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+              activeFilter === null ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'
+            }`}>
+              {people.length}
+            </span>
           </button>
           {usedRelations.map((rel) => (
             <button
@@ -117,7 +122,9 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
               }`}
             >
               {getRelationLabel(rel)}
-              <span className="ml-1.5 text-text-muted">
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+                activeFilter === rel ? 'bg-primary text-white' : 'bg-bg-input text-text-secondary'
+              }`}>
                 {people.filter((p) => p.relation === rel).length}
               </span>
             </button>
@@ -161,6 +168,10 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
   )
 }
 
+function getMenuStyle(): React.CSSProperties {
+  return { position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 500 }
+}
+
 /* ── Карточка человека ── */
 
 interface PersonCardProps {
@@ -176,6 +187,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [loading, setLoading] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -220,7 +232,13 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
   }
 
   return (
-    <div className={`person-card flex flex-col rounded-[14px] bg-bg-card border border-border-card${menuOpen ? ' relative z-[60]' : ''}`}>
+    <div
+      className={`person-card flex flex-col rounded-[14px] bg-bg-card border border-border-card${menuOpen ? ' relative z-[60]' : ''}`}
+      style={{
+        borderLeftWidth: '3px',
+        borderLeftColor: person.is_favorite ? 'rgba(232, 115, 90, 0.45)' : 'transparent',
+      }}
+    >
       <div className="flex items-center gap-4 px-4 py-3 min-h-[60px]">
         {/* Аватар — нажатие переходит на страницу */}
         <Link href={`/people/${person.id}`} className="flex items-center gap-4 flex-1 min-w-0">
@@ -270,6 +288,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
         {/* Меню из трёх точек */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
+            ref={menuBtnRef}
             onClick={() => { setMenuOpen((v) => !v); setConfirmDelete(false) }}
             disabled={loading}
             className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary disabled:opacity-40"
@@ -278,7 +297,7 @@ function PersonCard({ person, onEdit, onDeleted, onFavoriteToggled }: PersonCard
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-9 z-50 min-w-max rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
+            <div style={getMenuStyle()} className="min-w-max rounded-[12px] bg-bg-secondary border border-border-card shadow-lg overflow-hidden">
               <button
                 onClick={() => { setMenuOpen(false); onEdit() }}
                 className="flex w-full items-center justify-start gap-2.5 px-4 py-3 text-sm text-text-primary hover:bg-bg-hover transition-colors whitespace-nowrap"

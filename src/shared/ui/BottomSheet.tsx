@@ -31,7 +31,7 @@ export function BottomSheet({ title, onClose, children, contentClassName }: Bott
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24 md:px-6 md:pb-6 md:pt-20">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] backdrop-animate" onClick={onClose} />
 
@@ -43,9 +43,9 @@ export function BottomSheet({ title, onClose, children, contentClassName }: Bott
           <button
             type="button"
             onClick={onClose}
-            className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover transition-colors"
+            className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-primary hover:bg-primary/10 transition-colors"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 

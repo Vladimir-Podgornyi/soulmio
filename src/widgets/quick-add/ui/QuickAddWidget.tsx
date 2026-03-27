@@ -166,7 +166,7 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
 
           <div className="sheet-animate relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary max-h-[90dvh] flex flex-col">
@@ -216,7 +216,7 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
               <button
                 type="button"
                 onClick={close}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-text-muted hover:bg-bg-hover"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input text-primary hover:bg-primary/10"
               >
                 <X size={16} />
               </button>
@@ -240,7 +240,7 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                         className="h-10 w-10 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/60 to-primary flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
                         {person.name[0].toUpperCase()}
                       </div>
                     )}
