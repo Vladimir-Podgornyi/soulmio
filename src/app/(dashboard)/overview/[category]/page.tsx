@@ -5,6 +5,7 @@ import { getAllItemsByCategoryName } from '@/entities/item/api'
 import { getProfile } from '@/entities/user/api'
 import { getPeople } from '@/entities/person/api'
 import { OverviewPage } from '@/views/overview/OverviewPage'
+import { calcIsPro, getAccessiblePeopleIds } from '@/shared/lib/calcIsPro'
 
 interface Props {
   params: Promise<{ category: string }>
@@ -23,13 +24,15 @@ export default async function Page({ params }: Props) {
 
   const db = supabase as DbClient
 
-  const [items, profile, people] = await Promise.all([
-    getAllItemsByCategoryName(db, user.id, category),
+  const [profile, people] = await Promise.all([
     getProfile(db, user.id),
     getPeople(db, user.id),
   ])
 
-  const isPro = profile?.subscription_tier === 'pro'
+  const isPro = calcIsPro(profile ?? {})
+  const accessiblePeopleIds = getAccessiblePeopleIds(isPro, people)
+
+  const items = await getAllItemsByCategoryName(db, user.id, category, accessiblePeopleIds)
 
   return <OverviewPage category={category} items={items} isPro={isPro} people={people} />
 }

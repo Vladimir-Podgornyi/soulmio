@@ -21,6 +21,8 @@ export default async function Page() {
       full_name: fullName,
       avatar_url: null,
       subscription_tier: 'free',
+      subscription_ends_at: null,
+      grace_period_ends_at: null,
       created_at: new Date().toISOString(),
     } satisfies Profile
   }

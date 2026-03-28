@@ -104,6 +104,18 @@
   --rn-trip-bg:      #2A2030; --rn-trip-bd:      rgba(72,48,96,0.4);    --rn-trip-ic:      rgba(72,48,96,0.3);    --rn-trip-tx:      #9B70D0;
 }
 
+/* ─── Grace period banner + ProLock overlay tokens ─────────────────────── */
+:root {
+  --grace-banner-bg:   #FEF4E0;
+  --grace-banner-text: #9A6A00;
+  --pro-lock-overlay:  rgba(248,245,240,0.6);
+}
+.dark {
+  --grace-banner-bg:   #2E2A18;
+  --grace-banner-text: #F0A830;
+  --pro-lock-overlay:  rgba(10,9,8,0.45);
+}
+
 /* ─── Sheet / modal entrance animations ─────────────────────────────────── */
 @keyframes sheet-slide-up {
   from { transform: translateY(60px); opacity: 0; }

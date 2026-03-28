@@ -95,7 +95,7 @@ export function BottomNav() {
   return (
     <>
       {/* ── Mobile: bottom nav ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex h-[64px] items-center justify-around bg-bg-secondary border-t border-border px-2 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 transform-gpu flex h-[64px] items-center justify-around bg-bg-secondary border-t border-border px-2 pb-safe">
         {NAV_BEFORE.map(({ href, icon, labelKey }) => (
           <NavLink key={href} href={href} icon={icon} labelKey={labelKey} isActive={pathname === href} t={t} />
         ))}

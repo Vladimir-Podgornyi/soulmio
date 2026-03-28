@@ -9,6 +9,8 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   travel:      ['travel', 'путешествия', 'reisen', 'voyage', 'viajes', 'viagens', 'путешествие', 'поездки'],
 }
 
+const PRO_CATEGORY_NAMES = new Set(['movies', 'travel'])
+
 function matchesQuery(categoryName: string, isCustom: boolean, q: string): boolean {
   const lower = q.toLowerCase()
   if (categoryName.toLowerCase().includes(lower)) return true
@@ -16,6 +18,20 @@ function matchesQuery(categoryName: string, isCustom: boolean, q: string): boole
     const aliases = CATEGORY_ALIASES[categoryName] ?? []
     return aliases.some((a) => a.includes(lower))
   }
+  return false
+}
+
+/** Проверяет isPro с учётом grace period */
+function calcIsPro(profile: {
+  subscription_tier: string | null
+  subscription_ends_at: string | null
+  grace_period_ends_at: string | null
+}): boolean {
+  if (profile.subscription_tier !== 'pro') return false
+  const now = new Date()
+  if (!profile.subscription_ends_at && !profile.grace_period_ends_at) return true
+  if (profile.subscription_ends_at && new Date(profile.subscription_ends_at) > now) return true
+  if (profile.grace_period_ends_at && new Date(profile.grace_period_ends_at) > now) return true
   return false
 }
 
@@ -34,6 +50,10 @@ export interface SearchResult {
   categoryId?: string
   /** For items/categories: the category name (for section param) */
   categoryName?: string
+  /** Whether this result is locked behind Pro */
+  isLocked?: boolean
+  /** Which feature key to pass to PaywallModal */
+  lockedFeature?: string
 }
 
 export async function searchAll(
@@ -46,15 +66,38 @@ export async function searchAll(
   const q = `%${query.trim()}%`
   const results: SearchResult[] = []
 
-  // ── 1. Люди ──────────────────────────────────────────────────────────
-  const { data: people } = await supabase
-    .from('people')
-    .select('id, name, relation')
-    .eq('user_id', userId)
-    .ilike('name', q)
-    .limit(5)
+  // ── Fetch profile + all people (with created_at) in parallel ──────────
+  const [{ data: profile }, { data: allUserPeople }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('subscription_tier, subscription_ends_at, grace_period_ends_at')
+      .eq('id', userId)
+      .single(),
+    supabase
+      .from('people')
+      .select('id, name, relation, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true }),
+  ])
 
-  for (const p of people ?? []) {
+  const isPro = profile ? calcIsPro(profile) : false
+
+  // Compute locked people IDs (all except first by created_at)
+  const userPeopleList = allUserPeople ?? []
+  const lockedPeopleIds = new Set(
+    isPro ? [] : userPeopleList.slice(1).map((p) => p.id)
+  )
+
+  const peopleIds = userPeopleList.map((p) => p.id)
+  const peopleNameMap = new Map(userPeopleList.map((p) => [p.id, p.name]))
+
+  // ── 1. Люди ──────────────────────────────────────────────────────────
+  const matchingPeople = userPeopleList
+    .filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .slice(0, 5)
+
+  for (const p of matchingPeople) {
+    const locked = lockedPeopleIds.has(p.id)
     results.push({
       type: 'person',
       id: p.id,
@@ -62,24 +105,41 @@ export async function searchAll(
       subtitle: p.relation ?? '',
       href: `/people/${p.id}`,
       icon: null,
+      isLocked: locked || undefined,
+      lockedFeature: locked ? 'people' : undefined,
     })
   }
 
-  // ── 2. Категории ──────────────────────────────────────────────────────
-  // Сначала получаем id всех людей пользователя для фильтра
-  const { data: userPeople } = await supabase
-    .from('people')
-    .select('id, name')
-    .eq('user_id', userId)
-
-  const peopleIds = (userPeople ?? []).map((p) => p.id)
-  const peopleNameMap = new Map((userPeople ?? []).map((p) => [p.id, p.name]))
-
   if (peopleIds.length > 0) {
+    // ── 2. Категории ──────────────────────────────────────────────────────
     const { data: allCategories } = await supabase
       .from('categories')
-      .select('id, name, icon, is_custom, person_id')
+      .select('id, name, icon, is_custom, person_id, created_at')
       .in('person_id', peopleIds)
+
+    // Compute locked category IDs
+    let lockedCategoryIds = new Set<string>()
+    if (!isPro) {
+      // First custom category per person is free, rest locked
+      const firstCustomPerPerson = new Map<string, string>()
+      const sortedCats = [...(allCategories ?? [])].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+      for (const cat of sortedCats) {
+        if (cat.is_custom && !firstCustomPerPerson.has(cat.person_id)) {
+          firstCustomPerPerson.set(cat.person_id, cat.id)
+        }
+      }
+      lockedCategoryIds = new Set(
+        (allCategories ?? [])
+          .filter((cat) => {
+            if (PRO_CATEGORY_NAMES.has(cat.name)) return true
+            if (cat.is_custom && firstCustomPerPerson.get(cat.person_id) !== cat.id) return true
+            return false
+          })
+          .map((cat) => cat.id)
+      )
+    }
 
     const categories = (allCategories ?? [])
       .filter((cat) => matchesQuery(cat.name, cat.is_custom, query.trim()))
@@ -87,6 +147,12 @@ export async function searchAll(
 
     for (const cat of categories) {
       const personName = peopleNameMap.get(cat.person_id) ?? ''
+      const locked = lockedCategoryIds.has(cat.id) || lockedPeopleIds.has(cat.person_id)
+      const lockedFeature = locked
+        ? PRO_CATEGORY_NAMES.has(cat.name)
+          ? cat.name as string
+          : 'custom_categories'
+        : undefined
       results.push({
         type: 'category',
         id: cat.id,
@@ -96,6 +162,8 @@ export async function searchAll(
         icon: cat.icon ?? null,
         categoryId: cat.id,
         categoryName: cat.name,
+        isLocked: locked || undefined,
+        lockedFeature,
       })
     }
 
@@ -129,6 +197,15 @@ export async function searchAll(
       const categoryIcon = item.categories?.icon ?? null
       const catId = item.categories?.id ?? item.category_id
 
+      const locked = lockedCategoryIds.has(catId) || lockedPeopleIds.has(item.person_id)
+      const lockedFeature = locked
+        ? PRO_CATEGORY_NAMES.has(categoryName)
+          ? categoryName
+          : item.categories?.is_custom
+            ? 'custom_categories'
+            : 'people'
+        : undefined
+
       results.push({
         type: 'item',
         id: item.id,
@@ -139,6 +216,8 @@ export async function searchAll(
         icon: categoryIcon,
         categoryId: catId,
         categoryName,
+        isLocked: locked || undefined,
+        lockedFeature,
       })
     }
   }

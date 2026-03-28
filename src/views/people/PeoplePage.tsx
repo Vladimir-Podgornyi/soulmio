@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Star, Trash2, MoreVertical, Pencil } from 'lucide-react'
+import { Star, Trash2, MoreVertical, Pencil, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import { deletePerson, toggleFavorite } from '@/entities/person/api'
@@ -14,10 +14,17 @@ import { getRelationDuration } from '@/shared/lib/milestones'
 import { AddPersonWidget } from '@/widgets/add-person'
 import { AddPersonForm } from '@/features/add-person'
 import { BottomSheet } from '@/shared/ui/BottomSheet'
+import { PaywallModal } from '@/shared/ui'
+import { useAccessControl } from '@/shared/lib/useAccessControl'
 
 interface PeoplePageProps {
   initialPeople: Person[]
   isPro: boolean
+  profile?: {
+    subscription_tier?: string | null
+    subscription_ends_at?: string | null
+    grace_period_ends_at?: string | null
+  }
 }
 
 function sortPeople(people: Person[]): Person[] {
@@ -27,12 +34,18 @@ function sortPeople(people: Person[]): Person[] {
   })
 }
 
-export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
+export function PeoplePage({ initialPeople, isPro, profile }: PeoplePageProps) {
   const t = useTranslations()
   const [people, setPeople] = useState<Person[]>(sortPeople(initialPeople))
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [customRelations, setCustomRelations] = useState<string[]>([])
+
+  const { canAddPerson, isPersonLocked } = useAccessControl({
+    profile,
+    people,
+    categories: [],
+  })
 
   // Загружаем кастомные отношения чтобы показывать их в фильтрах
   useEffect(() => {
@@ -135,19 +148,23 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
       <div className="stagger-list flex flex-col gap-2">
         <AddPersonWidget
           isPro={isPro}
-          canAdd={isPro || people.length === 0}
+          canAdd={canAddPerson}
           onPersonAdded={handlePersonAdded}
         />
 
-        {filteredPeople.map((person) => (
-          <PersonCard
-            key={person.id}
-            person={person}
-            onEdit={() => setEditingPerson(person)}
-            onDeleted={handleDeleted}
-            onFavoriteToggled={handleFavoriteToggled}
-          />
-        ))}
+        {filteredPeople.map((person) =>
+          isPersonLocked(person.id) ? (
+            <LockedPersonCard key={person.id} person={person} />
+          ) : (
+            <PersonCard
+              key={person.id}
+              person={person}
+              onEdit={() => setEditingPerson(person)}
+              onDeleted={handleDeleted}
+              onFavoriteToggled={handleFavoriteToggled}
+            />
+          )
+        )}
       </div>
 
       {/* Bottom sheet редактирования */}
@@ -170,6 +187,57 @@ export function PeoplePage({ initialPeople, isPro }: PeoplePageProps) {
 
 function getMenuStyle(): React.CSSProperties {
   return { position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 500 }
+}
+
+/* ── Заблокированная карточка человека (Free after downgrade) ── */
+
+function LockedPersonCard({ person }: { person: Person }) {
+  const t = useTranslations()
+  const [paywallOpen, setPaywallOpen] = useState(false)
+
+  return (
+    <>
+      <div
+        className="person-card relative flex items-center gap-4 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 min-h-[60px] cursor-pointer"
+        onClick={() => setPaywallOpen(true)}
+        style={{
+          borderLeftWidth: '3px',
+          borderLeftColor: 'transparent',
+        }}
+      >
+        <div className="relative flex-shrink-0">
+          <div className="avatar-img flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark text-[15px] font-bold text-white uppercase leading-none overflow-hidden">
+            {person.avatar_url
+              ? <img src={person.avatar_url} alt={person.name} className="h-full w-full object-cover" />
+              : person.name.charAt(0)
+            }
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col min-w-0">
+          <span className="text-sm font-semibold text-text-primary truncate">{person.name}</span>
+          {person.relation && (
+            <span className="text-xs text-text-secondary capitalize">
+              {DEFAULT_RELATIONS.includes(person.relation as typeof DEFAULT_RELATIONS[number])
+                ? t(`people.relations.${person.relation as 'partner' | 'friend' | 'family' | 'other'}`)
+                : person.relation}
+            </span>
+          )}
+        </div>
+        {/* Lock overlay */}
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-[14px]"
+          style={{ backgroundColor: 'var(--pro-lock-overlay, rgba(10,9,8,0.45))' }}
+        >
+          <Lock className="text-primary drop-shadow-md" style={{ width: 22, height: 22 }} />
+        </div>
+      </div>
+      <PaywallModal
+        open={paywallOpen}
+        feature="people"
+        onClose={() => setPaywallOpen(false)}
+      />
+    </>
+  )
 }
 
 /* ── Карточка человека ── */

@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2, X, Calendar, Clock, MapPin } from 'lucide-react'
+import { ChevronLeft, Plus, Star, ExternalLink, MoreVertical, Pencil, Trash2, X, Calendar, Clock, MapPin, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
@@ -28,6 +28,8 @@ import { getRelationDuration } from '@/shared/lib/milestones'
 import { CATEGORY_GRADIENTS, parseCategoryIconField, buildCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { EmojiPicker } from '@/shared/ui/EmojiPicker'
 import { SkeletonList } from '@/shared/ui/SkeletonList'
+import { GracePeriodBanner } from '@/shared/ui/GracePeriodBanner'
+import { ProLock, PaywallModal } from '@/shared/ui'
 
 interface PersonPageProps {
   person: Person
@@ -391,6 +393,34 @@ function ItemPreviewSheet({
   )
 }
 
+/* ── Вкладка заблокированной категории ── */
+
+function LockedCategoryTab({
+  icon,
+  label,
+  feature,
+}: {
+  icon: string
+  label: string
+  feature: string
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-9 flex-shrink-0 items-center gap-1.5 rounded-[20px] px-4 text-sm font-medium bg-bg-input text-text-muted transition-colors"
+      >
+        <span>{icon}</span>
+        <span>{label}</span>
+        <Lock size={11} className="text-text-muted ml-0.5" />
+      </button>
+      <PaywallModal open={open} feature={feature} onClose={() => setOpen(false)} />
+    </>
+  )
+}
+
 export function PersonPage({
   person,
   categories,
@@ -528,6 +558,34 @@ export function PersonPage({
   const isTravel = activeCategory?.name === 'travel'
   const isCustom = activeCategory?.is_custom ?? false
 
+  // Вычисляем заблокированные категории для Free пользователей
+  const lockedCategoryIds = useMemo(() => {
+    if (isPro) return new Set<string>()
+    const PRO_NAMES = new Set(['movies', 'travel'])
+    const customCats = localCategories.filter((c) => c.is_custom)
+    const sortedCustom = [...customCats].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+    const freeCustomId = sortedCustom[0]?.id
+    const locked = new Set<string>()
+    for (const cat of localCategories) {
+      if (PRO_NAMES.has(cat.name)) locked.add(cat.id)
+      else if (cat.is_custom && cat.id !== freeCustomId) locked.add(cat.id)
+    }
+    return locked
+  }, [isPro, localCategories])
+
+  const canAddCategory =
+    isPro || localCategories.filter((c) => c.is_custom).length < 1
+
+  const isActiveCategoryLocked = lockedCategoryIds.has(activeCategoryId)
+
+  function getLockedFeature(cat: { name: string; is_custom: boolean }): string {
+    if (cat.name === 'movies') return 'movies'
+    if (cat.name === 'travel') return 'travel'
+    return 'custom_categories'
+  }
+
   // Фильмы: разделяем фильмы и актёров
   const movieOnlyItems = isMovies ? allItems.filter((it) => !isActorItem(it.tags ?? null)) : allItems
   const actorOnlyItems = isMovies ? allItems.filter((it) => isActorItem(it.tags ?? null)) : []
@@ -616,6 +674,7 @@ export function PersonPage({
 
   return (
     <div className="min-h-screen bg-bg-primary">
+      <GracePeriodBanner />
       {/* Шапка */}
       <div className="px-4 pt-14 pb-4">
         <Link href="/people" className="mb-4 flex items-center gap-1 text-sm text-text-secondary">
@@ -665,6 +724,18 @@ export function PersonPage({
           const label = cat.name in { food: 1, restaurants: 1, gifts: 1, movies: 1, travel: 1 }
             ? t(`categories.${cat.name as 'food' | 'restaurants' | 'gifts' | 'movies' | 'travel'}`)
             : cat.name
+          const isLocked = lockedCategoryIds.has(cat.id)
+
+          if (isLocked) {
+            return (
+              <LockedCategoryTab
+                key={cat.id}
+                icon={icon}
+                label={label}
+                feature={getLockedFeature(cat)}
+              />
+            )
+          }
 
           if (cat.is_custom) {
             return (
@@ -700,13 +771,22 @@ export function PersonPage({
           )
         })}
         {/* Кнопка добавления кастомной категории */}
-        <button
-          onClick={() => setShowAddCategory(true)}
-          className="flex h-9 flex-shrink-0 items-center gap-1 rounded-[20px] px-3 text-sm font-medium bg-bg-input text-text-muted hover:bg-bg-hover transition-colors"
-        >
-          <Plus size={14} />
-          <span>{t('categories.addCustom')}</span>
-        </button>
+        {canAddCategory ? (
+          <button
+            onClick={() => setShowAddCategory(true)}
+            className="flex h-9 flex-shrink-0 items-center gap-1 rounded-[20px] px-3 text-sm font-medium bg-bg-input text-text-muted hover:bg-bg-hover transition-colors"
+          >
+            <Plus size={14} />
+            <span>{t('categories.addCustom')}</span>
+          </button>
+        ) : (
+          <ProLock feature="custom_categories" profile={{ subscription_tier: 'free' }}>
+            <button className="flex h-9 flex-shrink-0 items-center gap-1 rounded-[20px] px-3 text-sm font-medium bg-bg-input text-text-muted transition-colors">
+              <Plus size={14} />
+              <span>{t('categories.addCustom')}</span>
+            </button>
+          </ProLock>
+        )}
       </div>
 
       {/* Модал редактирования человека */}
@@ -946,9 +1026,6 @@ export function PersonPage({
               }`}
             >
               👤 {t('movies.actorsTab')}
-              {!isPro && (
-                <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Pro</span>
-              )}
             </button>
           </div>
 
@@ -1012,29 +1089,70 @@ export function PersonPage({
         </div>
       )}
 
+      {/* Read-only баннер для заблокированных категорий */}
+      {isActiveCategoryLocked && (
+        <div className="px-4 mb-3">
+          <div className="flex items-center gap-3 rounded-[14px] border border-border bg-bg-card px-4 py-3">
+            <Lock size={14} className="text-text-muted flex-shrink-0" />
+            <p className="flex-1 text-xs text-text-muted leading-snug">
+              {t('paywall.readOnlyBanner')}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const feature = activeCategory ? getLockedFeature(activeCategory) : 'movies'
+                // Откроем PaywallModal через ProLock — просто перейдём на /pro
+                window.location.href = '/pro'
+              }}
+              className="text-xs font-medium text-primary flex-shrink-0"
+            >
+              {t('paywall.readOnlyBannerAction')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Список элементов */}
       <div className="px-4 pb-32 pt-1">
         {/* Десктоп: пунктирная карточка "Добавить" вверху списка */}
-        <button
-          onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
-          className="hidden md:flex mb-2 w-full items-center gap-3 rounded-[14px] border border-dashed border-border bg-transparent p-4 text-left transition-colors hover:bg-bg-hover"
-        >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted">
-            <Plus size={16} />
-          </div>
-          <span className="text-sm text-text-muted">{t('common.add')}</span>
-        </button>
+        {isActiveCategoryLocked ? (
+          <ProLock
+            feature={activeCategory ? getLockedFeature(activeCategory) : 'movies'}
+            profile={{ subscription_tier: 'free' }}
+          >
+            <button
+              className="hidden md:flex mb-2 w-full items-center gap-3 rounded-[14px] border border-dashed border-border bg-transparent p-4 text-left"
+            >
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted">
+                <Plus size={16} />
+              </div>
+              <span className="text-sm text-text-muted">{t('common.add')}</span>
+            </button>
+          </ProLock>
+        ) : (
+          <button
+            onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
+            className="hidden md:flex mb-2 w-full items-center gap-3 rounded-[14px] border border-dashed border-border bg-transparent p-4 text-left transition-colors hover:bg-bg-hover"
+          >
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-bg-input text-text-muted">
+              <Plus size={16} />
+            </div>
+            <span className="text-sm text-text-muted">{t('common.add')}</span>
+          </button>
+        )}
 
         {loadingCategoryId === activeCategoryId ? (
           <SkeletonList count={4} hasImage={activeCategory?.name === 'gifts'} />
         ) : items.length === 0 ? (
           isMovies && movieSubTab === 'actors' && !isPro ? (
-            <Link href="/pro" className="block rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center hover:border-primary/40 transition-colors">
-              <p className="text-3xl mb-3">🎭</p>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                {t('movies.actorsPro')}
-              </p>
-            </Link>
+            <ProLock feature="actors" profile={{ subscription_tier: 'free' }}>
+              <div className="rounded-[16px] border border-primary/20 bg-primary/5 px-5 py-8 text-center">
+                <p className="text-3xl mb-3">🎭</p>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {t('movies.actorsPro')}
+                </p>
+              </div>
+            </ProLock>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="mb-4 text-[52px]">
@@ -1142,7 +1260,28 @@ export function PersonPage({
       </div>
 
       {/* FAB — только на мобильных */}
-      {!(isMovies && movieSubTab === 'actors' && !isPro) && (
+      {isActiveCategoryLocked ? (
+        <ProLock
+          feature={activeCategory ? getLockedFeature(activeCategory) : 'movies'}
+          profile={{ subscription_tier: 'free' }}
+        >
+          <button
+            className="md:hidden fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg"
+            style={{ bottom: fabBottom }}
+          >
+            <Plus size={24} className="text-white" />
+          </button>
+        </ProLock>
+      ) : isMovies && movieSubTab === 'actors' && !isPro ? (
+        <ProLock feature="actors" profile={{ subscription_tier: 'free' }}>
+          <button
+            className="md:hidden fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg"
+            style={{ bottom: fabBottom }}
+          >
+            <Plus size={24} className="text-white" />
+          </button>
+        </ProLock>
+      ) : (
         <button
           onClick={isFood ? handleOpenFoodAdd : () => setIsAddOpen(true)}
           className="md:hidden fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95"
@@ -2473,6 +2612,12 @@ interface EditCategoryModalProps {
 
 function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCategoryModalProps) {
   const t = useTranslations()
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const [name, setName] = useState(category.name)
   const parsed = parseCategoryIconField(category.icon ?? null)
   const [colorKey, setColorKey] = useState(() => {
@@ -2521,9 +2666,9 @@ function EditCategoryModal({ category, onClose, onUpdated, onDeleted }: EditCate
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-[80px] md:p-6">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 max-h-[calc(100dvh-96px)] md:max-h-[85dvh] overflow-y-auto overscroll-contain">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">
@@ -2688,6 +2833,11 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   const [isSaving, setIsSaving] = useState(false)
   const isLimited = !isPro && customCategoryCount >= FREE_CUSTOM_LIMIT
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   async function handleSave() {
     if (!name.trim() || isSaving) return
     setIsSaving(true)
@@ -2741,9 +2891,9 @@ function AddCategoryModal({ personId, userId, personName, isPro, customCategoryC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center md:pt-20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-[80px] md:p-6">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 pb-safe max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-md rounded-[28px] bg-bg-secondary p-6 max-h-[calc(100dvh-96px)] md:max-h-[85dvh] overflow-y-auto overscroll-contain">
         {/* Заголовок */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-[-0.5px] text-text-primary">

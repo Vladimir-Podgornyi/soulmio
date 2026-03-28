@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Search, X, User, Folder, Loader2 } from 'lucide-react'
+import { Search, X, User, Folder, Loader2, Lock } from 'lucide-react'
 import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
+import { PaywallModal } from '@/shared/ui/PaywallModal'
+import type { PaywallFeature } from '@/shared/ui/PaywallModal'
 import { useSearch } from '../model/useSearch'
+import type { SearchResult } from '../api'
 
 const DEFAULT_CATEGORY_EMOJIS: Record<string, string> = {
   restaurants: '🍽️',
@@ -26,8 +29,17 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const { query, setQuery, results, loading, reset } = useSearch(userId)
 
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const [paywallFeature, setPaywallFeature] = useState<PaywallFeature>('movies')
+
   useEffect(() => {
     inputRef.current?.focus()
+  }, [])
+
+  // Блокируем скролл страницы когда поиск открыт
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
   }, [])
 
   useEffect(() => {
@@ -38,10 +50,15 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  function handleSelect(href: string) {
+  function handleSelect(r: SearchResult) {
+    if (r.isLocked) {
+      setPaywallFeature((r.lockedFeature as PaywallFeature) ?? 'movies')
+      setPaywallOpen(true)
+      return
+    }
     reset()
     onClose()
-    router.push(href)
+    router.push(r.href)
   }
 
   function getCategoryDisplayTitle(name: string): string {
@@ -53,9 +70,7 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
   }
 
   function getItemIcon(icon: string | null, categoryName?: string): string {
-    // Для дефолтных категорий icon содержит emoji напрямую (не colorKey:emoji)
     if (icon && !icon.includes(':')) return icon
-    // Для кастомных категорий icon = 'colorKey:emoji|...'
     if (icon) {
       const { emoji } = parseCategoryIconField(icon)
       return emoji
@@ -69,6 +84,46 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
   const people = results.filter((r) => r.type === 'person')
   const categories = results.filter((r) => r.type === 'category')
   const items = results.filter((r) => r.type === 'item')
+
+  function ResultRow({
+    r,
+    icon,
+    displayTitle,
+    displaySubtitle,
+  }: {
+    r: SearchResult
+    icon: React.ReactNode
+    displayTitle?: string
+    displaySubtitle?: string
+  }) {
+    const title = displayTitle ?? r.title
+    const subtitle = displaySubtitle ?? r.subtitle
+    return (
+      <button
+        key={r.id}
+        onClick={() => handleSelect(r)}
+        className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors text-left ${r.isLocked ? 'opacity-60' : ''}`}
+      >
+        <div className="relative flex-shrink-0">
+          {icon}
+          {r.isLocked && (
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-bg-secondary flex items-center justify-center">
+              <Lock size={9} className="text-text-muted" />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-text-primary truncate">{title}</p>
+          {subtitle && (
+            <p className="text-xs text-text-muted truncate">{subtitle}</p>
+          )}
+        </div>
+        {r.isLocked && (
+          <Lock size={12} className="text-text-muted flex-shrink-0" />
+        )}
+      </button>
+    )
+  }
 
   return (
     <>
@@ -123,21 +178,15 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
                   {t('search.sectionPeople')}
                 </p>
                 {people.map((r) => (
-                  <button
+                  <ResultRow
                     key={r.id}
-                    onClick={() => handleSelect(r.href)}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors text-left"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
-                      <User size={16} className="text-text-secondary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">{r.title}</p>
-                      {r.subtitle && (
-                        <p className="text-xs text-text-muted capitalize truncate">{r.subtitle}</p>
-                      )}
-                    </div>
-                  </button>
+                    r={r}
+                    icon={
+                      <div className="w-9 h-9 rounded-full bg-bg-input flex items-center justify-center">
+                        <User size={16} className="text-text-secondary" />
+                      </div>
+                    }
+                  />
                 ))}
               </div>
             )}
@@ -150,21 +199,16 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
                 {categories.map((r) => {
                   const emoji = r.icon ? getItemIcon(r.icon) : null
                   return (
-                    <button
+                    <ResultRow
                       key={r.id}
-                      onClick={() => handleSelect(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors text-left"
-                    >
-                      <div className="w-9 h-9 rounded-[10px] bg-bg-input flex items-center justify-center flex-shrink-0 text-base">
-                        {emoji ?? <Folder size={16} className="text-text-secondary" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">{getCategoryDisplayTitle(r.title)}</p>
-                        {r.subtitle && (
-                          <p className="text-xs text-text-muted truncate">{r.subtitle}</p>
-                        )}
-                      </div>
-                    </button>
+                      r={r}
+                      displayTitle={getCategoryDisplayTitle(r.title)}
+                      icon={
+                        <div className="w-9 h-9 rounded-[10px] bg-bg-input flex items-center justify-center text-base">
+                          {emoji ?? <Folder size={16} className="text-text-secondary" />}
+                        </div>
+                      }
+                    />
                   )
                 })}
               </div>
@@ -177,20 +221,22 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
                 </p>
                 {items.map((r) => {
                   const emoji = getItemIcon(r.icon, r.categoryName)
+                  // Пересобираем subtitle с переведённым именем категории
+                  const personPart = r.subtitle.split(' · ')[0]
+                  const translatedSubtitle = r.categoryName
+                    ? `${personPart} · ${getCategoryDisplayTitle(r.categoryName)}`
+                    : r.subtitle
                   return (
-                    <button
+                    <ResultRow
                       key={r.id}
-                      onClick={() => handleSelect(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors text-left"
-                    >
-                      <div className="w-9 h-9 rounded-[10px] bg-bg-input flex items-center justify-center flex-shrink-0 text-base">
-                        {emoji}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">{r.title}</p>
-                        <p className="text-xs text-text-muted truncate">{r.subtitle}</p>
-                      </div>
-                    </button>
+                      r={r}
+                      displaySubtitle={translatedSubtitle}
+                      icon={
+                        <div className="w-9 h-9 rounded-[10px] bg-bg-input flex items-center justify-center text-base">
+                          {emoji}
+                        </div>
+                      }
+                    />
                   )
                 })}
               </div>
@@ -198,6 +244,12 @@ export function SearchModal({ userId, onClose }: SearchModalProps) {
           </div>
         </div>
       </div>
+
+      <PaywallModal
+        open={paywallOpen}
+        feature={paywallFeature}
+        onClose={() => setPaywallOpen(false)}
+      />
     </>
   )
 }

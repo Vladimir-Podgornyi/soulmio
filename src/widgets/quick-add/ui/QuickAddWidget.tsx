@@ -11,6 +11,7 @@ import { parseCategoryIconField, CATEGORY_GRADIENTS, buildCategoryIconField } fr
 import { createClient } from '@/shared/api/supabase'
 import { AddPersonForm } from '@/features/add-person'
 import { EmojiPicker } from '@/shared/ui/EmojiPicker'
+import { ProLock } from '@/shared/ui'
 
 interface QuickAddWidgetProps {
   people: Person[]
@@ -322,14 +323,16 @@ export function QuickAddWidget({ people, isPro }: QuickAddWidgetProps) {
                       </span>
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => { close(); router.push('/pro') }}
-                      className="flex flex-col items-center gap-2 rounded-[16px] border border-dashed border-border p-4 transition-all hover:border-primary/40 active:scale-95"
-                    >
-                      <span className="text-2xl leading-none">🔒</span>
-                      <span className="text-xs font-medium text-text-muted text-center leading-tight">Pro</span>
-                    </button>
+                    <ProLock feature="custom_categories" profile={{ subscription_tier: 'free' }}>
+                      <div className="flex flex-col items-center gap-2 rounded-[16px] border border-dashed border-border p-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-input">
+                          <Plus size={16} className="text-text-muted" />
+                        </div>
+                        <span className="text-xs font-medium text-text-muted text-center leading-tight">
+                          {t('categories.addCustom')}
+                        </span>
+                      </div>
+                    </ProLock>
                   )}
                 </div>
               </div>
