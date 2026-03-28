@@ -17,6 +17,11 @@ export interface Database {
           avatar_url: string | null
           subscription_tier: string
           created_at: string
+          is_admin: boolean
+          country_code: string | null
+          language: string | null
+          platform: string | null
+          stripe_customer_id: string | null
         }
         Insert: {
           id: string
@@ -25,6 +30,11 @@ export interface Database {
           avatar_url?: string | null
           subscription_tier?: string
           created_at?: string
+          is_admin?: boolean
+          country_code?: string | null
+          language?: string | null
+          platform?: string | null
+          stripe_customer_id?: string | null
         }
         Update: {
           id?: string
@@ -33,6 +43,11 @@ export interface Database {
           avatar_url?: string | null
           subscription_tier?: string
           created_at?: string
+          is_admin?: boolean
+          country_code?: string | null
+          language?: string | null
+          platform?: string | null
+          stripe_customer_id?: string | null
         }
         Relationships: []
       }
@@ -229,6 +244,39 @@ export interface Database {
           category_id?: string
           prompt_summary?: string | null
           response?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_type: string
+          platform: string | null
+          country_code: string | null
+          language: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_type: string
+          platform?: string | null
+          country_code?: string | null
+          language?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          event_type?: string
+          platform?: string | null
+          country_code?: string | null
+          language?: string | null
+          metadata?: Json | null
           created_at?: string
         }
         Relationships: []

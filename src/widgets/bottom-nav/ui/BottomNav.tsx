@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Home, Users, Settings, Search } from 'lucide-react'
+import { Home, Users, Settings, Search, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/shared/api/supabase'
 import { SearchModal } from '@/features/search/ui/SearchModal'
 
@@ -21,6 +21,7 @@ function NavLink({
   href,
   icon: Icon,
   labelKey,
+  label,
   isActive,
   t,
   desktop = false,
@@ -28,10 +29,13 @@ function NavLink({
   href: string
   icon: typeof Home
   labelKey: string
+  label?: string
   isActive: boolean
   t: ReturnType<typeof useTranslations>
   desktop?: boolean
 }) {
+  const displayLabel = label ?? t(labelKey as Parameters<typeof t>[0])
+
   if (desktop) {
     return (
       <Link
@@ -43,7 +47,7 @@ function NavLink({
         }`}
       >
         <Icon size={16} strokeWidth={isActive ? 2.2 : 1.8} />
-        {t(labelKey as Parameters<typeof t>[0])}
+        {displayLabel}
       </Link>
     )
   }
@@ -71,11 +75,20 @@ export function BottomNav() {
   const t = useTranslations()
   const [searchOpen, setSearchOpen] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUserId(data.user?.id ?? null)
+      if (data.user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', data.user.id)
+          .single()
+        setIsAdmin(profile?.is_admin ?? false)
+      }
     })
   }, [])
 
@@ -99,6 +112,16 @@ export function BottomNav() {
         {NAV_AFTER.map(({ href, icon, labelKey }) => (
           <NavLink key={href} href={href} icon={icon} labelKey={labelKey} isActive={pathname === href} t={t} />
         ))}
+        {isAdmin && (
+          <NavLink
+            href="/admin"
+            icon={ShieldCheck}
+            labelKey="nav.admin"
+            label="Admin"
+            isActive={pathname === '/admin'}
+            t={t}
+          />
+        )}
       </nav>
 
       {/* ── Desktop: top nav ── */}
@@ -127,6 +150,17 @@ export function BottomNav() {
           {NAV_AFTER.map(({ href, icon, labelKey }) => (
             <NavLink key={href} href={href} icon={icon} labelKey={labelKey} isActive={pathname === href} t={t} desktop />
           ))}
+          {isAdmin && (
+            <NavLink
+              href="/admin"
+              icon={ShieldCheck}
+              labelKey="nav.admin"
+              label="Admin"
+              isActive={pathname === '/admin'}
+              t={t}
+              desktop
+            />
+          )}
         </div>
       </nav>
 
