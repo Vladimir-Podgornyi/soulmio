@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import { loginSchema, type LoginFormValues } from './schemas'
+import { updateProfileMeta } from '@/shared/lib/updateProfileMeta'
 
 export function useLogin() {
   const router = useRouter()
@@ -30,6 +31,11 @@ export function useLogin() {
       toast.error(error.message)
       setIsLoading(false)
       return
+    }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      updateProfileMeta(supabase, user.id).catch(() => {})
     }
 
     window.location.href = '/dashboard'
