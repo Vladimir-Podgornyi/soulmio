@@ -18,5 +18,5 @@ export default async function Page() {
 
   const isPro = profile?.subscription_tier === 'pro'
 
-  return <PeoplePage initialPeople={people} isPro={isPro} />
+  return <PeoplePage initialPeople={people} isPro={isPro} profile={profile ?? undefined} />
 }

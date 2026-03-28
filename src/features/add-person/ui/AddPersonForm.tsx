@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Plus, X, Camera, CalendarHeart, Cake, Calendar, Trash2 } from 'lucide-react'
 import { getRelationStats } from '@/shared/lib/milestones'
+import { ProLock } from '@/shared/ui'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/api/supabase'
 import type { Person } from '@/entities/person/model/types'
@@ -177,15 +178,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
   return (
     <form onSubmit={handleSubmit((v) => onSubmit(v, avatarUrl, pendingDates))} className="flex flex-col gap-5">
       {/* Аватар */}
-      {!isPro && (
-        <div className="flex items-center gap-3 pb-1">
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-bg-input opacity-50">
-            <Camera size={20} className="text-text-muted" />
-          </div>
-          <p className="text-xs text-text-muted">{t('people.avatarProHint')}</p>
-        </div>
-      )}
-      {isPro && (
+      <ProLock feature="avatar" profile={{ subscription_tier: isPro ? 'pro' : 'free' }}>
         <div className="flex flex-col items-center gap-2 pb-1">
           <input
             ref={avatarInputRef}
@@ -231,7 +224,7 @@ export function AddPersonForm({ isPro, person, onSuccess, onCancel }: AddPersonF
           )}
           <p className="text-[11px] text-text-muted">{t('people.uploadPhotoHint')}</p>
         </div>
-      )}
+      </ProLock>
 
       {/* Имя */}
       <div className="flex flex-col gap-1.5">

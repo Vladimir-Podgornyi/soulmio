@@ -8,6 +8,7 @@ import { getUpcomingBirthdays } from '@/entities/person/api'
 import { getUpcomingPersonDates } from '@/entities/person/api/personDates'
 import { DashboardPage } from '@/views/dashboard/DashboardPage'
 import type { Profile } from '@/entities/user/model/types'
+import { calcIsPro, getAccessiblePeopleIds } from '@/shared/lib/calcIsPro'
 
 async function getOrCreateProfile(
   supabase: DbClient,
@@ -32,9 +33,12 @@ async function getOrCreateProfile(
     full_name: fullName,
     avatar_url: null,
     subscription_tier: 'free',
+    subscription_ends_at: null,
+    grace_period_ends_at: null,
     created_at: new Date().toISOString(),
   }
 }
+
 
 export default async function Page() {
   const supabase = await createServerSupabaseClient()
@@ -45,10 +49,17 @@ export default async function Page() {
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? null
   const db = supabase as DbClient
 
-  const [profile, people, summary, upcomingGifts, upcomingRestaurants, upcomingMovies, upcomingTrips, upcomingCustomItems, upcomingBirthdays, upcomingPersonDates] = await Promise.all([
+  // Fetch profile + people first to compute accessible person IDs
+  const [profile, people] = await Promise.all([
     getOrCreateProfile(db, user.id, user.email, fullName),
     getPeople(db, user.id),
-    getItemSummary(db, user.id),
+  ])
+
+  const isPro = calcIsPro(profile)
+  const accessiblePeopleIds = getAccessiblePeopleIds(isPro, people)
+
+  const [summary, upcomingGifts, upcomingRestaurants, upcomingMovies, upcomingTrips, upcomingCustomItems, upcomingBirthdays, upcomingPersonDates] = await Promise.all([
+    getItemSummary(db, user.id, accessiblePeopleIds),
     getUpcomingGifts(db, user.id),
     getUpcomingRestaurants(db, user.id),
     getUpcomingMovies(db, user.id),

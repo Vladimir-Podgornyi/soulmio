@@ -16,6 +16,8 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           subscription_tier: string
+          subscription_ends_at: string | null
+          grace_period_ends_at: string | null
           created_at: string
           is_admin: boolean
           country_code: string | null
@@ -29,6 +31,8 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           subscription_tier?: string
+          subscription_ends_at?: string | null
+          grace_period_ends_at?: string | null
           created_at?: string
           is_admin?: boolean
           country_code?: string | null
@@ -42,6 +46,8 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           subscription_tier?: string
+          subscription_ends_at?: string | null
+          grace_period_ends_at?: string | null
           created_at?: string
           is_admin?: boolean
           country_code?: string | null

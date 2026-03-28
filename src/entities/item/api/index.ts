@@ -76,30 +76,44 @@ export interface ItemCategorySummary {
   count: number
   icon?: string | null
   isCustom?: boolean
+  /** ID of the category (first encountered when merging same-name categories) */
+  categoryId?: string
+  /** created_at of the category — used for locking order in Free plan */
+  categoryCreatedAt?: string
 }
 
 export async function getItemSummary(
   supabase: DbClient,
-  userId: string
+  userId: string,
+  /** If provided, only include items from these people (for Free plan filtering) */
+  accessiblePeopleIds?: string[]
 ): Promise<ItemCategorySummary[]> {
-  const { data: people } = await supabase
-    .from('people')
-    .select('id')
-    .eq('user_id', userId)
+  let peopleIds: string[]
 
-  if (!people?.length) return []
+  if (accessiblePeopleIds) {
+    peopleIds = accessiblePeopleIds
+  } else {
+    const { data: people } = await supabase
+      .from('people')
+      .select('id')
+      .eq('user_id', userId)
+    if (!people?.length) return []
+    peopleIds = people.map((p) => p.id)
+  }
 
-  const peopleIds = people.map((p) => p.id)
+  if (!peopleIds.length) return []
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, icon, is_custom')
+    .select('id, name, icon, is_custom, created_at')
     .in('person_id', peopleIds)
 
   if (!categories?.length) return []
 
   const categoryIds = categories.map((c) => c.id)
-  const categoryMeta = new Map(categories.map((c) => [c.id, { name: c.name, icon: c.icon, isCustom: c.is_custom }]))
+  const categoryMeta = new Map(
+    categories.map((c) => [c.id, { name: c.name, icon: c.icon, isCustom: c.is_custom, createdAt: c.created_at, id: c.id }])
+  )
 
   const { data: items } = await supabase
     .from('items')
@@ -108,19 +122,29 @@ export async function getItemSummary(
 
   if (!items?.length) return []
 
-  const counts: Record<string, { count: number; icon: string | null; isCustom: boolean }> = {}
+  const counts: Record<string, { count: number; icon: string | null; isCustom: boolean; categoryId: string; categoryCreatedAt: string }> = {}
   for (const item of items) {
     const meta = categoryMeta.get(item.category_id)
     const name = meta?.name ?? 'other'
-    if (!counts[name]) counts[name] = { count: 0, icon: meta?.icon ?? null, isCustom: meta?.isCustom ?? false }
+    if (!counts[name]) {
+      counts[name] = {
+        count: 0,
+        icon: meta?.icon ?? null,
+        isCustom: meta?.isCustom ?? false,
+        categoryId: meta?.id ?? item.category_id,
+        categoryCreatedAt: meta?.createdAt ?? '',
+      }
+    }
     counts[name].count += 1
   }
 
-  return Object.entries(counts).map(([categoryName, { count, icon, isCustom }]) => ({
+  return Object.entries(counts).map(([categoryName, { count, icon, isCustom, categoryId, categoryCreatedAt }]) => ({
     categoryName,
     count,
     icon,
     isCustom,
+    categoryId,
+    categoryCreatedAt,
   }))
 }
 
@@ -541,14 +565,28 @@ export interface ItemWithPerson extends Item {
 export async function getAllItemsByCategoryName(
   supabase: DbClient,
   userId: string,
-  categoryName: string
+  categoryName: string,
+  /** Если передан — показывать только элементы этих людей (Free план) */
+  accessiblePeopleIds?: string[]
 ): Promise<ItemWithPerson[]> {
-  const { data: people } = await supabase
-    .from('people')
-    .select('id, name, avatar_url')
-    .eq('user_id', userId)
+  let people: Array<{ id: string; name: string; avatar_url: string | null }>
 
-  if (!people?.length) return []
+  if (accessiblePeopleIds) {
+    if (!accessiblePeopleIds.length) return []
+    const { data } = await supabase
+      .from('people')
+      .select('id, name, avatar_url')
+      .in('id', accessiblePeopleIds)
+    people = data ?? []
+  } else {
+    const { data } = await supabase
+      .from('people')
+      .select('id, name, avatar_url')
+      .eq('user_id', userId)
+    people = data ?? []
+  }
+
+  if (!people.length) return []
 
   const peopleIds = people.map((p) => p.id)
   const peopleMap = new Map(

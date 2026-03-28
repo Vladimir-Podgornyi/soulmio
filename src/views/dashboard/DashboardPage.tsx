@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, startTransition } from 'react'
+import { useState, useEffect, startTransition, useMemo } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles, CheckCircle } from 'lucide-react'
+import { Gift, UtensilsCrossed, ExternalLink, X, Star, MapPin, Bell, ChevronRight, Sparkles, CheckCircle, Lock } from 'lucide-react'
 import { createClient } from '@/shared/api/supabase'
 import { updateItem } from '@/entities/item/api'
 import { useCurrency, formatPrice } from '@/shared/lib/currency'
@@ -16,6 +16,9 @@ import { QuickAddWidget } from '@/widgets/quick-add'
 import { parseCategoryIconField } from '@/entities/category/model/categoryIcon'
 import { getMilestoneToday, getRelationStats, type MilestoneMatch, type RelationStats } from '@/shared/lib/milestones'
 import { InAppOnboarding, shouldShowInAppOnboarding } from '@/widgets/in-app-onboarding'
+import { useSubscriptionStatus } from '@/shared/lib/useSubscriptionStatus'
+import { GracePeriodBanner } from '@/shared/ui/GracePeriodBanner'
+import { ProLock, PaywallModal } from '@/shared/ui'
 
 interface DashboardPageProps {
   profile: Profile
@@ -96,6 +99,46 @@ const GRADIENT_SOLID_COLOR: Record<string, string> = {
   gold:    '#C09020',
 }
 
+/* ── Заблокированная карточка человека (Free после downgrade) ── */
+
+function LockedPersonDashboardCard({ person }: { person: Person }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div
+        className="person-card relative flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 cursor-pointer"
+        onClick={() => setOpen(true)}
+      >
+        {person.avatar_url ? (
+          <img
+            src={person.avatar_url}
+            alt={person.name}
+            className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+            {person.name[0].toUpperCase()}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-text-primary leading-tight truncate">{person.name}</p>
+          {person.relation && (
+            <p className="text-xs text-text-secondary capitalize truncate">{person.relation}</p>
+          )}
+        </div>
+        {/* Lock overlay */}
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-[14px]"
+          style={{ backgroundColor: 'var(--pro-lock-overlay, rgba(10,9,8,0.45))' }}
+        >
+          <Lock className="text-primary drop-shadow-md" style={{ width: 20, height: 20 }} />
+        </div>
+      </div>
+      <PaywallModal open={open} feature="people" onClose={() => setOpen(false)} />
+    </>
+  )
+}
+
 /* ── Unified reminder notification card ── */
 type ReminderScheme = 'milestone' | 'birthday' | 'date' | 'gift' | 'restaurant' | 'movie' | 'trip'
 
@@ -158,7 +201,7 @@ function ReminderNotif({
 
 export function DashboardPage({ profile, people, summary, upcomingGifts: initialGifts, upcomingRestaurants: initialRestaurants, upcomingMovies: initialMovies, upcomingTrips: initialTrips, upcomingCustomItems: initialCustomItems, upcomingBirthdays, upcomingPersonDates }: DashboardPageProps) {
   const t = useTranslations()
-  const isPro = profile.subscription_tier === 'pro'
+  const { isPro } = useSubscriptionStatus(profile)
   const displayName = profile.full_name?.split(' ')[0] ?? profile.email ?? 'there'
 
   // Вычисляем milestone для каждого человека с relation_since
@@ -235,6 +278,37 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
     return a.is_favorite ? -1 : 1
   })
 
+  // IDs людей сверх Free лимита (для downgraded пользователей)
+  const lockedPeopleIds = useMemo(() => {
+    if (isPro) return new Set<string>()
+    const sorted = [...people].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+    const freeIds = new Set(sorted.slice(0, 1).map((p) => p.id))
+    return new Set(sorted.filter((p) => !freeIds.has(p.id)).map((p) => p.id))
+  }, [isPro, people])
+
+  // Состояние для Paywall в разделе Обзора
+  const [overviewPaywallOpen, setOverviewPaywallOpen] = useState(false)
+  const [overviewPaywallFeature, setOverviewPaywallFeature] = useState<'movies' | 'travel' | 'custom_categories'>('movies')
+
+  function openOverviewPaywall(feature: 'movies' | 'travel' | 'custom_categories') {
+    setOverviewPaywallFeature(feature)
+    setOverviewPaywallOpen(true)
+  }
+
+  // Для Free: определяем заблокированные кастомные категории в Обзоре
+  // Первая кастомная (по created_at) — бесплатна, остальные — заблокированы
+  const lockedCustomCategoryIds = useMemo(() => {
+    if (isPro) return new Set<string>()
+    const customs = summary
+      .filter((s) => s.isCustom && s.categoryId)
+      .sort((a, b) => new Date(a.categoryCreatedAt ?? '').getTime() - new Date(b.categoryCreatedAt ?? '').getTime())
+    const locked = new Set<string>()
+    customs.slice(1).forEach((s) => { if (s.categoryId) locked.add(s.categoryId) })
+    return locked
+  }, [isPro, summary])
+
   function handleGiftBought(giftId: string) {
     setGifts((prev) => prev.filter((g) => g.itemId !== giftId))
     setSelectedGift(null)
@@ -262,6 +336,7 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
 
   return (
     <div className="min-h-screen bg-bg-primary pb-28">
+      <GracePeriodBanner profile={profile} />
       {showOnboarding && <InAppOnboarding onDone={() => setShowOnboarding(false)} />}
       {/* Шапка с приветствием */}
       <div className="px-4 pt-14 pb-6">
@@ -437,18 +512,17 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           )}
         </>
       ) : (
-        <section className="px-4 mb-5">
-          <Link
-            href="/pro"
-            className="flex items-center gap-3 rounded-[16px] border border-dashed border-border px-4 py-3 hover:border-primary/30 transition-colors"
-          >
-            <Bell size={15} className="text-text-muted flex-shrink-0" suppressHydrationWarning />
-            <p className="flex-1 text-xs text-text-muted leading-snug">
-              {t('dashboard.remindersProHint')}
-            </p>
-            <ChevronRight size={14} className="text-text-muted flex-shrink-0" />
-          </Link>
-        </section>
+        <ProLock feature="reminders" profile={profile}>
+          <section className="px-4 mb-5">
+            <div className="flex items-center gap-3 rounded-[16px] border border-dashed border-border px-4 py-3">
+              <Bell size={15} className="text-text-muted flex-shrink-0" suppressHydrationWarning />
+              <p className="flex-1 text-xs text-text-muted leading-snug">
+                {t('dashboard.remindersProHint')}
+              </p>
+              <ChevronRight size={14} className="text-text-muted flex-shrink-0" />
+            </div>
+          </section>
+        </ProLock>
       )}
 
       {/* Ваши люди — избранные первыми */}
@@ -458,40 +532,45 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
             {t('dashboard.yourPeople')}
           </h2>
           <div className="stagger-list flex flex-col gap-2">
-            {sortedPeople.map((person) => (
-              <Link
-                key={person.id}
-                href={`/people/${person.id}`}
-                className="person-card flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 hover:border-primary/30"
-              >
-                {person.avatar_url ? (
-                  <img
-                    src={person.avatar_url}
-                    alt={person.name}
-                    className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
-                    {person.name[0].toUpperCase()}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-text-primary leading-tight">{person.name}</p>
-                    {person.is_favorite && (
-                      <Star size={12} className="fill-primary text-primary flex-shrink-0" />
+            {sortedPeople.map((person) => {
+              if (lockedPeopleIds.has(person.id)) {
+                return <LockedPersonDashboardCard key={person.id} person={person} />
+              }
+              return (
+                <Link
+                  key={person.id}
+                  href={`/people/${person.id}`}
+                  className="person-card flex items-center gap-3 rounded-[14px] bg-bg-card border border-border-card px-4 py-3 hover:border-primary/30"
+                >
+                  {person.avatar_url ? (
+                    <img
+                      src={person.avatar_url}
+                      alt={person.name}
+                      className="avatar-img h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="avatar-img h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm">
+                      {person.name[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold text-text-primary leading-tight">{person.name}</p>
+                      {person.is_favorite && (
+                        <Star size={12} className="fill-primary text-primary flex-shrink-0" />
+                      )}
+                    </div>
+                    {person.relation && (
+                      <p className="text-xs text-text-secondary capitalize">
+                        {['partner', 'friend', 'family', 'other'].includes(person.relation)
+                          ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
+                          : person.relation}
+                      </p>
                     )}
                   </div>
-                  {person.relation && (
-                    <p className="text-xs text-text-secondary capitalize">
-                      {['partner', 'friend', 'family', 'other'].includes(person.relation)
-                        ? t(`people.relations.${person.relation}` as Parameters<typeof t>[0])
-                        : person.relation}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}
@@ -511,17 +590,18 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
           <div className="stagger-list grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
             {STAT_CARDS.filter((card) => summaryMap.has(card.categoryName)).map((card) => {
               const count = summaryMap.get(card.categoryName) ?? 0
-              return (
-                <Link
-                  key={card.categoryName}
-                  href={`/overview/${card.categoryName}`}
-                  className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
-                  style={{ background: card.gradient }}
-                  suppressHydrationWarning
-                >
+              const isProCat = card.categoryName === 'movies' || card.categoryName === 'travel'
+              const locked = !isPro && isProCat
+              const cardContent = (
+                <>
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[44px] opacity-[0.15] select-none pointer-events-none">
                     {card.icon}
                   </span>
+                  {locked && (
+                    <div className="absolute top-3 right-3">
+                      <Lock size={14} className="text-white opacity-70" />
+                    </div>
+                  )}
                   <p
                     className="text-[11px] font-semibold uppercase tracking-[0.08em]"
                     style={{ color: 'var(--card-label-color)' }}
@@ -545,47 +625,101 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
                       {t('dashboard.itemCount', { count })}
                     </p>
                   </div>
+                </>
+              )
+
+              if (locked) {
+                return (
+                  <button
+                    key={card.categoryName}
+                    type="button"
+                    onClick={() => openOverviewPaywall(card.categoryName as 'movies' | 'travel')}
+                    className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between w-full text-left opacity-70"
+                    style={{ background: card.gradient }}
+                    suppressHydrationWarning
+                  >
+                    {cardContent}
+                  </button>
+                )
+              }
+
+              return (
+                <Link
+                  key={card.categoryName}
+                  href={`/overview/${card.categoryName}`}
+                  className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
+                  style={{ background: card.gradient }}
+                  suppressHydrationWarning
+                >
+                  {cardContent}
                 </Link>
               )
             })}
 
             {summary.filter((s) => s.isCustom && s.count > 0).map((s) => {
               const { gradient, emoji } = parseCategoryIconField(s.icon ?? null)
+              const locked = !isPro && s.categoryId ? lockedCustomCategoryIds.has(s.categoryId) : false
+              const cardContent = (
+                <>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[44px] opacity-[0.15] select-none pointer-events-none">
+                    {emoji}
+                  </span>
+                  {locked && (
+                    <div className="absolute top-3 right-3">
+                      <Lock size={14} className="text-white opacity-70" />
+                    </div>
+                  )}
+                  <p
+                    className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate pr-6"
+                    style={{ color: 'var(--card-label-color)' }}
+                    suppressHydrationWarning
+                  >
+                    {s.categoryName}
+                  </p>
+                  <div>
+                    <p
+                      className="text-[30px] font-bold leading-none tracking-[-1px]"
+                      style={{ color: 'var(--card-count-color)' }}
+                      suppressHydrationWarning
+                    >
+                      {s.count}
+                    </p>
+                    <p
+                      className="text-[11px] mt-1"
+                      style={{ color: 'var(--card-sub-color)' }}
+                      suppressHydrationWarning
+                    >
+                      {t('dashboard.itemCount', { count: s.count })}
+                    </p>
+                  </div>
+                </>
+              )
+
+              if (locked) {
+                return (
+                  <button
+                    key={s.categoryName}
+                    type="button"
+                    onClick={() => openOverviewPaywall('custom_categories')}
+                    className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between w-full text-left opacity-70"
+                    style={{ background: gradient }}
+                    suppressHydrationWarning
+                  >
+                    {cardContent}
+                  </button>
+                )
+              }
+
               return (
-              <Link
-                key={s.categoryName}
-                href={`/overview/custom/${encodeURIComponent(s.categoryName)}`}
-                className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
-                style={{ background: gradient }}
-                suppressHydrationWarning
-              >
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[44px] opacity-[0.15] select-none pointer-events-none">
-                  {emoji}
-                </span>
-                <p
-                  className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate pr-6"
-                  style={{ color: 'var(--card-label-color)' }}
+                <Link
+                  key={s.categoryName}
+                  href={`/overview/custom/${encodeURIComponent(s.categoryName)}`}
+                  className="stat-card relative overflow-hidden rounded-[20px] p-4 min-h-[120px] flex flex-col justify-between"
+                  style={{ background: gradient }}
                   suppressHydrationWarning
                 >
-                  {s.categoryName}
-                </p>
-                <div>
-                  <p
-                    className="text-[30px] font-bold leading-none tracking-[-1px]"
-                    style={{ color: 'var(--card-count-color)' }}
-                    suppressHydrationWarning
-                  >
-                    {s.count}
-                  </p>
-                  <p
-                    className="text-[11px] mt-1"
-                    style={{ color: 'var(--card-sub-color)' }}
-                    suppressHydrationWarning
-                  >
-                    {t('dashboard.itemCount', { count: s.count })}
-                  </p>
-                </div>
-              </Link>
+                  {cardContent}
+                </Link>
               )
             })}
           </div>
@@ -594,6 +728,13 @@ export function DashboardPage({ profile, people, summary, upcomingGifts: initial
 
       {/* FAB — быстрое добавление */}
       <QuickAddWidget people={people} isPro={isPro} />
+
+      {/* PaywallModal для заблокированных карточек в Обзоре */}
+      <PaywallModal
+        open={overviewPaywallOpen}
+        feature={overviewPaywallFeature}
+        onClose={() => setOverviewPaywallOpen(false)}
+      />
 
       {/* Модальное окно подарка */}
       {selectedGift && (

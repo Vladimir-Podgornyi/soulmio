@@ -5,6 +5,7 @@ import { getAllItemsByCategoryName } from '@/entities/item/api'
 import { getProfile } from '@/entities/user/api'
 import { getPeople } from '@/entities/person/api'
 import { OverviewPage } from '@/views/overview/OverviewPage'
+import { calcIsPro, getAccessiblePeopleIds } from '@/shared/lib/calcIsPro'
 
 interface Props {
   params: Promise<{ categoryName: string }>
@@ -20,22 +21,27 @@ export default async function Page({ params }: Props) {
 
   const db = supabase as DbClient
 
-  const [items, profile, people] = await Promise.all([
-    getAllItemsByCategoryName(db, user.id, name),
+  const [profile, people] = await Promise.all([
     getProfile(db, user.id),
     getPeople(db, user.id),
   ])
 
-  // Получаем иконку кастомной категории из первой попавшейся категории с таким именем
-  const { data: categoryRow } = await (supabase as DbClient)
-    .from('categories')
-    .select('icon')
-    .eq('name', name)
-    .eq('is_custom', true)
-    .limit(1)
-    .single()
+  const isPro = calcIsPro(profile ?? {})
+  const accessiblePeopleIds = getAccessiblePeopleIds(isPro, people)
 
-  const isPro = profile?.subscription_tier === 'pro'
+  const [items, categoryRow] = await Promise.all([
+    getAllItemsByCategoryName(db, user.id, name, accessiblePeopleIds),
+    // Иконка кастомной категории из доступных людей
+    (db as typeof supabase)
+      .from('categories')
+      .select('icon')
+      .eq('name', name)
+      .eq('is_custom', true)
+      .in('person_id', accessiblePeopleIds ?? people.map((p) => p.id))
+      .limit(1)
+      .single()
+      .then(({ data }) => data),
+  ])
 
   return (
     <OverviewPage

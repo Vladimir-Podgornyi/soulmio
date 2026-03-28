@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import NextLink from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Link, Star, Upload, X } from 'lucide-react'
+import { ProLock } from '@/shared/ui'
 import { toast } from 'sonner'
 import type { Item } from '@/entities/item/model/types'
 import { useAddGift, getGiftPinned, getGiftDate } from '../model/useAddGift'
@@ -182,35 +183,28 @@ export function AddGiftForm({
             <X size={14} />
           </button>
         </div>
-      ) : isPro ? (
-        /* Pro: кнопка загрузки фото */
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-transparent text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
-          >
-            <Upload size={15} />
-            {isUploading ? t('gifts.uploading') : t('gifts.uploadPhoto')}
-          </button>
-        </div>
       ) : (
-        /* Free: paywall-заглушка */
-        <NextLink href="/pro" className="flex items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3 hover:border-primary/30 transition-colors">
-          <Upload size={15} className="flex-shrink-0 text-text-muted" />
-          <span className="flex-1 text-sm text-text-muted">{t('gifts.uploadPhoto')}</span>
-          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-            Pro
-          </span>
-        </NextLink>
+        /* Загрузка фото — только Pro */
+        <ProLock feature="gift_photo" profile={{ subscription_tier: isPro ? 'pro' : 'free' }}>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-transparent text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
+            >
+              <Upload size={15} />
+              {isUploading ? t('gifts.uploading') : t('gifts.uploadPhoto')}
+            </button>
+          </div>
+        </ProLock>
       )}
 
       {/* Название */}
